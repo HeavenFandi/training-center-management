@@ -1,0 +1,208 @@
+import { Box } from "@mui/material";
+import GenericDeleteModal from "../../components/Modal/DeleteModal";
+import AddCourseModal from "../../components/AdminDasboard/Courses/AddCourseModel";
+import CourseDetailsModal from "../../components/AdminDasboard/Courses/CourseDetailsModal";
+import {  useState, useCallback } from "react";
+import EditCourseModal from "../../components/AdminDasboard/Courses/EditCourseModel";
+import { useCourseManagement } from "../../hooks/adminDashboard/useCourseManagement";
+import CourseManagementHeader from "../../components/AdminDasboard/Courses/CourseManagement/CourseManagementHeader";
+import CourseManagementGrid from "../../components/AdminDasboard/Courses/CourseManagement/CourseManagementGrid";
+
+import AddSessionModal from "../../components/AdminDasboard/Courses/AddSessionModal";
+import SessionDetailsModal from "../../components/AdminDasboard/Courses/SessionDetailsModal";
+import SessionsListModal from "../../components/AdminDasboard/Courses/SessionsListModal";
+import { TCourse, TSession } from "../../types/cardType";
+
+const CourseManagement = () => {
+  const {
+    courses,
+    selectedCourse,
+    isDeleteOpen,
+    openEditModal,
+    openAddModal,
+    openDetailsModal,
+    handleDeleteCourse,
+    handleOpenDetail,
+    handleCloseDetail,
+    handleOpenEdit,
+    handleCloseEdit,
+  
+    handleCloseDelete,
+    handleSaveEdit,
+    handleOpenAdd,
+    handleCloseAdd,
+    handleSaveAdd,
+    handleAddSession,
+  } = useCourseManagement();
+
+  const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
+  const [sessionTargetCourse, setSessionTargetCourse] =
+    useState<TCourse | null>(null);
+  
+  const [selectedSession, setSelectedSession] = useState<TSession | null>(null);
+  const [editingSession, setEditingSession] = useState<TSession | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<{ session: TSession, course: TCourse } | null>(null);
+  const [isDeleteSessionOpen, setIsDeleteSessionOpen] = useState(false);
+  const [isSessionDetailsOpen, setIsSessionDetailsOpen] = useState(false);
+  const [isSessionsListOpen, setIsSessionsListOpen] = useState(false);
+
+  const handleOpenAddSession = (course: TCourse) => {
+    setSessionTargetCourse(course);
+    setEditingSession(null);
+    setIsAddSessionOpen(true);
+  };
+
+  const handleOpenEditSession = (session: TSession, course: TCourse) => {
+    setSessionTargetCourse(course);
+    setEditingSession(session);
+    setIsAddSessionOpen(true);
+  };
+
+  const handleCloseAddSession = () => {
+    setIsAddSessionOpen(false);
+    setSessionTargetCourse(null);
+    setEditingSession(null);
+  };
+
+  const handleOpenSessionsList = (course: TCourse) => {
+    setSessionTargetCourse(course);
+    setIsSessionsListOpen(true);
+  };
+
+  const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
+    setSessionTargetCourse(course);
+    setSelectedSession(session);
+    setIsSessionDetailsOpen(true);
+  }, []);
+
+  const handleUpdateSession = useCallback((updatedSession: TSession) => {
+    if (!sessionTargetCourse) return;
+    const updatedSessions = sessionTargetCourse.sessions?.map(s => 
+      s.id === updatedSession.id ? updatedSession : s
+    );
+    handleSaveEdit({ ...sessionTargetCourse, sessions: updatedSessions });
+    setSelectedSession(updatedSession);
+  }, [sessionTargetCourse, handleSaveEdit]);
+
+  const handleDeleteSessionRequest = useCallback((session: TSession, course: TCourse) => {
+    setSessionToDelete({ session, course });
+    setIsDeleteSessionOpen(true);
+  }, []);
+
+  const handleConfirmDeleteSession = useCallback(() => {
+    if (!sessionToDelete) return;
+    const { session, course } = sessionToDelete;
+    const updatedSessions = course.sessions?.filter(s => s.id !== session.id);
+    handleSaveEdit({ ...course, sessions: updatedSessions });
+    setIsDeleteSessionOpen(false);
+    setSessionToDelete(null);
+  }, [sessionToDelete, handleSaveEdit]);
+
+  return (
+    <Box sx={{  width: "100%", overflowX: "hidden", flexGrow: 1 }}>
+      <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
+        <CourseManagementHeader onAddClick={handleOpenAdd} />
+
+      {openAddModal && (
+        <AddCourseModal
+          open={openAddModal}
+          onClose={handleCloseAdd}
+          onSave={handleSaveAdd}
+        />
+      )}
+
+      {isAddSessionOpen && (
+        <AddSessionModal
+          open={isAddSessionOpen}
+          onClose={handleCloseAddSession}
+          course={sessionTargetCourse}
+          onSave={(data) => {
+            if (editingSession) {
+              handleUpdateSession({ ...editingSession, ...data });
+            } else {
+              handleAddSession(data);
+            }
+          }}
+          initialSession={editingSession}
+        />
+      )}
+
+      {isSessionDetailsOpen && (
+        <SessionDetailsModal
+          open={isSessionDetailsOpen}
+          onClose={() => setIsSessionDetailsOpen(false)}
+          session={selectedSession}
+          course={sessionTargetCourse || { id: 0, title: "", category: "", price: 0, requirements: "", duration: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
+          onUpdateSession={handleUpdateSession}
+        />
+      )}
+
+      {isSessionsListOpen && (
+        <SessionsListModal
+          open={isSessionsListOpen}
+          onClose={() => setIsSessionsListOpen(false)}
+          course={sessionTargetCourse}
+          onEditSession={handleOpenEditSession}
+          onDeleteSession={handleDeleteSessionRequest}
+          onSessionClick={handleSessionClick}
+        />
+      )}
+
+      {isDeleteOpen && (
+        <GenericDeleteModal
+          open={isDeleteOpen}
+          onClose={handleCloseDelete}
+          onConfirm={handleDeleteCourse}
+          title="تأكيد حذف الكورس"
+          description="هل أنت متأكد من رغبتك في حذف الكورس"
+          itemName={selectedCourse?.title}
+        />
+      )}
+
+      {isDeleteSessionOpen && (
+        <GenericDeleteModal
+          open={isDeleteSessionOpen}
+          onClose={() => setIsDeleteSessionOpen(false)}
+          onConfirm={handleConfirmDeleteSession}
+          title="تأكيد حذف الدورة"
+          description="هل أنت متأكد من رغبتك في حذف الدورة"
+          itemName={sessionToDelete?.session.title}
+        />
+      )}
+
+      {openDetailsModal && (
+        <CourseDetailsModal
+          open={openDetailsModal}
+          onClose={handleCloseDetail}
+          course={selectedCourse}
+          onSave={handleSaveEdit}
+          onAddSession={handleOpenAddSession}
+        />
+      )}
+
+      {openEditModal && (
+        <EditCourseModal
+          open={openEditModal}
+          onClose={handleCloseEdit}
+          course={selectedCourse}
+          onSave={handleSaveEdit}
+        />
+      )}
+
+      <CourseManagementGrid
+        courses={courses}
+        onView={handleOpenDetail}
+        onEdit={handleOpenEdit}
+        onAddSession={handleOpenAddSession}
+        onShowSessions={handleOpenSessionsList}
+      />
+
+      
+    </Box>
+    </Box>
+  );
+};
+
+export default CourseManagement;
+
+
