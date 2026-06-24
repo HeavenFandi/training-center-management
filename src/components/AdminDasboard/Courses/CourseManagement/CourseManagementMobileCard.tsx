@@ -45,7 +45,7 @@ const CourseManagementMobileCard: React.FC<CourseManagementMobileCardProps> = ({
       </Typography>
 
       <Typography>
-        <strong>عدد الساعات:</strong> {course.duration}
+        <strong>عدد الساعات:</strong> {course.hours}
       </Typography>
 
       <Typography>

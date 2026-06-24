@@ -18,11 +18,20 @@ export const useAddCourseForm = ({ onClose, onSave }: UseAddCourseFormProps) => 
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
- 
+
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     mode: "onChange",
+    defaultValues: {
+      title: "",
+      hoursCount: "",
+      categoryId: "1",
+      description: "",
+      requirements: "",
+      image: ""
+    }
   });
 
   const handleFileChange = useCallback(
@@ -44,10 +53,8 @@ export const useAddCourseForm = ({ onClose, onSave }: UseAddCourseFormProps) => 
   const onSubmit = useCallback(
     (data: CourseFormData) => {
       onSave(data);
-      showSnackbar("تم إضافة الكورس بنجاح", "success");
-      onClose();
     },
-    [onSave, showSnackbar, onClose]
+    [onSave]
   );
 
   const onError = useCallback(
@@ -67,6 +74,7 @@ export const useAddCourseForm = ({ onClose, onSave }: UseAddCourseFormProps) => 
     courseImage,
     fileInputRef,
     handleFileChange,
+    control,
   };
 };
 

@@ -25,6 +25,7 @@ export const teacher = {
   experience: "+10",
   students: 200,
   coursesCount: 10,
+  username: "ahmed_ali",
   email: "ahmad@gmail.com",
   phone: "0987354546",
   bio: "خبير في مجال التسويق الرقمي مع خبرة تزيد عن 10 سنوات في إدارة الحملات الإعلانية، وبناء الخطط التسويقية، وتطوير الاستراتيجيات الرقمية وتحليل الأداء وتحسين نتائج الحملات.",
@@ -87,8 +88,6 @@ export default function TeacherProfile() {
     setTeacherData({
       ...teacherData,
       ...updatedTeacher,
-      students: Number(updatedTeacher.students),
-      coursesCount: Number(updatedTeacher.coursesCount),
       courses: teacherData.courses, // Keep original courses as they are not edited in this modal
     });
     setOpenEditModal(false);

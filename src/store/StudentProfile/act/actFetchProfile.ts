@@ -2,12 +2,21 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import axiosClient from "../../../api/axiosClient";
 import { Student } from "../../../types/studentDashboard";
+import { RootState } from "../../index";
 
 const actFetchProfile = createAsyncThunk<
   Student,
   number,
   { rejectValue: string }
 >("studentProfile/actFetchProfile", async (studentId, thunkAPI) => {
+  const { getState } = thunkAPI;
+  const state = getState() as RootState;
+  
+  // If we already have profile data and fetch completed (loading is false), don't fetch again
+  if (state.studentProfile.profile && !state.studentProfile.loading) {
+    return state.studentProfile.profile;
+  }
+  
   try {
     console.log("[DEBUG actFetchProfile] Fetching student profile with id:", studentId);
     const response = await axiosClient.get(`/students/${studentId}`);

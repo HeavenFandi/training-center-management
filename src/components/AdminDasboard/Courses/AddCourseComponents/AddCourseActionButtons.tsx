@@ -1,12 +1,13 @@
 import React from "react";
-import { Stack, Button } from "@mui/material";
+import { Stack, Button, CircularProgress } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 
 interface AddCourseActionButtonsProps {
   onClose: () => void;
+  isLoading?: boolean;
 }
 
-const AddCourseActionButtons: React.FC<AddCourseActionButtonsProps> = ({ onClose }) => {
+const AddCourseActionButtons: React.FC<AddCourseActionButtonsProps> = ({ onClose, isLoading = false }) => {
   return (
     <Stack
       direction={{ xs: "column", sm: "row" }}
@@ -18,6 +19,7 @@ const AddCourseActionButtons: React.FC<AddCourseActionButtonsProps> = ({ onClose
         fullWidth
         variant="contained"
         onClick={onClose}
+        disabled={isLoading}
         sx={{
           bgcolor: "rgba(19, 62, 101, 0.05)",
           color: "#133E65",
@@ -41,7 +43,8 @@ const AddCourseActionButtons: React.FC<AddCourseActionButtonsProps> = ({ onClose
         fullWidth
         type="submit"
         variant="contained"
-        startIcon={<SaveIcon sx={{ ml: 1 }} />}
+        disabled={isLoading}
+        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon sx={{ ml: 1 }} />}
         sx={{
           bgcolor: "#133E65",
           color: "white",
@@ -59,7 +62,7 @@ const AddCourseActionButtons: React.FC<AddCourseActionButtonsProps> = ({ onClose
           },
         }}
       >
-        حفظ بيانات الكورس
+        {isLoading ? "جار الحفظ..." : "حفظ بيانات الكورس"}
       </Button>
     </Stack>
   );

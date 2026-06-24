@@ -21,12 +21,20 @@ const CourseManagement = () => {
     openEditModal,
     openAddModal,
     openDetailsModal,
+    createLoading,
+    updateLoading,
+    searchLoading,
+    adminCoursesLoading,
+    tenantId,
+    searchQuery,
+    handleSearch,
+    handleClearSearch,
     handleDeleteCourse,
     handleOpenDetail,
     handleCloseDetail,
     handleOpenEdit,
     handleCloseEdit,
-  
+    handleDeleteClick,
     handleCloseDelete,
     handleSaveEdit,
     handleOpenAdd,
@@ -80,9 +88,9 @@ const CourseManagement = () => {
     const updatedSessions = sessionTargetCourse.sessions?.map(s => 
       s.id === updatedSession.id ? updatedSession : s
     );
-    handleSaveEdit({ ...sessionTargetCourse, sessions: updatedSessions });
+    // handleSaveEdit({ ...sessionTargetCourse, sessions: updatedSessions });
     setSelectedSession(updatedSession);
-  }, [sessionTargetCourse, handleSaveEdit]);
+  }, [sessionTargetCourse]);
 
   const handleDeleteSessionRequest = useCallback((session: TSession, course: TCourse) => {
     setSessionToDelete({ session, course });
@@ -93,21 +101,28 @@ const CourseManagement = () => {
     if (!sessionToDelete) return;
     const { session, course } = sessionToDelete;
     const updatedSessions = course.sessions?.filter(s => s.id !== session.id);
-    handleSaveEdit({ ...course, sessions: updatedSessions });
+    // handleSaveEdit({ ...course, sessions: updatedSessions });
     setIsDeleteSessionOpen(false);
     setSessionToDelete(null);
-  }, [sessionToDelete, handleSaveEdit]);
+  }, [sessionToDelete]);
 
   return (
     <Box sx={{  width: "100%", overflowX: "hidden", flexGrow: 1 }}>
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
-        <CourseManagementHeader onAddClick={handleOpenAdd} />
+        <CourseManagementHeader 
+          onAddClick={handleOpenAdd}
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          onClearSearch={handleClearSearch}
+          isSearchLoading={searchLoading === "pending"}
+        />
 
       {openAddModal && (
         <AddCourseModal
           open={openAddModal}
           onClose={handleCloseAdd}
           onSave={handleSaveAdd}
+          isLoading={createLoading === "pending"}
         />
       )}
 
@@ -177,6 +192,8 @@ const CourseManagement = () => {
           course={selectedCourse}
           onSave={handleSaveEdit}
           onAddSession={handleOpenAddSession}
+          tenantId={tenantId}
+          isSaving={updateLoading === "pending"}
         />
       )}
 
@@ -185,7 +202,9 @@ const CourseManagement = () => {
           open={openEditModal}
           onClose={handleCloseEdit}
           course={selectedCourse}
-          onSave={handleSaveEdit}
+          onSave={(data) => handleSaveEdit(data, handleCloseEdit)}
+          tenantId={tenantId}
+          isLoading={updateLoading === "pending"}
         />
       )}
 
@@ -195,6 +214,8 @@ const CourseManagement = () => {
         onEdit={handleOpenEdit}
         onAddSession={handleOpenAddSession}
         onShowSessions={handleOpenSessionsList}
+        onDelete={handleDeleteClick}
+        loading={adminCoursesLoading === "pending" || searchLoading === "pending"}
       />
 
       

@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, TextField, InputAdornment, IconButton } from "@mui/material";
 import TeachersTable from "../../components/AdminDasboard/Teachers/TeachersTable";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import { statsTeacher } from "../../data/TeacherData";
@@ -8,7 +8,10 @@ import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import TeacherDetailsModal from "../../components/AdminDasboard/Teachers/TeacherDetailsModal";
 import AddTeachersModal from "../../components/AdminDasboard/Teachers/AddTeachersModal";
 import { useTeacherManagement } from "../../hooks/adminDashboard/useTeacherManagement";
+import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 import TeacherManagementHeader from "../../components/AdminDasboard/Teachers/SubComponents/TeacherManagementHeader";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
 const TeachersManagement: React.FC = () => {
   const {
@@ -25,6 +28,9 @@ const TeachersManagement: React.FC = () => {
     isViewOpen,
     loading,
     selectedTeacherLoading,
+    isUpdating,
+    pendingImageFile,
+    setPendingImageFile,
     handleAddTeacher,
     handleViewClick,
     handleCloseView,
@@ -32,11 +38,15 @@ const TeachersManagement: React.FC = () => {
     handleCloseEdit,
     handleDeleteClick,
     handleCloseDelete,
-    handleSaveEdit,
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
+    handleSaveEdit,
+    handleImageUpdate,
   } = useTeacherManagement();
+  
+  const showLoading = useDelayedLoading(loading);
+  const showTeacherLoading = useDelayedLoading(selectedTeacherLoading);
 
   const statsCards = useMemo(
     () =>
@@ -66,6 +76,60 @@ const TeachersManagement: React.FC = () => {
         {statsCards}
       </Grid>
 
+      {/* Search Field */}
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          placeholder="ابحث عن معلم..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setSearchTerm("")} size="small">
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            width: "400px",
+            backgroundColor: "transparent",
+            borderRadius: "12px",
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                border: "none",
+              },
+              "&:hover fieldset": {
+                border: "none",
+              },
+              "&.Mui-focused fieldset": {
+                border: "none",
+              },
+            },
+            "& .MuiInputBase-root": {
+              backgroundColor: "transparent",
+              fontFamily: "Tajawal",
+              fontSize: "16px",
+            },
+            "& .MuiInputBase-input": {
+              py: 1.5,
+              px: 2,
+              "&::placeholder": {
+                color: "#555",
+                opacity: 1,
+                fontWeight: 500,
+              },
+            },
+          }}
+        />
+      </Box>
+
       <TeachersTable
         teachersData={filteredTeachers}
         searchTerm={searchTerm}
@@ -74,6 +138,8 @@ const TeachersManagement: React.FC = () => {
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
+        showLoading={showLoading}
+        hasData={teachers.length > 0}
       />
 
       <AddTeachersModal
@@ -85,7 +151,8 @@ const TeachersManagement: React.FC = () => {
       <TeacherDetailsModal
         open={isViewOpen}
         teacher={selectedTeacher}
-        loading={selectedTeacherLoading}
+        loading={showTeacherLoading}
+        hasData={!!selectedTeacher}
         onClose={handleCloseView}
       />
 
@@ -96,12 +163,15 @@ const TeachersManagement: React.FC = () => {
           teacher={localEditTeacher}
           onClose={handleCloseEdit}
           onSave={handleSaveEdit}
+          onImageUpdate={handleImageUpdate}
+          loading={isUpdating}
+          setPendingImageFile={setPendingImageFile}
         />
       )}
 
       <GenericDeleteModal
         open={isDeleteOpen}
-        itemName={teacherToDelete?.name}
+        itemName={`${teacherToDelete?.firstName || ""} ${teacherToDelete?.lastName || ""}`.trim()}
         description="هل أنت متأكد من رغبتك في حذف المعلم"
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}

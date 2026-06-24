@@ -8,6 +8,7 @@ import {
   Typography,
   MenuItem,
   Box,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
@@ -21,6 +22,7 @@ interface AddHallModalProps {
   onClose: () => void;
   onSave: (hall: HallFormData) => void;
   initialData?: { hall: string; capacity: number; equipment: string } | null;
+  loading?: boolean;
 }
 
 const AddHallModal: React.FC<AddHallModalProps> = ({
@@ -28,6 +30,7 @@ const AddHallModal: React.FC<AddHallModalProps> = ({
   onClose,
   onSave,
   initialData,
+  loading = false,
 }) => {
   const {
     register,
@@ -53,7 +56,6 @@ const AddHallModal: React.FC<AddHallModalProps> = ({
 
   const handleSave = handleSubmit((data) => {
     onSave(data);
-    onClose();
   });
 
   return (
@@ -130,7 +132,8 @@ const AddHallModal: React.FC<AddHallModalProps> = ({
             variant="contained"
             fullWidth
             onClick={handleSave}
-            startIcon={<SaveIcon sx={{ ml: 1 }} />}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon sx={{ ml: 1 }} />}
             sx={{
               backgroundColor: "#133E65",
               color: "white",
@@ -145,6 +148,9 @@ const AddHallModal: React.FC<AddHallModalProps> = ({
                 backgroundColor: "#1e5a91",
                 transform: "translateY(-2px)",
                 boxShadow: "0 10px 25px rgba(19, 62, 101, 0.3)",
+              },
+              "&:disabled": {
+                backgroundColor: "#8aaac1",
               },
             }}>
             {initialData ? "حفظ التعديلات" : "إضافة القاعة"}

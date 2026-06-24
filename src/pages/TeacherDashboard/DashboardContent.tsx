@@ -19,7 +19,10 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
-
+import { useEffect } from "react";
+import { useAppSelector } from "../../store/hooks";
+import actGetTeacherById from "../../store/teachers/act/actGetTeacherById";
+import actGetTeacherCourseProgress from "../../store/teachers/act/actGetTeacherCourseProgress";
 interface StatCardProps {
   title: string;
   value: string;
@@ -47,31 +50,27 @@ const StatCard = ({ title, value, icon, iconBg }: StatCardProps) => (
         backgroundColor: "rgba(255, 255, 255, 0.8)",
         transform: "translateY(-5px)",
       },
-    }}
-  >
+    }}>
     <Box
       sx={{
         color: iconBg,
         mb: 0.5,
         display: "flex",
         justifyContent: "center",
-      }}
-    >
+      }}>
       {React.cloneElement(icon as React.ReactElement)}
     </Box>
     <Typography
       variant="body2"
       color="text.secondary"
       fontWeight="bold"
-      sx={{ fontFamily: "Tajawal", fontSize: 12 }}
-    >
+      sx={{ fontFamily: "Tajawal", fontSize: 12 }}>
       {title}
     </Typography>
     <Typography
       variant="h5"
       fontWeight="bold"
-      sx={{ fontFamily: "Tajawal", fontSize: 20 }}
-    >
+      sx={{ fontFamily: "Tajawal", fontSize: 20 }}>
       {value}
     </Typography>
   </Paper>
@@ -82,6 +81,9 @@ interface CourseCardProps {
   image: string;
   progress: number;
   progressColor: string;
+  studentsCount: number;
+  completedSessions: number;
+  totalSessions: number;
 }
 
 const CourseCard = ({
@@ -89,6 +91,9 @@ const CourseCard = ({
   image,
   progress,
   progressColor,
+  studentsCount,
+  completedSessions,
+  totalSessions,
 }: CourseCardProps) => (
   <Card
     elevation={0}
@@ -99,13 +104,7 @@ const CourseCard = ({
       backdropFilter: "blur(10px)",
       border: "1px solid rgba(255, 255, 255, 0.3)",
       boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
-      transition: "all 0.3s ease",
-      "&:hover": {
-        transform: "translateY(-2px)",
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-      },
-    }}
-  >
+    }}>
     <Box sx={{ p: 1.5 }}>
       <Box
         component="img"
@@ -118,6 +117,7 @@ const CourseCard = ({
         }}
       />
     </Box>
+
     <CardContent sx={{ p: "0 20px 20px 20px !important" }}>
       <Typography
         sx={{
@@ -127,8 +127,7 @@ const CourseCard = ({
           mb: 2,
           textAlign: "right",
           fontFamily: "Tajawal",
-        }}
-      >
+        }}>
         {title}
       </Typography>
 
@@ -136,8 +135,7 @@ const CourseCard = ({
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ mb: 1.5 }}
-      >
+        sx={{ mb: 1.5 }}>
         <Stack direction="row" spacing={2}>
           <Stack direction="row" spacing={1}>
             <Groups2OutlinedIcon sx={{ fontSize: 20, color: "#1e293b" }} />
@@ -147,11 +145,11 @@ const CourseCard = ({
                 color: "#1e293b",
                 fontWeight: 700,
                 fontFamily: "Tajawal",
-              }}
-            >
-              24 طالب
+              }}>
+              {studentsCount} طالب
             </Typography>
           </Stack>
+
           <Stack direction="row" spacing={1}>
             <AccessTimeRoundedIcon sx={{ fontSize: 20, color: "#1e293b" }} />
             <Typography
@@ -160,9 +158,8 @@ const CourseCard = ({
                 color: "#1e293b",
                 fontWeight: 700,
                 fontFamily: "Tajawal",
-              }}
-            >
-              ساعتين/أسبوع
+              }}>
+              {completedSessions}/{totalSessions} جلسة
             </Typography>
           </Stack>
         </Stack>
@@ -173,8 +170,7 @@ const CourseCard = ({
             fontWeight: 900,
             color: progressColor,
             fontFamily: "Tajawal",
-          }}
-        >
+          }}>
           {progress}%
         </Typography>
       </Stack>
@@ -200,20 +196,37 @@ const CourseCard = ({
 const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { selectedTeacher, courseProgress } = useAppSelector(
+    (state) => state.teachers,
+  );
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+    if (user?.id) {
+      dispatch(actGetTeacherById(12));
+      dispatch(actGetTeacherCourseProgress(12));
+    }
+  }, [dispatch]);
   const handleLogout = () => {
     dispatch(logout());
     navigate("/");
   };
-
+  const averageProgress =
+    courseProgress.length > 0
+      ? Math.round(
+          courseProgress.reduce(
+            (sum, course) => sum + course.progressPercentage,
+            0,
+          ) / courseProgress.length,
+        )
+      : 0;
   return (
     <Box
       dir="rtl"
       sx={{
         minHeight: "100vh",
         p: { xs: 1.5, md: 2.5 },
-      }}
-    >
+      }}>
       <Box sx={{ mx: "auto", display: "flex", flexDirection: "column" }}>
         <Box
           sx={{
@@ -221,8 +234,7 @@ const TeacherDashboard: React.FC = () => {
             justifyContent: "space-between",
             alignItems: "center",
             mb: 2,
-          }}
-        >
+          }}>
           <Box sx={{ textAlign: "right" }}>
             <Typography
               sx={{
@@ -231,18 +243,18 @@ const TeacherDashboard: React.FC = () => {
                 color: "#1e293b",
                 mb: 0.5,
                 fontFamily: "Tajawal",
-              }}
-            >
-              مرحباً أستاذ محمد
+              }}>
+              مرحباً أستاذ {selectedTeacher?.firstName || ""}{" "}
+              {selectedTeacher?.lastName || ""}
             </Typography>
+
             <Typography
               sx={{
                 fontSize: { xs: 13, md: 14 },
                 color: "#64748b",
                 fontWeight: 600,
                 fontFamily: "Tajawal",
-              }}
-            >
+              }}>
               إليك ملخص نشاطك التعليمي لهذا اليوم
             </Typography>
           </Box>
@@ -262,8 +274,7 @@ const TeacherDashboard: React.FC = () => {
                 borderWidth: "2px",
                 backgroundColor: "rgba(211, 47, 47, 0.04)",
               },
-            }}
-          >
+            }}>
             تسجيل الخروج
           </Button>
         </Box>
@@ -272,7 +283,7 @@ const TeacherDashboard: React.FC = () => {
           <Grid size={{ xs: 6, sm: 4 }}>
             <StatCard
               title="الدورات الحالية"
-              value="3 دورات"
+              value={`${courseProgress.length} دورات`}
               icon={<LibraryBooksRoundedIcon />}
               iconBg="#FF8B61"
             />
@@ -280,7 +291,7 @@ const TeacherDashboard: React.FC = () => {
           <Grid size={{ xs: 6, sm: 4 }}>
             <StatCard
               title="اجمالي الطلاب"
-              value="142 طالب"
+              value={`${selectedTeacher?.numberOfStudents ?? 0} طالب`}
               icon={<Diversity3RoundedIcon />}
               iconBg="#B27CFF"
             />
@@ -288,7 +299,7 @@ const TeacherDashboard: React.FC = () => {
           <Grid size={{ xs: 12, sm: 4 }}>
             <StatCard
               title="نسبة تقدم الطلاب"
-              value="78%"
+              value={`${averageProgress}%`}
               icon={<DonutLargeRoundedIcon />}
               iconBg="#54C26A"
             />
@@ -299,16 +310,14 @@ const TeacherDashboard: React.FC = () => {
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ mb: 2 }}
-        >
+          sx={{ mb: 2 }}>
           <Typography
             sx={{
               fontSize: 16,
               fontWeight: 900,
               color: "#1e293b",
               fontFamily: "Tajawal",
-            }}
-          >
+            }}>
             الدورات الحالية
           </Typography>
           <Typography
@@ -319,37 +328,35 @@ const TeacherDashboard: React.FC = () => {
               cursor: "pointer",
               fontFamily: "Tajawal",
               "&:hover": { color: "#1e293b" },
-            }}
-          >
+            }}>
             عرض الجميع
           </Typography>
         </Stack>
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <CourseCard
-              title="التسويق الإلكتروني"
-              image="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
-              progress={65}
-              progressColor="#54C26A"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <CourseCard
-              title="تصميم واجهات المستخدم"
-              image="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop"
-              progress={35}
-              progressColor="#FF8B61"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <CourseCard
-              title="أساسيات الرياضيات"
-              image="https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=1200&auto=format&fit=crop"
-              progress={50}
-              progressColor="#3B82F6"
-            />
-          </Grid>
+          {courseProgress.map((course, index) => (
+            <Grid key={course.courseId} size={{ xs: 12, sm: 6, md: 4 }}>
+              <CourseCard
+                title={course.courseName}
+                image={
+                  index % 2 === 0
+                    ? "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
+                    : "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop"
+                }
+                progress={course.progressPercentage}
+                progressColor={
+                  course.progressPercentage >= 70
+                    ? "#54C26A"
+                    : course.progressPercentage >= 40
+                      ? "#3B82F6"
+                      : "#FF8B61"
+                }
+                studentsCount={course.numberOfStudents}
+                completedSessions={course.completedSessions}
+                totalSessions={course.totalSessions}
+              />
+            </Grid>
+          ))}
         </Grid>
       </Box>
     </Box>

@@ -1,19 +1,24 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { CreateStudentResponse, UpdateStudentRequest } from "../../api/studentApi";
+import { CreateStudentResponse, UpdateStudentRequest, getStudentActiveCourses } from "../../api/studentApi";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import actGetStudents from "../../store/students/act/actGetStudents";
-import actUpdateStudent from "../../store/students/act/actUpdateStudent";
-import { selectStudentsState, resetStudentsError } from "../../store/students/studentsSlice";
+import actGetStudents from "../../store/Students/act/actGetStudents";
+import actUpdateStudent from "../../store/Students/act/actUpdateStudent";
+import actDeleteStudent from "../../store/Students/act/actDeleteStudent";
+import { selectStudentsState, resetStudentsError } from "../../store/Students/studentsSlice";
+import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 
 export const useStudentManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
   const { students, loading, error } = useAppSelector(selectStudentsState);
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<CreateStudentResponse | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<CreateStudentResponse | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -21,11 +26,45 @@ export const useStudentManagement = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  // Track which students have active courses (cannot be deleted)
+  const [studentsWithActiveCourses, setStudentsWithActiveCourses] = useState<Set<number>>(new Set());
 
-  // Fetch students on load
+  // First, fetch institute by userId
   useEffect(() => {
-    dispatch(actGetStudents());
-  }, [dispatch]);
+    const userId = user?.id;
+    if (userId && !currentInstitute) {
+      dispatch(actGetInstituteByUserId(userId));
+    }
+  }, [dispatch, user, currentInstitute]);
+
+  // Fetch students on load only if we don't have data yet
+  useEffect(() => {
+    if (students.length === 0) {
+      dispatch(actGetStudents());
+    }
+  }, [dispatch, students.length]);
+
+  // Check active courses for each student when students list changes
+  useEffect(() => {
+    const checkAllStudentsEnrollments = async () => {
+      const enrolledStudentIds = new Set<number>();
+      for (const student of students) {
+        try {
+          const activeCourses = await getStudentActiveCourses(student.id);
+          if (activeCourses.length > 0) {
+            enrolledStudentIds.add(student.id);
+          }
+        } catch (err) {
+          console.error(`Error checking enrollments for student ${student.id}:`, err);
+        }
+      }
+      setStudentsWithActiveCourses(enrolledStudentIds);
+    };
+    
+    if (students.length > 0) {
+      checkAllStudentsEnrollments();
+    }
+  }, [students]);
 
   // Show error snackbar if there's an error
   useEffect(() => {
@@ -92,11 +131,18 @@ export const useStudentManagement = () => {
 
   const handleDeleteClick = useCallback((student: CreateStudentResponse) => {
     setStudentToDelete(student);
+    // Check if student has active courses
+    if (studentsWithActiveCourses.has(student.id)) {
+      setDeleteErrorMessage("Student cannot be deleted until course completion.");
+    } else {
+      setDeleteErrorMessage(null);
+    }
     setIsDeleteOpen(true);
-  }, []);
+  }, [studentsWithActiveCourses]);
 
   const handleCloseDelete = useCallback(() => {
     setIsDeleteOpen(false);
+    setDeleteErrorMessage(null);
   }, []);
 
   const handleSaveEdit = useCallback(async (formData: CreateStudentResponse) => {
@@ -150,13 +196,42 @@ export const useStudentManagement = () => {
     }
   }, [dispatch, showSnackbar, selectedStudent, pendingImageFile]);
 
-  const handleConfirmDelete = useCallback(() => {
-    // TODO: Implement delete API call here
-    if (studentToDelete) {
+  const handleConfirmDelete = useCallback(async () => {
+    if (!studentToDelete || !studentToDelete.id) return;
+    
+    // Check if student has active courses before trying to delete
+    if (studentsWithActiveCourses.has(studentToDelete.id)) {
+      showSnackbar("Student cannot be deleted until course completion.", "error");
       setIsDeleteOpen(false);
-      setStudentToDelete(null);
+      setDeleteErrorMessage(null);
+      return;
     }
-  }, [studentToDelete]);
+
+    console.log("Deleting student id:", studentToDelete.id);
+
+    try {
+      const resultAction = await dispatch(
+        actDeleteStudent(studentToDelete.id)
+      );
+
+      if (actDeleteStudent.fulfilled.match(resultAction)) {
+        setIsDeleteOpen(false);
+        setStudentToDelete(null);
+        setDeleteErrorMessage(null);
+        showSnackbar("تم حذف الطالب بنجاح", "success");
+        dispatch(actGetStudents());
+      } else {
+        const errorMessage =
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "حدث خطأ أثناء حذف الطالب";
+        showSnackbar(errorMessage, "error");
+      }
+    } catch (error) {
+      console.error("[DEBUG useStudentManagement] handleConfirmDelete error:", error);
+      showSnackbar("حدث خطأ أثناء حذف الطالب", "error");
+    }
+  }, [dispatch, studentToDelete, showSnackbar, studentsWithActiveCourses]);
 
   const handleOpenAdd = useCallback(() => {
     setIsAddOpen(true);
@@ -193,5 +268,7 @@ export const useStudentManagement = () => {
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
+    studentsWithActiveCourses,
+    deleteErrorMessage,
   };
 };

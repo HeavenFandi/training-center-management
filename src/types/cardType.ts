@@ -19,10 +19,12 @@ export interface Hall {
 
 export interface TCourseListItem {
   id: number;
-  title: string;
+  title?: string;
+  name?: string;
   institute: string;
   price: number;
-  category: string;
+  category?: string;
+  categoryName?: string;
   location?: string;
   image?: string;
 }
@@ -136,7 +138,8 @@ export interface TCourse extends TCourseListItem {
   instructor: TInstructor;
   reviews: TReview[];
   requirements: string;
-  duration: string;
+  hours: number;
+  categoryName: string;
   students: string;
   sessions?: TSession[];
   image: string;

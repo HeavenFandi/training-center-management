@@ -22,7 +22,10 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import EditInstituteModal from "../../components/AdminDasboard/EditInstituteModal";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { actGetInstituteByTenantId, actUpdateInstitute, resetInstituteState } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actUpdateInstitute, resetInstituteState, actGetStudentsCount } from "../../store/Institutes/institutesSlice";
+import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
+import actGetTeachers from "../../store/teachers/act/actGetTeachers";
+import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 
 interface InstituteInfo {
   name: string;
@@ -120,30 +123,38 @@ const formatTime = (value: any) => {
 const InstituteManagement: React.FC = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
+  const { user } = useAppSelector((state) => state.auth);
   const { 
     currentInstitute, 
     currentInstituteLoading, 
     currentInstituteError, 
     updateLoading, 
     updateError, 
-    updateSuccess 
+    updateSuccess,
+    studentsCount,
+    studentsCountLoading,
+    studentsCountError
   } = useAppSelector(
     (state) => state.institutes,
   );
+  const { courses, loading: coursesLoading, error: coursesError } = useAppSelector((state) => state.courses);
+  const { teachers, loading: teachersLoading, error: teachersError } = useAppSelector((state) => state.teachers);
+  const showLoading = useDelayedLoading(currentInstituteLoading);
+  const showStudentsCountLoading = useDelayedLoading(studentsCountLoading);
   const [instituteInfo, setInstituteInfo] = useState<InstituteInfo | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [missingTenantId, setMissingTenantId] = useState(false);
 
   useEffect(() => {
-    const tenantId = localStorage.getItem("tenantId");
+    const userId = user?.id;
 
-    if (!tenantId) {
+    if (!userId) {
       setMissingTenantId(true);
       return;
     }
 
-    dispatch(actGetInstituteByTenantId(tenantId));
-  }, [dispatch]);
+    dispatch(actGetInstituteByUserId(userId));
+  }, [dispatch, user]);
 
   useEffect(() => {
     if (currentInstitute) {
@@ -160,7 +171,6 @@ const InstituteManagement: React.FC = () => {
           phone: currentInstitute.phoneNumber ?? "",
           email: currentInstitute.email ?? "",
         },
-        // Update workingHours to hold days array, time, and status directly (for compatibility with EditInstituteModal)
         workingHours: [{
           days: mappedDays.join(" - "),
           time: timeRange,
@@ -194,9 +204,40 @@ const InstituteManagement: React.FC = () => {
     }
   }, [updateSuccess, updateError, showSnackbar, dispatch]);
 
+  useEffect(() => {
+    console.log("InstituteManagement: coursesLoading:", coursesLoading, "courses:", courses, "error:", coursesError);
+    if (coursesError) {
+      showSnackbar(coursesError, "error");
+    }
+  }, [coursesLoading, courses, coursesError, showSnackbar]);
+
+  useEffect(() => {
+    console.log("InstituteManagement: teachersLoading:", teachersLoading, "teachers:", teachers, "error:", teachersError);
+    if (teachersError) {
+      showSnackbar(teachersError, "error");
+    }
+  }, [teachersLoading, teachers, teachersError, showSnackbar]);
+
+  // Fetch students count, courses, and teachers when currentInstitute is available
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    console.log("InstituteManagement: currentInstitute.tenantId:", tenantId);
+    if (tenantId) {
+      dispatch(actGetStudentsCount(tenantId));
+      dispatch(actGetCoursesByTenantId(tenantId));
+      dispatch(actGetTeachers());
+    }
+  }, [dispatch, currentInstitute?.tenantId]);
+
   const handleUpdate = async (formData: any) => {
     if (!currentInstitute?.id) {
       showSnackbar("لم يتم العثور على معرف المعهد", "error");
+      return;
+    }
+
+    // Check if tenantId is available
+    if (!currentInstitute.tenantId) {
+      showSnackbar("تعذر تعديل بيانات المعهد لأن معرف المؤسسة غير موجود", "error");
       return;
     }
 
@@ -219,7 +260,8 @@ const InstituteManagement: React.FC = () => {
     }
 
     const payload = {
-      userId: currentInstitute.userId,
+      userId: currentInstitute.userId || user?.id,
+      tenantId: currentInstitute.tenantId,
       name: formData.name,
       location: formData.location,
       description: formData.description,
@@ -230,6 +272,8 @@ const InstituteManagement: React.FC = () => {
       workingDays: formData.workingDays.map((day: string) => arabicToEnglishDay[day]),
       status: (formData.status === "متاح" ? "ACTIVE" : "INACTIVE") as "ACTIVE" | "INACTIVE",
     };
+
+    console.log("Update institute payload:", payload);
 
     dispatch(actUpdateInstitute({ id: currentInstitute.id, data: payload }));
   };
@@ -244,7 +288,8 @@ const InstituteManagement: React.FC = () => {
     );
   }
 
-  if (currentInstituteLoading) {
+  // If we already have currentInstitute, don't show loading
+  if (!currentInstitute && showLoading) {
     return (
       <Box dir="rtl" sx={{ p: { xs: 1, sm: 3 } }}>
         <Typography variant="h6" color="text.primary">
@@ -265,6 +310,14 @@ const InstituteManagement: React.FC = () => {
   }
 
   if (!instituteInfo || !currentInstitute) return null;
+
+  // Get the correct Arabic plural/singular form
+  const getStudentLabel = (count: number) => {
+    if (count === 1) return "طالب";
+    if (count === 2) return "طالبين";
+    if (count >= 3 && count <= 10) return "طلاب";
+    return "طالب";
+  };
 
   return (
     <Box dir="rtl">
@@ -329,6 +382,7 @@ const InstituteManagement: React.FC = () => {
             px: 3,
             py: 1.2,
             fontWeight: 600,
+            gap: "10px",
             fontSize: "0.95rem",
             whiteSpace: "nowrap",
             boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
@@ -348,13 +402,28 @@ const InstituteManagement: React.FC = () => {
 
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard icon={<SchoolIcon />} title="إجمالي الكورسات" value="32 كورس" color="#3b82f6" />
+          <StatCard 
+            icon={<SchoolIcon />} 
+            title="إجمالي الكورسات" 
+            value={coursesLoading === "pending" ? "..." : `${courses.length} كورس`} 
+            color="#3b82f6" 
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard icon={<AssignmentIndIcon />} title="المدربين" value="12 مدرب" color="#8b5cf6" />
+          <StatCard 
+            icon={<AssignmentIndIcon />} 
+            title="المدربين" 
+            value={teachersLoading === "pending" ? "..." : `${teachers.length} مدرب`} 
+            color="#8b5cf6" 
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard icon={<PeopleIcon />} title="الطلاب المسجلين" value="450 طالب" color="#10b981" />
+          <StatCard 
+            icon={<PeopleIcon />} 
+            title="الطلاب المسجلين" 
+            value={showStudentsCountLoading ? "..." : (studentsCount !== null ? `${studentsCount} ${getStudentLabel(studentsCount)}` : "---")} 
+            color="#10b981" 
+          />
         </Grid>
       </Grid>
 
@@ -364,11 +433,13 @@ const InstituteManagement: React.FC = () => {
             elevation={0}
             sx={{
               ...glassCardStyle,
-            }}>
+            }}
+          >
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}>
+              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}
+            >
               <ForumIcon sx={{ color: "#0f172a" }} /> قنوات التواصل
             </Typography>
             <Stack spacing={2.5}>
@@ -407,11 +478,13 @@ const InstituteManagement: React.FC = () => {
             elevation={0}
             sx={{
               ...glassCardStyle,
-            }}>
+            }}
+          >
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}>
+              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}
+            >
               <AccessTimeIcon sx={{ color: "#0f172a" }} /> أوقات الدوام
             </Typography>
             <Stack spacing={1.5}>
@@ -422,7 +495,8 @@ const InstituteManagement: React.FC = () => {
                       p: 1.8,
                       borderRadius: "12px",
                       bgcolor: "#f8fafc",
-                    }}>
+                    }}
+                  >
                     <Typography variant="body2" fontWeight="600" color="#0f172a">
                       {instituteInfo.workingHours[0].days}
                     </Typography>
@@ -432,12 +506,14 @@ const InstituteManagement: React.FC = () => {
                       p: 1.8,
                       borderRadius: "12px",
                       bgcolor: "transparent",
-                    }}>
+                    }}
+                  >
                     <Typography
                       variant="body2"
                       fontWeight="600"
                       color="#0f172a"
-                      dir="ltr">
+                      dir="ltr"
+                    >
                       {instituteInfo.workingHours[0].time}
                     </Typography>
                   </Box>
@@ -448,7 +524,8 @@ const InstituteManagement: React.FC = () => {
                     p: 2,
                     borderRadius: "12px",
                     bgcolor: "#f8fafc",
-                  }}>
+                  }}
+                >
                   <Typography variant="body2" fontWeight="500" color="#64748b">
                     لا توجد بيانات الدوام
                   </Typography>
@@ -480,5 +557,3 @@ const InstituteManagement: React.FC = () => {
 };
 
 export default memo(InstituteManagement);
-
-

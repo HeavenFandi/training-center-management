@@ -1,12 +1,21 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import axiosClient from "../../../api/axiosClient";
+import { RootState } from "../../index";
 
 const actFetchCompletionPercentage = createAsyncThunk<
   number,
   number,
   { rejectValue: string }
 >("studentProfile/actFetchCompletionPercentage", async (studentId, thunkAPI) => {
+  const { getState } = thunkAPI;
+  const state = getState() as RootState;
+  
+  // If we already have completion percentage data and fetch completed (loading is false), don't fetch again
+  if (state.studentProfile.completionPercentage !== 0 && !state.studentProfile.completionPercentageLoading) {
+    return state.studentProfile.completionPercentage;
+  }
+  
   try {
     console.log("[DEBUG actFetchCompletionPercentage] Fetching completion percentage for student id:", studentId);
     const response = await axiosClient.get(`/students/${studentId}/completion-percentage`);

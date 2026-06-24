@@ -116,7 +116,7 @@ const CourseManagementTable: React.FC<CourseManagementTableProps> = ({
                   fontWeight: 700,
                   fontFamily: "Tajawal",
                 }}>
-                {course.duration}
+                {course.hours}
               </TableCell>
               <TableCell
                 align="center"

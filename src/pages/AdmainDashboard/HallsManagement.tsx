@@ -10,40 +10,75 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
+  Chip,
+  TextField,
+  InputAdornment,
+  Paper,
 } from "@mui/material";
+import TableSkeleton from "../../components/Common/TableSkeleton";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import PeopleIcon from "@mui/icons-material/People";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import VideoCameraFrontIcon from "@mui/icons-material/VideoCameraFront";
+import ComputerIcon from "@mui/icons-material/Computer";
 import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import AddHallModal from "../../components/Modal/AddHallModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme, useMediaQuery } from "@mui/material";
-const hallsData = [
-  { id: 1, hall: "A01", capacity: 20, equipment: "برجكتور , لابتوب" },
-  { id: 2, hall: "A02", capacity: 30, equipment: "برجكتور" },
-  { id: 4, hall: "B01", capacity: 25, equipment: "برجكتور , لابتوب" },
-  { id: 5, hall: "B02", capacity: 15, equipment: "برجكتور" },
-  { id: 6, hall: "B03", capacity: 20, equipment: "برجكتور" },
-];
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
+import { actGetClassroomsByInstituteId, actUpdateClassroom, actCreateClassroom, actDeleteClassroom } from "../../store/Classrooms/classroomsSlice";
+import { Classroom } from "../../api/classroomApi";
+import { useSnackbar } from "../../Context/SnackbarContext";
 
 const HallsManagement = () => {
-  type Hall = {
-    id: number;
-    hall: string;
-    capacity: number;
-    equipment: string;
-  };
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [halls, setHalls] = useState<Hall[]>(hallsData);
+  const dispatch = useAppDispatch();
+  const { showSnackbar } = useSnackbar();
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
+  const { list: classrooms, loading, error, updateLoading, updateError, createLoading, createError, deleteLoading, deleteError } = useAppSelector((state) => state.classrooms);
+
+  // Fetch institute by userId on mount
+  useEffect(() => {
+    const userId = user?.id;
+    if (userId && !currentInstitute) {
+      dispatch(actGetInstituteByUserId(userId));
+    }
+  }, [dispatch, user, currentInstitute]);
+
+  // Fetch classrooms once we have institute id
+  useEffect(() => {
+    const instituteId = currentInstitute?.id;
+    if (instituteId) {
+      dispatch(actGetClassroomsByInstituteId(instituteId));
+    }
+  }, [dispatch, currentInstitute?.id]);
+
   const [openDelete, setOpenDelete] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [selectedHall, setSelectedHall] = useState<Hall | null>(null);
-  const [editingHall, setEditingHall] = useState<Hall | null>(null);
+  const [selectedHall, setSelectedHall] = useState<Classroom | null>(null);
+  const [editingHall, setEditingHall] = useState<Classroom | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleOpenDelete = (hall: Hall) => {
+  // Summary stats
+  const totalRooms = classrooms.length;
+  const totalCapacity = classrooms.reduce((sum, room) => sum + room.capacity, 0);
+
+  // Filtered classrooms
+  const filteredClassrooms = classrooms.filter(room => 
+    room.number.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    room.availableDevices.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleOpenDelete = (hall: Classroom) => {
     setSelectedHall(hall);
     setOpenDelete(true);
   };
@@ -53,36 +88,86 @@ const HallsManagement = () => {
     setOpenAddModal(true);
   };
 
-  const handleOpenEditModal = (hall: Hall) => {
+  const handleOpenEditModal = (hall: Classroom) => {
     setEditingHall(hall);
     setOpenAddModal(true);
   };
 
-  const handleSaveHall = (hallData: {
+  const handleSaveHall = async (hallData: {
     hall: string;
     capacity: number;
     equipment: string;
   }) => {
-    if (editingHall) {
-      setHalls((prev) =>
-        prev.map((h) => (h.id === editingHall.id ? { ...h, ...hallData } : h)),
-      );
-    } else {
-      const newId =
-        halls.length > 0 ? Math.max(...halls.map((h) => h.id)) + 1 : 1;
-      setHalls((prev) => [...prev, { id: newId, ...hallData }]);
+    if (currentInstitute) {
+      try {
+        if (editingHall) {
+          const resultAction = await dispatch(
+            actUpdateClassroom({
+              id: editingHall.id,
+              data: {
+                number: hallData.hall,
+                capacity: hallData.capacity,
+                availableDevices: hallData.equipment,
+                images: editingHall.images,
+                instituteId: currentInstitute.id,
+              },
+            })
+          );
+          
+          if (actUpdateClassroom.fulfilled.match(resultAction)) {
+            showSnackbar("تم تعديل القاعة بنجاح", "success");
+            setOpenAddModal(false);
+            setEditingHall(null);
+          } else if (actUpdateClassroom.rejected.match(resultAction)) {
+            showSnackbar(resultAction.payload || "حدث خطأ أثناء تعديل القاعة", "error");
+          }
+        } else {
+          const resultAction = await dispatch(
+            actCreateClassroom({
+              number: hallData.hall,
+              capacity: hallData.capacity,
+              availableDevices: hallData.equipment,
+              images: null,
+              instituteId: currentInstitute.id,
+            })
+          );
+          
+          if (actCreateClassroom.fulfilled.match(resultAction)) {
+            showSnackbar("تم إضافة القاعة بنجاح", "success");
+            setOpenAddModal(false);
+          } else if (actCreateClassroom.rejected.match(resultAction)) {
+            showSnackbar(resultAction.payload || "حدث خطأ أثناء إضافة القاعة", "error");
+          }
+        }
+      } catch (error) {
+        console.error("Error saving classroom:", error);
+        showSnackbar("حدث خطأ أثناء حفظ القاعة", "error");
+      }
     }
   };
 
-  const handleDelete = () => {
-    if (!selectedHall) return;
-
-    setHalls((prev) => prev.filter((h) => h.id !== selectedHall.id));
-
-    setOpenDelete(false);
+  const handleDelete = async () => {
+    if (selectedHall) {
+      try {
+        const resultAction = await dispatch(actDeleteClassroom(selectedHall.id));
+        
+        if (actDeleteClassroom.fulfilled.match(resultAction)) {
+          showSnackbar("تم حذف القاعة بنجاح", "success");
+          setOpenDelete(false);
+          setSelectedHall(null);
+        } else if (actDeleteClassroom.rejected.match(resultAction)) {
+          showSnackbar(resultAction.payload || "حدث خطأ أثناء حذف القاعة", "error");
+        }
+      } catch (error) {
+        console.error("Error deleting classroom:", error);
+        showSnackbar("حدث خطأ أثناء حذف القاعة", "error");
+      }
+    }
   };
+  
   return (
-    <Box dir="rtl" sx={{ p: { xs: 1, sm: 4 } }}>
+    <Box dir="rtl" sx={{ p: { xs: 2, sm: 4 } }}>
+      {/* Header */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -98,146 +183,265 @@ const HallsManagement = () => {
                 backgroundColor: "#091c39",
                 color: "white",
                 "&:hover": { backgroundColor: "#0d2d4a" },
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                transition: "all 0.2s ease",
               }}>
               <ChevronRightIcon fontSize="small" />
             </IconButton>
-            <Typography variant="h5" fontWeight="bold" color="#091c39">
+            <Typography variant="h4" fontWeight="bold" color="#091c39">
               إدارة القاعات
             </Typography>
           </Box>
-          <Typography color="#888" sx={{ fontSize: 14 }}>
+          <Typography color="#666" sx={{ fontSize: 15 }}>
             إضافة وتعديل بيانات القاعات التدريبية
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          onClick={handleOpenAddModal}
-          sx={{
-            backgroundColor: "#091c39",
-            color: "white",
-            borderRadius: "50px",
-            px: { xs: 2, sm: 4 },
-            py: 1.2,
-            fontWeight: "bold",
-            fontSize: "15px",
-            "&:hover": { backgroundColor: "#0d2d4a" },
-          }}>
-          إضافة قاعة جديدة
-        </Button>
+       <Button
+  variant="contained"
+  onClick={handleOpenAddModal}
+  startIcon={<MeetingRoomIcon />}
+  sx={{
+    backgroundColor: "#091c39",
+    color: "white",
+    borderRadius: "12px",
+    px: { xs: 2, sm: 4 },
+    py: 1.5,
+    fontWeight: 700,
+    fontSize: "15px",
+     gap: "10px",
+    boxShadow: "0 4px 12px rgba(9, 28, 57, 0.2)",
+    transition: "all 0.2s ease",
+
+  
+
+    "&:hover": {
+      backgroundColor: "#0d2d4a",
+      boxShadow: "0 6px 16px rgba(9, 28, 57, 0.3)",
+      transform: "translateY(-2px)",
+    },
+  }}
+>
+  إضافة قاعة جديدة
+</Button>
       </Stack>
 
+      {/* Search Field */}
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          placeholder="ابحث عن قاعة..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+            endAdornment: searchQuery && (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setSearchQuery("")} size="small">
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+sx={{
+  width: "400px",
+  backgroundColor: "transparent",
+  borderRadius: "12px",
+
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      border: "none", // 🔥 إزالة البوردر
+    },
+    "&:hover fieldset": {
+      border: "none",
+    },
+    "&.Mui-focused fieldset": {
+      border: "none",
+    },
+  },
+
+  "& .MuiInputBase-root": {
+    backgroundColor: "transparent",
+    fontFamily: "Tajawal",
+    fontSize: "16px",
+  },
+
+  "& .MuiInputBase-input": {
+    py: 1.5,
+    px: 2,
+    "&::placeholder": {
+      color: "#555",
+      opacity: 1,
+      fontWeight: 500,
+    },
+  },
+}}
+        />
+      </Box>
+
+
+
+      {/* Modals */}
       <AddHallModal
         open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         onSave={handleSaveHall}
-        initialData={editingHall}
+        initialData={editingHall ? { hall: editingHall.number, capacity: editingHall.capacity, equipment: editingHall.availableDevices } : undefined}
+        loading={editingHall ? updateLoading : createLoading}
       />
 
       <GenericDeleteModal
         open={openDelete}
         onClose={() => setOpenDelete(false)}
         onConfirm={handleDelete}
-        itemName={selectedHall?.hall}
+        itemName={selectedHall?.number}
       />
 
-      <TableContainer>
-        {isMobile ? (
-          <Box>
-            {halls.map((row) => (
+      {/* Table Container */}
+      {loading ? (
+        <TableSkeleton columnsCount={5} rowsCount={5} showMobileView />
+      ) : error ? (
+        <Box sx={{ textAlign: "center", py: 12 }}>
+          <Typography color="error" sx={{ fontSize: 16 }}>{error}</Typography>
+        </Box>
+      ) : (
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: "16px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+            border: "1px solid #eef2f6",
+            overflow: "hidden",
+          }}
+        >
+          {isMobile ? (
+          <Box sx={{ p: 2 }}>
+            {filteredClassrooms.map((row) => (
               <Box
                 key={row.id}
                 sx={{
-                  borderRadius: "20px",
-                  p: 2,
+                  borderRadius: "12px",
+                  p: 3,
                   mb: 2,
-                  background: "#f9fbfd",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                  background: "white",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                   border: "1px solid #eef2f6",
-                  transition: "all 0.3s ease",
-
+                  transition: "all 0.2s ease",
                   "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                    transform: "translateY(-2px)",
                   },
-                }}>
-             
-                <Typography fontWeight="bold" sx={{ mb: 1 }}>
-                  #{row.id}
+                }}
+              >
+                <Typography fontWeight="bold" color="#091c39" sx={{ mb: 2, fontSize: 18 }}>
+                  {row.number}
                 </Typography>
 
-               
-                <Typography sx={{ mb: 0.5 }}>
-                  <strong>رقم القاعة:</strong> {row.hall}
-                </Typography>
-
-             
-                <Typography sx={{ mb: 0.5 }}>
-                  <strong>السعة:</strong> {row.capacity}
-                </Typography>
-
-             
-                <Typography sx={{ mb: 1 }}>
-                  <strong>التجهيزات:</strong> {row.equipment}
-                </Typography>
-
-              
-                <Stack direction="row" justifyContent="center" gap={2} mt={2}>
-                  <IconButton
-                    onClick={() => handleOpenDelete(row)}
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                  <PeopleIcon sx={{ color: "#666", fontSize: 18 }} />
+                  <Typography color="#666">السعة:</Typography>
+                  <Chip
+                    label={row.capacity}
+                    size="small"
                     sx={{
-                      background: "#fdecea",
-                      width: 42,
-                      height: 42,
-                      borderRadius: "12px",
-                      transition: "0.2s",
+                      backgroundColor: "#e3f2fd",
+                      color: "#091c39",
+                      fontWeight: 600,
+                    }}
+                  />
+                </Stack>
 
-                      "&:hover": {
-                        background: "#f8cfcf",
-                        transform: "scale(1.1)",
-                      },
-                    }}>
-                    <DeleteIcon sx={{ color: "#e74c3c" }} />
-                  </IconButton>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  flexWrap="wrap"
+                  sx={{ mb: 2 }}
+                >
+                  {row.availableDevices.split(/[,،]/).map((item, idx) => (
+                    item.trim() && (
+                      <Chip
+                        key={idx}
+                        label={item.trim()}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          color: "#444",
+                          fontWeight: 500,
+                        }}
+                      />
+                    )
+                  ))}
+                </Stack>
 
-                  <IconButton
-                    onClick={() => handleOpenEditModal(row)}
-                    sx={{
-                      background: "#e9f7ef",
-                      width: 42,
-                      height: 42,
-                      borderRadius: "12px",
-                      transition: "0.2s",
+                <Stack direction="row" justifyContent="flex-end" gap={1} mt={1}>
+                  <Tooltip title="تعديل القاعة">
+                    <IconButton
+                      onClick={() => handleOpenEditModal(row)}
+                      sx={{
+                        background: "#e9f7ef",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          background: "#c8f2dc",
+                          transform: "scale(1.1)",
+                        },
+                      }}
+                    >
+                      <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
 
-                      "&:hover": {
-                        background: "#c8f2dc",
-                        transform: "scale(1.1)",
-                      },
-                    }}>
-                    <EditIcon sx={{ color: "#2ecc71" }} />
-                  </IconButton>
+                  <Tooltip title="حذف القاعة">
+                    <IconButton
+                      onClick={() => handleOpenDelete(row)}
+                      sx={{
+                        background: "#fdecea",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          background: "#f8cfcf",
+                          transform: "scale(1.1)",
+                        },
+                      }}
+                    >
+                      <DeleteIcon sx={{ color: "#e74c3c", fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
                 </Stack>
               </Box>
             ))}
           </Box>
         ) : (
-          <Table>
+          <Table sx={{ backgroundColor: "white" }}>
             <TableHead>
               <TableRow
                 sx={{
-                  backgroundColor: "#dbe9f6",
-                }}>
+                  backgroundColor: "#091c39",
+                }}
+              >
                 {["#", "رقم القاعة", "السعة", "التجهيزات", "الإجراءات"].map(
                   (head) => (
                     <TableCell
                       key={head}
                       align="center"
                       sx={{
-                        fontWeight: "bold",
-                        border: "1px solid #0A1931",
-                      }}>
+                        fontWeight: 700,
+                        color: "white",
+                        borderBottom: "none",
+                        py: 2,
+                        fontSize: 15,
+                      }}
+                    >
                       {head}
                     </TableCell>
                   ),
@@ -245,55 +449,137 @@ const HallsManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {halls.map((row) => (
-                <TableRow key={row.id}>
+              {filteredClassrooms.map((row, index) => (
+                <TableRow
+                  key={row.id}
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? "#fafbfc" : "white",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "#f0f4f8",
+                    },
+                  }}
+                >
                   <TableCell
                     align="center"
-                    sx={{ border: "1px solid #0A1931" }}>
+                    sx={{
+                      borderBottom: "1px solid #eef2f6",
+                      py: 2,
+                      color: "#444",
+                    }}
+                  >
                     {row.id}
                   </TableCell>
 
                   <TableCell
                     align="center"
-                    sx={{ border: "1px solid #0A1931" }}>
-                    {row.hall}
+                    sx={{
+                      borderBottom: "1px solid #eef2f6",
+                      py: 2,
+                      fontWeight: 600,
+                      color: "#091c39",
+                    }}
+                  >
+                    {row.number}
                   </TableCell>
 
                   <TableCell
                     align="center"
-                    sx={{ border: "1px solid #0A1931", fontWeight: "bold" }}>
-                    {row.capacity}
+                    sx={{
+                      borderBottom: "1px solid #eef2f6",
+                      py: 2,
+                    }}
+                  >
+                    <Chip
+                      icon={<PeopleIcon />}
+                      label={row.capacity}
+                      size="medium"
+                      sx={{
+                        backgroundColor: "#e3f2fd",
+                        color: "#091c39",
+                        fontWeight: 700,
+                        "& .MuiChip-icon": {
+                          color: "#091c39",
+                        },
+                      }}
+                    />
                   </TableCell>
 
                   <TableCell
                     align="center"
-                    sx={{ border: "1px solid #0A1931" }}>
-                    {row.equipment}
+                    sx={{
+                      borderBottom: "1px solid #eef2f6",
+                      py: 2,
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      justifyContent="center"
+                    >
+                      {row.availableDevices.split(/[,،]/).map((item, idx) => (
+                        item.trim() && (
+                          <Chip
+                            key={idx}
+                            label={item.trim()}
+                            size="small"
+                            sx={{
+                              backgroundColor: "#f5f5f5",
+                              color: "#444",
+                              fontWeight: 500,
+                            }}
+                          />
+                        )
+                      ))}
+                    </Stack>
                   </TableCell>
 
                   <TableCell
                     align="center"
-                    sx={{ border: "1px solid #0A1931" }}>
-                    <Stack direction="row" justifyContent="center" gap={2}>
-                      <IconButton
-                        onClick={() => handleOpenDelete(row)}
-                        sx={{
-                          background: "#fdecea",
-                          width: 40,
-                          height: 40,
-                        }}>
-                        <DeleteIcon sx={{ color: "#e74c3c" }} />
-                      </IconButton>
+                    sx={{
+                      borderBottom: "1px solid #eef2f6",
+                      py: 2,
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="center" gap={1}>
+                      <Tooltip title="تعديل القاعة">
+                        <IconButton
+                          onClick={() => handleOpenEditModal(row)}
+                          sx={{
+                            background: "#e9f7ef",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              background: "#c8f2dc",
+                              transform: "scale(1.1)",
+                            },
+                          }}
+                        >
+                          <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
 
-                      <IconButton
-                        onClick={() => handleOpenEditModal(row)}
-                        sx={{
-                          background: "#e9f7ef",
-                          width: 40,
-                          height: 40,
-                        }}>
-                        <EditIcon sx={{ color: "#2ecc71" }} />
-                      </IconButton>
+                      <Tooltip title="حذف القاعة">
+                        <IconButton
+                          onClick={() => handleOpenDelete(row)}
+                          sx={{
+                            background: "#fdecea",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              background: "#f8cfcf",
+                              transform: "scale(1.1)",
+                            },
+                          }}
+                        >
+                          <DeleteIcon sx={{ color: "#e74c3c", fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -301,41 +587,10 @@ const HallsManagement = () => {
             </TableBody>
           </Table>
         )}
-      </TableContainer>
-
-
-      <Stack
-        direction="row-reverse"
-        justifyContent="space-between"
-        alignItems="center"
-        mt={3}>
-        <Stack direction="row" spacing={3} gap={2}>
-          <IconButton
-            sx={{
-              border: "2px solid black",
-              borderRadius: "16px",
-              color: "#091c39",
-            }}>
-            <ChevronRightIcon />
-          </IconButton>
-          <IconButton
-            sx={{
-              border: "2px solid black",
-              borderRadius: "16px",
-              color: "#091c39",
-            }}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </Stack>
-
-        <Typography sx={{ fontWeight: "bold" }}>
-          عرض {halls.length} من 28 قاعة
-        </Typography>
-      </Stack>
+        </TableContainer>
+      )}
     </Box>
   );
 };
 
 export default HallsManagement;
-
-

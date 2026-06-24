@@ -7,7 +7,8 @@ import {
   actSendOtp,
   actVerifyOtp,
   resetOtpState,
-} from "../../store/OTP/otpSlice";
+} from "../../store/Otp/otpSlice";
+import actGetInstituteByUserId from "../../store/Institutes/act/actGetInstituteByUserId";
 
 const useLogin = () => {
   const navigate = useNavigate();
@@ -15,9 +16,6 @@ const useLogin = () => {
   const {
     loginLoading: loading,
     loginError: error,
-    isAuthenticated,
-    userType,
-    user,
   } = useAppSelector((state) => state.auth);
   const {
     sendLoading,
@@ -32,29 +30,35 @@ const useLogin = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [tempEmail, setTempEmail] = useState<string>("");
 
-  useEffect(() => {
-    if (isAuthenticated && userType) {
-      const currentPath = window.location.pathname;
-      const setupComplete =
-        Boolean(user?.tenantId || user?.instituteId || user?.institute) ||
-        localStorage.getItem("instituteSetupDone") === "true";
+  const onsubmit = useCallback(
+    async (data: TSignInType) => {
+      try {
+        const userData = await dispatch(actAuthLogin(data)).unwrap();
+        console.log("Login success userData:", userData);
+        console.log("Navigating userType:", userData.userType);
 
-      if (userType === "TEACHER") {
-        navigate("/teacher-dashboard");
-      } else if (userType === "ADMIN") {
-        if (!setupComplete) {
-          if (currentPath !== "/institute-setup") {
+        if (userData.userType === "ADMIN") {
+          const userId = userData.id;
+          console.log("admin userId:", userId);
+          const institute = await dispatch(actGetInstituteByUserId(userId)).unwrap();
+          console.log("admin institute:", institute);
+          if (institute) {
+            navigate("/admin-dashboard");
+          } else {
             navigate("/institute-setup");
           }
-        } else if (!currentPath.startsWith("/admin-dashboard")) {
-          navigate("/admin-dashboard");
+        } else if (userData.userType === "TEACHER") {
+          navigate("/teacher-dashboard");
+        } else if (userData.userType === "STUDENT") {
+          navigate("/main");
         }
-      } else {
-        navigate("/main");
+        dispatch(resetAuthState());
+      } catch (err) {
+        console.error("Login failed:", err);
       }
-      dispatch(resetAuthState());
-    }
-  }, [isAuthenticated, userType, user, navigate, dispatch]);
+    },
+    [dispatch, navigate]
+  );
 
   useEffect(() => {
     if (sendSuccess) {
@@ -132,13 +136,6 @@ const useLogin = () => {
       setTempEmail(email);
       localStorage.setItem("otpEmail", email);
       dispatch(actSendOtp(email));
-    },
-    [dispatch],
-  );
-
-  const onsubmit = useCallback(
-    (data: TSignInType) => {
-      dispatch(actAuthLogin({ email: data.email, password: data.password }));
     },
     [dispatch],
   );

@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { Grid, Box, Typography } from "@mui/material";
+import { Grid, Box, TextField, InputAdornment, IconButton } from "@mui/material";
 import StudentsTable from "../../components/AdminDasboard/students/StudentsTable";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import EditStudentModal from "../../components/AdminDasboard/students/EditStudentModal";
@@ -7,8 +7,11 @@ import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import StudentDetailsModal from "../../components/AdminDasboard/students/StudentDetailsModal";
 import AddStudentModal from "../../components/AdminDasboard/students/AddStudentModal";
 import { useStudentManagement } from "../../hooks/adminDashboard/useStudentManagement";
+import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 import GroupIcon from "@mui/icons-material/Group";
 import PersonIcon from "@mui/icons-material/Person";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import StudentManagementHeader from "../../components/AdminDasboard/students/SubComponents/StudentManagementHeader";
 
@@ -39,7 +42,11 @@ const Studentmanagment: React.FC = () => {
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
+    studentsWithActiveCourses,
+    deleteErrorMessage,
   } = useStudentManagement();
+  
+  const showLoading = useDelayedLoading(loading);
 
   const statsCards = useMemo(
     () => [
@@ -71,6 +78,60 @@ const Studentmanagment: React.FC = () => {
         ))}
       </Grid>
 
+      {/* Search Field */}
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          placeholder="ابحث عن طالب..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setSearchTerm("")} size="small">
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            width: "400px",
+            backgroundColor: "transparent",
+            borderRadius: "12px",
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                border: "none",
+              },
+              "&:hover fieldset": {
+                border: "none",
+              },
+              "&.Mui-focused fieldset": {
+                border: "none",
+              },
+            },
+            "& .MuiInputBase-root": {
+              backgroundColor: "transparent",
+              fontFamily: "Tajawal",
+              fontSize: "16px",
+            },
+            "& .MuiInputBase-input": {
+              py: 1.5,
+              px: 2,
+              "&::placeholder": {
+                color: "#555",
+                opacity: 1,
+                fontWeight: 500,
+              },
+            },
+          }}
+        />
+      </Box>
+
       <StudentsTable
         studentsData={filteredStudents}
         searchTerm={searchTerm}
@@ -79,6 +140,8 @@ const Studentmanagment: React.FC = () => {
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
+        showLoading={showLoading}
+        hasData={students.length > 0}
       />
 
       <AddStudentModal
@@ -111,6 +174,7 @@ const Studentmanagment: React.FC = () => {
         description="هل أنت متأكد من رغبتك في حذف الطالب"
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}
+        errorMessage={deleteErrorMessage}
       />
     </Box>
   );

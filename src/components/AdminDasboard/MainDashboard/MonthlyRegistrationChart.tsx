@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Paper, Box, Typography, CircularProgress, Alert } from "@mui/material";
+import { Paper, Box, Typography, CircularProgress, Alert, Skeleton } from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -17,9 +17,13 @@ type Props = {
   }[];
   loading?: boolean;
   error?: string | null;
+  year?: number;
 };
 
-const MonthlyRegistrationChart: React.FC<Props> = ({ data, loading, error }) => {
+const MonthlyRegistrationChart: React.FC<Props> = ({ data, loading, error, year }) => {
+  console.log("MonthlyRegistrationChart: loading =", loading);
+  console.log("MonthlyRegistrationChart: data =", data);
+  console.log("MonthlyRegistrationChart: data.every(d => d.value === 0) =", data.every(d => d.value === 0));
   return (
     <Paper
       sx={{
@@ -45,14 +49,44 @@ const MonthlyRegistrationChart: React.FC<Props> = ({ data, loading, error }) => 
           color="text.secondary"
           fontWeight="bold"
         >
-          تحليل بيانات الطلاب الجدد لعام {new Date().getFullYear()}
+          تحليل بيانات الطلاب الجدد لعام {year}
         </Typography>
       </Box>
 
-      <Box sx={{ height: 300, width: "100%" }}>
+      {/* Explicit container with fixed dimensions */}
+      <Box sx={{ width: "100%", height: 320 }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-            <CircularProgress />
+          <Box sx={{ height: "100%" }}>
+            {/* Y-axis skeleton */}
+            <Box sx={{ display: "flex", height: "100%" }}>
+              <Box sx={{ width: "10%", display: "flex", flexDirection: "column", justifyContent: "space-between", py: 2 }}>
+                <Skeleton variant="text" width="60%" height={20} />
+                <Skeleton variant="text" width="60%" height={20} />
+                <Skeleton variant="text" width="60%" height={20} />
+                <Skeleton variant="text" width="60%" height={20} />
+                <Skeleton variant="text" width="60%" height={20} />
+              </Box>
+              <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                {/* Chart area */}
+                <Box sx={{ flexGrow: 1, display: "flex", alignItems: "flex-end", gap: 2, px: 2, pb: 1 }}>
+                  {Array.from({ length: 12 }).map((_, index) => (
+                    <Skeleton
+                      key={index}
+                      variant="rectangular"
+                      width="100%"
+                      height={`${30 + Math.random() * 70}%`}
+                      sx={{ borderRadius: "8px 8px 0 0" }}
+                    />
+                  ))}
+                </Box>
+                {/* X-axis */}
+                <Box sx={{ display: "flex", justifyContent: "space-around", pt: 1 }}>
+                  {Array.from({ length: 12 }).map((_, index) => (
+                    <Skeleton key={index} variant="text" width={30} height={20} />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
           </Box>
         ) : error ? (
           <Alert severity="error" sx={{ height: "100%", justifyContent: "center" }}>

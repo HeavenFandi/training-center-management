@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionListItem } from "../../../types/cardType";
+import { RootState } from "../../index";
 
 interface TTrainingSessionResponse {
   id: number;
@@ -22,7 +23,14 @@ interface TTrainingSessionResponse {
 const actGetTrainingSessions = createAsyncThunk(
   "trainingSessions/actGetTrainingSessions",
   async (_, thunkAPI) => {
-    const { rejectWithValue } = thunkAPI;
+    const { rejectWithValue, getState } = thunkAPI;
+    const state = getState() as RootState;
+    
+    // If we already have training sessions data and fetch succeeded, don't fetch again
+    if (state.trainingSessions.trainingSessions.length > 0 && state.trainingSessions.loading === "succeeded") {
+      return state.trainingSessions.trainingSessions;
+    }
+    
     try {
       console.log("Fetching all sessions without filters");
       const response = await axiosClient.get<TTrainingSessionResponse[]>("/training-sessions/sessions-with-filter");

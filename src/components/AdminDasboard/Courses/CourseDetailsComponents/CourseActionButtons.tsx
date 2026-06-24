@@ -2,17 +2,20 @@ import React from "react";
 import { Box, Stack, Button } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import EditIcon from "@mui/icons-material/Edit";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 interface CourseActionButtonsProps {
   onOpenStudents: () => void;
   onOpenAddSession: () => void;
+  onOpenEdit: () => void;
   onClose: () => void;
 }
 
 const CourseActionButtons: React.FC<CourseActionButtonsProps> = ({
   onOpenStudents,
   onOpenAddSession,
+  onOpenEdit,
   onClose,
 }) => {
   const smallButtonStyle = {
@@ -79,6 +82,27 @@ const CourseActionButtons: React.FC<CourseActionButtonsProps> = ({
           }}
         >
           إضافة جلسة
+        </Button>
+
+        <Button
+          variant="contained"
+          onClick={onOpenEdit}
+          startIcon={<EditIcon sx={{ fontSize: "18px !important", ml: 3 }} />}
+          sx={{
+            bgcolor: "#091c39",
+            color: "#fff",
+            borderRadius: "10px",
+            fontWeight: "bold",
+            fontSize: "12px",
+            px: 2.5,
+            py: 0.8,
+            boxShadow: "none",
+            textTransform: "none",
+            border: "1px solid #D9EAEB",
+            fontFamily: "Tajawal",
+          }}
+        >
+          تعديل معلومات الكورس
         </Button>
       </Stack>
 

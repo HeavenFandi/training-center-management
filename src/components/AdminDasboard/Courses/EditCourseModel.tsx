@@ -1,21 +1,45 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   Box,
   Typography,
   Button,
   Stack,
-
+  Grid,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  FormHelperText,
+  CircularProgress,
 } from "@mui/material";
 import { useSnackbar } from "../../../Context/SnackbarContext";
 import { TCourse } from "../../../types/cardType";
 import AuthInput from "../../Auth/AuthInput";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import actGetCategories from "../../../store/Courses/act/actGetCategories";
+import { UpdateCourseRequest } from "../../../api/courseApi";
+
+const editCourseSchema = z.object({
+  title: z.string().min(1, "اسم الكورس مطلوب"),
+  hoursCount: z.string().min(1, "عدد الساعات مطلوب"),
+  categoryId: z.string().min(1, "التصنيف مطلوب"),
+  description: z.string().min(1, "الوصف مطلوب"),
+  requirements: z.string().min(1, "متطلبات الكورس مطلوبة"),
+});
+
+type EditCourseFormData = z.infer<typeof editCourseSchema>;
 
 interface EditCourseModalProps {
   open: boolean;
   onClose: () => void;
   course: TCourse | null;
-  onSave: (course: TCourse) => void;
+  onSave: (data: UpdateCourseRequest) => Promise<void>;
+  tenantId: number;
+  isLoading?: boolean;
 }
 
 const EditCourseModal: React.FC<EditCourseModalProps> = ({
@@ -23,102 +47,177 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
   onClose,
   course,
   onSave,
+  tenantId,
+  isLoading = false,
 }) => {
-  const [form, setForm] = useState<TCourse | null>(null);
-  const { showSnackbar } = useSnackbar();
+  const dispatch = useAppDispatch();
+  const { categories, categoriesLoading, categoriesError } = useAppSelector(
+    (state) => state.trainingSessions
+  );
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<EditCourseFormData>({
+    resolver: zodResolver(editCourseSchema),
+    mode: "onChange",
+  });
 
   useEffect(() => {
-    setForm(course);
-  }, [course]);
+    if (categories.length === 0 && categoriesLoading === "idle") {
+      dispatch(actGetCategories());
+    }
+  }, [dispatch, categories.length, categoriesLoading]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    if (form) {
-      setForm((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          [name]: value,
-        };
+  useEffect(() => {
+    if (open && course) {
+      reset({
+        title: course.title || course.name || "",
+        hoursCount: String(course.hours || ""),
+        categoryId: categories.find(cat => cat.name === (course.category || course.categoryName))?.id ? String(categories.find(cat => cat.name === (course.category || course.categoryName))?.id) : categories[0]?.id ? String(categories[0].id) : "1",
+        description: course.description || "",
+        requirements: course.requirements || "",
       });
     }
+  }, [open, course, categories, reset]);
+
+  const onSubmit = async (data: EditCourseFormData) => {
+    if (!course) return;
+    const payload: UpdateCourseRequest = {
+      id: course.id,
+      name: data.title,
+      description: data.description,
+      requirements: data.requirements,
+      hours: parseInt(data.hoursCount, 10),
+      categoryId: parseInt(data.categoryId, 10),
+      tenantId: tenantId,
+    };
+    await onSave(payload);
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (form) {
-      onSave(form);
-      showSnackbar("تم التعديل بنجاح", "success");
-      onClose();
-    }
-  };
+  if (!open || !course) return null;
 
-  if (!open || !course || !form) return null;
+  const isCategoriesLoading = categoriesLoading === "pending";
 
   return (
     <Dialog open={open} onClose={onClose} sx={{ direction: "rtl" }}>
       <Box
         component="form"
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         sx={{
-          width: 400,
+          width: { xs: "90vw", sm: 500 },
           p: 3,
           borderRadius: "20px",
           backgroundColor: "#F8FAFC",
           fontFamily: "Tajawal",
-        }}>
+        }}
+      >
         <Typography fontWeight="bold" mb={2} sx={{ fontFamily: "Tajawal" }}>
           تعديل بيانات الكورس
         </Typography>
 
         <Stack spacing={2}>
-          <AuthInput
-            label="اسم الكورس"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            compact
-          />
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <AuthInput
+                label="اسم الكورس"
+                placeholder="أدخل اسم الكورس"
+                {...register("title")}
+                error={!!errors.title}
+                helperText={errors.title?.message}
+                compact
+              />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <AuthInput
+                label="عدد الساعات"
+                placeholder="0"
+                {...register("hoursCount")}
+                error={!!errors.hoursCount}
+                helperText={errors.hoursCount?.message}
+                compact
+              />
+            </Grid>
 
-          <AuthInput
-            label="الوصف"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            compact
-          />
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>التصنيف</InputLabel>
+                <Controller
+                  name="categoryId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      label="التصنيف"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      disabled={isCategoriesLoading}
+                      startAdornment={isCategoriesLoading ? (
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                      ) : null}
+                    >
+                      {isCategoriesLoading ? (
+                        <MenuItem disabled value="">
+                          جار تحميل التصنيفات...
+                        </MenuItem>
+                      ) : categoriesError ? (
+                        <MenuItem disabled value="">
+                          فشل تحميل التصنيفات
+                        </MenuItem>
+                      ) : (
+                        categories.map((cat) => (
+                          <MenuItem key={cat.id} value={String(cat.id)}>
+                            {cat.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  )}
+                />
+                <FormHelperText error={!!errors.categoryId || !!categoriesError}>
+                  {errors.categoryId?.message as string || categoriesError}
+                </FormHelperText>
+              </FormControl>
+            </Grid>
 
-          <AuthInput
-            label="التصنيف"
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            compact
-          />
+            <Grid size={{ xs: 12 }}>
+              <AuthInput
+                label="الوصف"
+                placeholder="أدخل وصف الكورس"
+                multiline
+                rows={3}
+                {...register("description")}
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                compact
+              />
+            </Grid>
 
-          <AuthInput
-            label="(متطلبات الكورس / المدرب)"
-            name="requirements"
-            value={form.requirements}
-            onChange={handleChange}
-            compact
-          />
-
-          <AuthInput
-            label="عدد الساعات"
-            name="duration"
-            value={form.duration}
-            onChange={handleChange}
-            compact
-          />
+            <Grid size={{ xs: 12 }}>
+              <AuthInput
+                label="(متطلبات الكورس / المدرب)"
+                placeholder="أدخل متطلبات الكورس أو ملاحظات المدرب"
+                multiline
+                rows={2}
+                {...register("requirements")}
+                error={!!errors.requirements}
+                helperText={errors.requirements?.message}
+                compact
+              />
+            </Grid>
+          </Grid>
         </Stack>
 
         <Button
           variant="contained"
           fullWidth
           type="submit"
+          disabled={!isValid || isLoading}
           sx={{
             backgroundColor: "#133E65",
             color: "white",
@@ -130,8 +229,10 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
             whiteSpace: "nowrap",
             boxShadow: "0px 8px 20px rgba(19, 62, 101, 0.2)",
             "&:hover": { backgroundColor: "#0d2d4a" },
-          }}>
-          حفظ التعديلات
+            "&:disabled": { backgroundColor: "#7a8b9f" },
+          }}
+        >
+          {isLoading ? <CircularProgress size={20} sx={{ color: "white" }} /> : "حفظ التعديلات"}
         </Button>
       </Box>
     </Dialog>
@@ -139,5 +240,3 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
 };
 
 export default EditCourseModal;
-
-

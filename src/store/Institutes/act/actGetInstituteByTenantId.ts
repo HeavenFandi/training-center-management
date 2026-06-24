@@ -9,7 +9,7 @@ const actGetInstituteByTenantId = createAsyncThunk(
 
     try {
       const response = await getInstituteByTenantId(tenantId);
-      return response[0];
+      return response;
     } catch (error) {
       const errorMsg = axiosErrorHandler(error);
       return rejectWithValue(errorMsg);

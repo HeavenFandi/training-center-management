@@ -2,12 +2,21 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import axiosClient from "../../../api/axiosClient";
 import { ActiveCourse } from "../../../types/studentDashboard";
+import { RootState } from "../../index";
 
 const actFetchActiveStudentCourses = createAsyncThunk<
   ActiveCourse[],
   number,
   { rejectValue: string }
 >("studentProfile/actFetchActiveStudentCourses", async (studentId, thunkAPI) => {
+  const { getState } = thunkAPI;
+  const state = getState() as RootState;
+  
+  // If we already have active courses data and fetch completed (loading is false), don't fetch again
+  if (state.studentProfile.activeCourses.length > 0 && !state.studentProfile.activeCoursesLoading) {
+    return state.studentProfile.activeCourses;
+  }
+  
   try {
     console.log("[DEBUG actFetchActiveStudentCourses] Fetching active courses for student id:", studentId);
     const url = `/enrollments/student/${studentId}/active`;

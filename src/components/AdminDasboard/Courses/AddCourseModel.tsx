@@ -19,9 +19,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (data: CourseFormData) => void;
+  isLoading?: boolean;
 }
 
-const AddCourseModal: React.FC<Props> = ({ open, onClose, onSave }) => {
+const AddCourseModal: React.FC<Props> = ({ open, onClose, onSave, isLoading = false }) => {
   const {
     register,
     handleSubmit,
@@ -30,6 +31,7 @@ const AddCourseModal: React.FC<Props> = ({ open, onClose, onSave }) => {
     onError,
     handleFileChange,
     fileInputRef,
+    control,
   } = useAddCourseForm({ onClose, onSave });
 
   return (
@@ -52,7 +54,7 @@ const AddCourseModal: React.FC<Props> = ({ open, onClose, onSave }) => {
               justifyContent="space-between"
               alignItems="center"
               mb={1}>
-              <IconButton onClick={onClose} sx={{ color: "#999" }}>
+              <IconButton onClick={onClose} sx={{ color: "#999" }} disabled={isLoading}>
                 <CloseIcon fontSize="small" />
               </IconButton>
               <Typography
@@ -65,9 +67,9 @@ const AddCourseModal: React.FC<Props> = ({ open, onClose, onSave }) => {
               <Box sx={{ width: { xs: 0, sm: 30 } }} />
             </Stack>
 
-            <CourseFormFields register={register} errors={errors} />
+            <CourseFormFields register={register} errors={errors} control={control} />
 
-            <AddCourseActionButtons onClose={onClose} />
+            <AddCourseActionButtons onClose={onClose} isLoading={isLoading} />
           </DialogContent>
         </Box>
       </Dialog>

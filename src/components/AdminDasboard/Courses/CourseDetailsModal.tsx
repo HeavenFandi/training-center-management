@@ -9,16 +9,19 @@ import CourseDescriptionSection from "./CourseDetailsComponents/CourseDescriptio
 import CourseSessionsList from "./CourseDetailsComponents/CourseSessionsList";
 import CourseActionButtons from "./CourseDetailsComponents/CourseActionButtons";
 import { TCourse, TSession } from "../../../types/cardType";
+import { UpdateCourseRequest } from "../../../api/courseApi";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   course: TCourse | null;
-  onSave: (updated: TCourse) => void;
+  onSave: (updated: UpdateCourseRequest, onCloseEdit?: () => void) => Promise<void>;
   onAddSession: (course: TCourse) => void;
+  tenantId: number;
+  isSaving?: boolean;
 };
 
-const CourseDetailsModal = ({ open, onClose, course, onSave, onAddSession }: Props) => {
+const CourseDetailsModal = ({ open, onClose, course, onSave, onAddSession, tenantId, isSaving = false }: Props) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openStudentsModal, setOpenStudentsModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState<TSession | null>(null);
@@ -85,6 +88,7 @@ const CourseDetailsModal = ({ open, onClose, course, onSave, onAddSession }: Pro
           <CourseActionButtons 
             onOpenStudents={() => setOpenStudentsModal(true)}
             onOpenAddSession={() => onAddSession(course)}
+            onOpenEdit={() => setOpenEditModal(true)}
             onClose={onClose}
           />
 
@@ -95,8 +99,8 @@ const CourseDetailsModal = ({ open, onClose, course, onSave, onAddSession }: Pro
             session={selectedSession}
             course={course}
             onUpdateSession={(updatedSession) => {
-              const updatedSessions = course.sessions?.map(s => s.id === updatedSession.id ? updatedSession : s);
-              onSave({ ...course, sessions: updatedSessions });
+              // const updatedSessions = course.sessions?.map(s => s.id === updatedSession.id ? updatedSession : s);
+              // onSave({ ...course, sessions: updatedSessions });
               setSelectedSession(updatedSession);
             }}
           />
@@ -105,10 +109,9 @@ const CourseDetailsModal = ({ open, onClose, course, onSave, onAddSession }: Pro
             open={openEditModal}
             onClose={() => setOpenEditModal(false)}
             course={course}
-            onSave={(updated) => {
-              onSave(updated);
-              setOpenEditModal(false);
-            }}
+            onSave={(data) => onSave(data, () => setOpenEditModal(false))}
+            tenantId={tenantId}
+            isLoading={isSaving}
           />
 
           <RegisteredStudentsModal

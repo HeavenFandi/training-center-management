@@ -1,9 +1,8 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Box,
   Typography,
-  Avatar,
   List,
   ListItem,
   ListItemButton,
@@ -20,6 +19,9 @@ import CoPresentIcon from "@mui/icons-material/CoPresent";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import BusinessIcon from "@mui/icons-material/Business";
+import SchoolIcon from "@mui/icons-material/School";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
 
 const defaultData = [
   { text: "لوحة التحكم", icon: <DashboardIcon />, path: "/admin-dashboard" },
@@ -61,6 +63,19 @@ const SidebarContent = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const sidebarData = data || defaultData;
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
+
+  useEffect(() => {
+    const userId = user?.id;
+    if (userId && !currentInstitute) {
+      dispatch(actGetInstituteByUserId(userId));
+    }
+  }, [dispatch, user?.id, currentInstitute]);
+
+  const instituteName = currentInstitute?.name || "";
+
   return (
     <Box
       sx={{
@@ -83,9 +98,9 @@ const SidebarContent = ({
           gap: 2,
         }}
       >
-        <Avatar src="https://i.pravatar.cc/150?u=admin" />
+        <SchoolIcon sx={{ fontSize: 32, color: "#f0b41c" }} />
         <Typography variant="h6" fontWeight="bold">
-          معهد النور
+          {instituteName}
         </Typography>
       </Box>
 
@@ -154,5 +169,3 @@ const Sidebar = ({ open, onClose, data }: SidebarProps) => {
 };
 
 export default memo(Sidebar);
-
-

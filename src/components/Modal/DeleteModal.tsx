@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ interface GenericDeleteModalProps {
   itemName?: string;
   confirmButtonText?: string;
   cancelButtonText?: string;
+  errorMessage?: string | null;
 }
 
 const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
@@ -31,13 +32,21 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
   itemName,
   confirmButtonText = "حذف البيانات",
   cancelButtonText = "إلغاء",
+  errorMessage,
 }) => {
   const { showSnackbar } = useSnackbar();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = () => {
-    onConfirm();
-    showSnackbar("تم الحذف بنجاح", "success");
-    onClose();
+  const handleDelete = async () => {
+    if (errorMessage) return;
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } catch (error) {
+      console.error("Delete error:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -79,13 +88,15 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
               fontWeight="900"
               color="#1a2c4e"
               gutterBottom
-              sx={{ fontFamily: "Tajawal" }}>
+              sx={{ fontFamily: "Tajawal" }}
+            >
               {title}
             </Typography>
             <Typography
               variant="body2"
               color="#64748b"
-              sx={{ lineHeight: 1.6, fontFamily: "Tajawal" }}>
+              sx={{ lineHeight: 1.6, fontFamily: "Tajawal" }}
+            >
               {description} <br />
               {itemName && (
                 <b style={{ color: "#ff4d4f", fontSize: "1.1rem" }}>
@@ -95,6 +106,15 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
               {" "}؟
               <br /> لا يمكن التراجع عن هذا القرار لاحقاً.
             </Typography>
+            {errorMessage && (
+              <Typography
+                variant="body2"
+                color="#ff4d4f"
+                sx={{ mt: 2, fontFamily: "Tajawal", fontWeight: "bold" }}
+              >
+                {errorMessage}
+              </Typography>
+            )}
           </Box>
 
           <Stack direction="row"  gap={2} sx={{ px: 2 }}>
@@ -102,6 +122,7 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
               variant="contained"
               fullWidth
               onClick={handleDelete}
+              disabled={isDeleting || !!errorMessage}
               sx={{
                
                 bgcolor: "#ff4d4f",
@@ -114,14 +135,19 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
                   bgcolor: "#d32f2f",
                   boxShadow: "0 6px 20px rgba(255, 77, 79, 0.4)",
                 },
-              }}>
-              {confirmButtonText}
+                "&:disabled": {
+                  bgcolor: "#ff9999",
+                }
+              }}
+            >
+              {isDeleting ? "جارٍ الحذف..." : confirmButtonText}
             </Button>
 
             <Button
               variant="outlined"
              
               onClick={onClose}
+              disabled={isDeleting}
               sx={{
               
                 borderRadius: "14px",
@@ -130,6 +156,10 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
                 fontWeight: "bold",
                 fontFamily: "Tajawal",
                 "&:hover": { borderColor: "#cbd5e1", bgcolor: "#f8faff" },
+                "&:disabled": {
+                  borderColor: "#e2e8f0",
+                  color: "#94a3b8",
+                }
               }}>
               {cancelButtonText}
             </Button>

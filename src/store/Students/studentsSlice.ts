@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import actGetStudents from "./act/actGetStudents";
 import actUpdateStudent from "./act/actUpdateStudent";
 import actCreateStudent from "./act/actCreateStudent";
+import actDeleteStudent from "./act/actDeleteStudent";
 import { CreateStudentResponse } from "../../api/studentApi";
 import { RootState } from "..";
 
@@ -32,7 +33,10 @@ const studentsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(actGetStudents.pending, (state) => {
-      state.loading = "pending";
+      // Only set loading to pending if we don't have data yet
+      if (state.students.length === 0) {
+        state.loading = "pending";
+      }
       state.error = null;
     });
     builder.addCase(actGetStudents.fulfilled, (state, action) => {
@@ -73,6 +77,21 @@ const studentsSlice = createSlice({
       }
     });
     builder.addCase(actUpdateStudent.rejected, (state, action) => {
+      if (action.payload && typeof action.payload == "string") {
+        state.error = action.payload;
+      }
+    });
+    
+    // Delete student cases
+    builder.addCase(actDeleteStudent.pending, (state) => {
+      state.error = null;
+    });
+    builder.addCase(actDeleteStudent.fulfilled, (state, action) => {
+      state.students = state.students.filter(
+        (student) => student.id !== action.payload
+      );
+    });
+    builder.addCase(actDeleteStudent.rejected, (state, action) => {
       if (action.payload && typeof action.payload == "string") {
         state.error = action.payload;
       }

@@ -56,17 +56,9 @@ const InstituteSetup: React.FC = () => {
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
-  const { user, userType } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth);
   const { createLoading, createError, createSuccess, createdInstitute } =
     useAppSelector((state) => state.institutes);
-
-  const [savedInstituteInfo, setSavedInstituteInfo] = useState<{
-    name: string;
-    description: string;
-    location: string;
-    workingHours: Array<{ days: string; time: string; status: string }>;
-    contact: { phone: string; email: string };
-  } | null>(null);
 
   const {
     register,
@@ -100,24 +92,11 @@ const InstituteSetup: React.FC = () => {
     setValue("workingHoursMain", updatedDays, { shouldValidate: true });
   };
 
-  const hasSetupFinished = Boolean(
-    user?.instituteId ||
-    user?.institute ||
-    localStorage.getItem("instituteSetupCompleted") === "true" ||
-    localStorage.getItem("instituteSetupDone") === "true" ||
-    localStorage.getItem("instituteId"),
-  );
-
   useEffect(() => {
-    if (userType !== "ADMIN") {
+    if (user?.id === undefined || user?.id === null) {
       navigate("/login", { replace: true });
-      return;
     }
-
-    if (hasSetupFinished) {
-      navigate("/admin-dashboard", { replace: true });
-    }
-  }, [hasSetupFinished, navigate, userType]);
+  }, [user, navigate]);
 
   useEffect(() => {
     if (createError) {
@@ -126,29 +105,11 @@ const InstituteSetup: React.FC = () => {
   }, [createError, showSnackbar]);
 
   useEffect(() => {
-    if (createSuccess && savedInstituteInfo && createdInstitute?.id) {
-      localStorage.setItem("instituteSetupCompleted", "true");
-      localStorage.setItem("instituteId", String(createdInstitute.id));
-      localStorage.setItem("tenantId", String(createdInstitute.tenantId ?? ""));
-      localStorage.setItem(
-        "tenantName",
-        String(createdInstitute.tenantName ?? ""),
-      );
-      localStorage.setItem(
-        "tenantKey",
-        String(createdInstitute.tenantKey ?? ""),
-      );
-      localStorage.setItem("instituteInfo", JSON.stringify(savedInstituteInfo));
+    if (createSuccess && createdInstitute?.id) {
       showSnackbar("تم حفظ بيانات المعهد بنجاح", "success");
-      navigate("/dashboard", { replace: true });
+      navigate("/admin-dashboard", { replace: true });
     }
-  }, [
-    createSuccess,
-    createdInstitute,
-    navigate,
-    savedInstituteInfo,
-    showSnackbar,
-  ]);
+  }, [createSuccess, createdInstitute, navigate, showSnackbar]);
 
   const handleInstituteSubmit = (data: TInstituteSetupType) => {
     const selectedDaysEnglish = data.workingHoursMain.map(
@@ -189,23 +150,6 @@ const InstituteSetup: React.FC = () => {
     };
 
     console.log("Institute payload:", JSON.stringify(payload, null, 2));
-
-    setSavedInstituteInfo({
-      name: data.name,
-      description: data.description,
-      location: data.location,
-      workingHours: [
-        {
-          days: data.workingHoursMain.join(" - "),
-          time:
-            data.workingHoursMainStatus === "open"
-              ? `${data.workingHoursMainTimeFrom} - ${data.workingHoursMainTimeTo}`
-              : "مغلق",
-          status: data.workingHoursMainStatus,
-        },
-      ],
-      contact: { phone: data.phone, email: data.email },
-    });
 
     dispatch(actCreateInstitute(payload));
   };
@@ -401,7 +345,7 @@ const InstituteSetup: React.FC = () => {
                     <MenuItem value="open">متاح</MenuItem>
                     <MenuItem value="closed">مغلق</MenuItem>
                   </AuthInput>
-             
+
                 {mainStatus === "open" && (
                   <>
                     <Grid size={{ xs: 6, sm: 4 }}>
@@ -445,7 +389,7 @@ const InstituteSetup: React.FC = () => {
           >
             {createLoading ? (
               <>
-                جارٍ الحفظ
+                جاري الحفظ
                 <CircularProgress size={20} color="inherit" sx={{ ml: 1 }} />
               </>
             ) : (

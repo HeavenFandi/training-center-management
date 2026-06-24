@@ -14,7 +14,7 @@ export type User = {
   tenantId?: number;
   studentId?: number;
   teacherId?: number;
-  [key: string]: any; // Allow for other fields from the server
+  [key: string]: any; 
 };
 
 export type LoginPayload = {
@@ -36,7 +36,9 @@ const actAuthLogin = createAsyncThunk<
     console.log("[DEBUG actAuthLogin] Sending Login Payload:", loginData);
 
     const response = await axiosClient.post<User>("/auth/login", loginData);
+    
     const userData = response.data;
+ 
     console.log("[DEBUG actAuthLogin] Login Response (userData):", userData);
     const userId = userData.id;
     console.log("[DEBUG actAuthLogin] userId (from login):", userId);

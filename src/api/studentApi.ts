@@ -115,3 +115,22 @@ export const getStudents = async (): Promise<GetStudentsResponse> => {
   const response = await axiosClient.get<GetStudentsResponse>("/students");
   return response.data;
 };
+
+export const deleteStudent = async (studentId: number, instituteId: number): Promise<void> => {
+  await axiosClient.delete(`/students/${studentId}/register/institute/${instituteId}`);
+};
+
+export const getStudentActiveCourses = async (studentId: number): Promise<any[]> => {
+  const response = await axiosClient.get(`/enrollments/student/${studentId}/active`);
+  // Handle possible response formats
+  if (Array.isArray(response.data)) {
+    return response.data;
+  } else if (typeof response.data === "object" && response.data !== null) {
+    if ("data" in response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    } else if ("courses" in response.data && Array.isArray(response.data.courses)) {
+      return response.data.courses;
+    }
+  }
+  return [];
+};

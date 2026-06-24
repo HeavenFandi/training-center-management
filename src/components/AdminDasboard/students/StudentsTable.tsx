@@ -2,621 +2,344 @@ import React, { memo } from "react";
 import {
   Box,
   Typography,
+  Stack,
+  IconButton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
+  Chip,
   Paper,
   Avatar,
-  Stack,
-  Button,
-  Card,
   useTheme,
   useMediaQuery,
-  TextField,
-  InputAdornment,
 } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SearchIcon from "@mui/icons-material/Search";
+import SchoolIcon from "@mui/icons-material/School";
 
 import { CreateStudentResponse } from "../../../api/studentApi";
+import TableSkeleton from "../../Common/TableSkeleton";
 
 interface Props {
   studentsData: CreateStudentResponse[];
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
   onView: (student: CreateStudentResponse) => void;
   onEdit: (student: CreateStudentResponse) => void;
   onDelete: (student: CreateStudentResponse) => void;
   loading?: "idle" | "pending" | "succeeded" | "failed";
+  showLoading?: boolean;
+  hasData?: boolean;
 }
 
 const StudentsTable: React.FC<Props> = memo(({
   studentsData,
-  searchTerm,
-  onSearchChange,
   onView,
   onEdit,
   onDelete,
   loading,
+  showLoading,
+  hasData,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const btnStyle = {
-    borderRadius: "12px",
-    px: 2,
-    py: 0.75,
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    textTransform: "none",
-    boxShadow: "none",
-    minHeight: "32px",
-    height: "32px",
-    width: "100%",
-    transition: "all 0.2s ease-in-out",
-    "&:hover": { 
-      opacity: 0.9,
-      transform: "translateY(-1px)",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-    },
-    "& .MuiButton-startIcon": {
-      marginRight: "8px", // RTL, so marginRight is space between icon and text
-      marginLeft: 0,
-    },
-  };
+  // Don't show skeleton if we already have data
+  const isLoading = (loading === "pending" || showLoading) && !hasData;
 
-  const ActionButtons = ({ student }: { student: CreateStudentResponse }) => (
-    <Stack 
-      direction="row" 
-      spacing={2} 
-      justifyContent="center" 
-      sx={{ width: "100%", flexWrap: "nowrap" }}
-    >
-      <Button
-        onClick={() => onView(student)}
-        sx={{ 
-          ...btnStyle, 
-          bgcolor: "transparent", 
-          color: "#2196f3", 
-          flex: 1,
-          maxWidth: "130px",
-          "&:hover": {
-            bgcolor: "#e3f2fd",
-          }
-        }}
-        startIcon={<VisibilityIcon sx={{ fontSize: "1.1rem" }} />}
-      >
-        <Box component="span" sx={{ display: { xs: "none", lg: "inline" } }}>
-          التفاصيل
-        </Box>
-      </Button>
-
-      <Button
-        onClick={() => onEdit(student)}
-        sx={{ 
-          ...btnStyle, 
-          bgcolor: "transparent", 
-          color: "#4caf50", 
-          flex: 1,
-          maxWidth: "130px",
-          "&:hover": {
-            bgcolor: "#e8f5e9",
-          }
-        }}
-        startIcon={<EditIcon sx={{ fontSize: "1.1rem" }} />}
-      >
-        <Box component="span" sx={{ display: { xs: "none", lg: "inline" } }}>
-          تعديل
-        </Box>
-      </Button>
-
-      <Button
-        onClick={() => onDelete(student)}
-        sx={{ 
-          ...btnStyle, 
-          bgcolor: "transparent", 
-          color: "#ef5350", 
-          flex: 1,
-          maxWidth: "130px",
-          "&:hover": {
-            bgcolor: "#ffebee",
-          }
-        }}
-        startIcon={<DeleteIcon sx={{ fontSize: "1.1rem" }} />}
-      >
-        <Box component="span" sx={{ display: { xs: "none", lg: "inline" } }}>
-          حذف
-        </Box>
-      </Button>
-    </Stack>
-  );
-
-  // If there's a search term, always show the search UI and results
-  if (searchTerm.trim()) {
-    return (
-      <Box sx={{ width: "100%" }}>
-        {isMobile ? (
-          <Box dir="rtl" sx={{ p: 2 }}>
-            {/* Mobile Search */}
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                dir="rtl"
-                placeholder="ابحث عن طالب..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#334155", fontSize: "1.2rem" }} />
-                    </InputAdornment>
-                  ),
-                  sx: {
-                    borderRadius: "14px",
-                    bgcolor: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    "& fieldset": { border: "none" },
-                    "&:hover fieldset": { border: "none" },
-                    "&.Mui-focused": {
-                      bgcolor: "#ffffff",
-                      border: "1px solid #2196f3",
-                      boxShadow: "0 0 0 3px rgba(33,150,243,0.1)",
-                    },
-                    px: 1.5,
-                    py: 1,
-                  },
-                }}
-                sx={{
-                  "& .MuiInputBase-root": {
-                    paddingY: 0.5,
-                    fontSize: "0.95rem",
-                  },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "#94a3b8",
-                    opacity: 1,
-                  },
-                }}
-              />
-            </Box>
-            
-            {studentsData.length === 0 ? (
-              <Box 
-                sx={{ 
-                  display: "flex", 
-                  justifyContent: "center", 
-                  alignItems: "center", 
-                  py: 10,
-                  textAlign: "center",
-                  direction: "rtl",
-                }}
-              >
-                <Typography variant="body1" color="#64748b">
-                  لا توجد نتائج مطابقة
-                </Typography>
-              </Box>
-            ) : (
-              studentsData.map((student) => (
-                <Card
-                  key={student.id}
-                  sx={{
-                    mb: 2,
-                    borderRadius: "16px",
-                    backgroundColor: "rgba(255, 255, 255, 0.85)",
-                    backdropFilter: "blur(12px)",
-                    border: "1px solid rgba(255, 255, 255, 0.6)",
-                    boxShadow: "0 4px 20px rgba(19, 62, 101, 0.06)",
-                    p: 2.5,
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      boxShadow: "0 6px 30px rgba(19, 62, 101, 0.1)",
-                      transform: "translateY(-2px)",
-                    }
-                  }}
-                >
-                  <Stack direction="row" alignItems="center" spacing={2.5} mb={2.5}>
-                    <Avatar 
-                      src={student.image} 
-                      sx={{ 
-                        width: 56, 
-                        height: 56, 
-                        border: "2px solid #ffffff", 
-                        boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
-                        fontSize: "1.3rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {student.firstName[0]}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle1" fontWeight={700} color="#1a2c4e" sx={{ mb: 0.3 }}>
-                        {student.firstName} {student.lastName}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  
-                  <Box sx={{ bgcolor: "#f1f5f9", p: 1.75, borderRadius: "12px", mb: 2.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "#475569" }}>
-                      <span style={{ color: "#64748b", fontWeight: 600 }}>تاريخ التسجيل: </span> {student.enrollmentDate}
-                    </Typography>
-                  </Box>
-
-                  <ActionButtons student={student} />
-                </Card>
-              ))
-            )}
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            sx={{
-              borderRadius: "18px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 4px 30px rgba(19, 62, 101, 0.05)",
-              direction: "rtl",
-              overflow: "hidden",
-            }}
-          >
-            <Table sx={{ minWidth: 700 }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f8fafc" }}>
-                  <TableCell align="right" sx={{ fontWeight: 700, py: 2.5, color: "#1e293b", fontSize: "0.95rem" }}>
-                    الطالب
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, py: 2.5, color: "#1e293b", fontSize: "0.95rem" }}>
-                    تاريخ التسجيل
-                  </TableCell>
-                  <TableCell align="center" sx={{ py: 2.5, px: 2 }}>
-                    <TextField
-                      size="small"
-                      dir="rtl"
-                      placeholder="ابحث عن طالب..."
-                      value={searchTerm}
-                      onChange={(e) => onSearchChange(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon sx={{ color: "#64748b", fontSize: "1.2rem" }} />
-                          </InputAdornment>
-                        ),
-                        sx: {
-                          borderRadius: "14px",
-                          bgcolor: "#f8fafc",
-                          "& fieldset": { border: "none" },
-                          "&:hover fieldset": { border: "none" },
-                          "&.Mui-focused": {
-                            bgcolor: "#ffffff",
-                            boxShadow: "0 2px 12px rgba(19, 62, 101, 0.1)",
-                          },
-                          px: 1.5,
-                          py: 1,
-                        },
-                      }}
-                      sx={{
-                        width: "280px",
-                        "& .MuiInputBase-root": {
-                          paddingY: 0.75,
-                          fontSize: "0.95rem",
-                        },
-                        "& .MuiInputBase-input::placeholder": {
-                          color: "#94a3b8",
-                          opacity: 1,
-                        },
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {studentsData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} align="center" sx={{ py: 10 }}>
-                      <Typography variant="body1" color="#64748b">
-                        لا توجد نتائج مطابقة
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  studentsData.map((student) => (
-                    <TableRow
-                      key={student.id}
-                      sx={{ 
-                        "&:hover": { bgcolor: "#fafbfc" },
-                        transition: "background-color 0.2s ease",
-                        borderBottom: "1px solid #f1f5f9",
-                      }}
-                    >
-                      <TableCell align="right" sx={{ py: 2.25, px: 3 }}>
-                        <Stack direction="row" alignItems="center" spacing={2.5}>
-                          <Avatar 
-                            src={student.image} 
-                            sx={{ 
-                              width: 52, 
-                              height: 52, 
-                              border: "2px solid #ffffff", 
-                              boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
-                              fontSize: "1.2rem",
-                              fontWeight: 700,
-                            }}
-                          >
-                            {student.firstName[0]}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={700} sx={{ mb: 0.2, fontSize: "1rem", color: "#1e293b" }}>
-                              {student.firstName} {student.lastName}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right" sx={{ py: 2.25, px: 3 }}>
-                        <Typography variant="body2" sx={{ fontSize: "0.95rem", color: "#475569", fontWeight: 500 }}>
-                          {student.enrollmentDate}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center" sx={{ py: 2.25, px: 2 }}>
-                        <ActionButtons student={student} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
-    );
+  if (isLoading) {
+    return <TableSkeleton columnsCount={4} rowsCount={5} showMobileView />;
   }
 
-  // If no search term: show loading or data
-  if (loading !== "succeeded") {
-    return (
-      <Box 
-        sx={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          py: 10,
-          textAlign: "center",
-          direction: "rtl",
-        }}
-      >
-        <Typography variant="body1" color="#64748b">
-          جار التحميل
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (studentsData.length === 0) {
-    return (
-      <Box 
-        sx={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          py: 10,
-          textAlign: "center",
-          direction: "rtl",
-        }}
-      >
-        <Typography variant="body1" color="#64748b">
-          لا توجد طلاب بعد
-        </Typography>
-      </Box>
-    );
-  }
-
-  // If we have data and loading is succeeded, show the table
   return (
-    <Box sx={{ width: "100%" }}>
+    <TableContainer
+      component={Paper}
+      sx={{
+        borderRadius: "16px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+        border: "1px solid #eef2f6",
+        overflow: "hidden",
+      }}
+    >
       {isMobile ? (
-        <Box dir="rtl" sx={{ p: 2 }}>
-          {/* Mobile Search */}
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              dir="rtl"
-              placeholder="ابحث عن طالب..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#334155", fontSize: "1.2rem" }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: "14px",
-                  bgcolor: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  "& fieldset": { border: "none" },
-                  "&:hover fieldset": { border: "none" },
-                  "&.Mui-focused": {
-                    bgcolor: "#ffffff",
-                    border: "1px solid #2196f3",
-                    boxShadow: "0 0 0 3px rgba(33,150,243,0.1)",
-                  },
-                  px: 1.5,
-                  py: 1,
-                },
-              }}
-              sx={{
-                "& .MuiInputBase-root": {
-                  paddingY: 0.5,
-                  fontSize: "0.95rem",
-                },
-                "& .MuiInputBase-input::placeholder": {
-                  color: "#94a3b8",
-                  opacity: 1,
-                },
-              }}
-            />
-          </Box>
-          
+        <Box sx={{ p: 2 }}>
           {studentsData.map((student) => (
-            <Card
+            <Box
               key={student.id}
               sx={{
+                borderRadius: "12px",
+                p: 3,
                 mb: 2,
-                borderRadius: "16px",
-                backgroundColor: "rgba(255, 255, 255, 0.85)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255, 255, 255, 0.6)",
-                boxShadow: "0 4px 20px rgba(19, 62, 101, 0.06)",
-                p: 2.5,
-                transition: "all 0.3s ease",
+                background: "white",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                border: "1px solid #eef2f6",
+                transition: "all 0.2s ease",
                 "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 1)",
-                  boxShadow: "0 6px 30px rgba(19, 62, 101, 0.1)",
+                  boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
                   transform: "translateY(-2px)",
-                }
+                },
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={2.5} mb={2.5}>
-                <Avatar 
-                  src={student.image} 
-                  sx={{ 
-                    width: 56, 
-                    height: 56, 
-                    border: "2px solid #ffffff", 
-                    boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
-                    fontSize: "1.3rem",
-                    fontWeight: 700,
+              <Stack direction="row"  sx={{ gap: "12px" }} alignItems="center" spacing={4} sx={{ mb: 2 }}>
+                <Avatar
+                  src={student.image}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "#3b82f6",
                   }}
                 >
-                  {student.firstName[0]}
+                  {student.firstName?.[0] || ""}
                 </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle1" fontWeight={700} color="#1a2c4e" sx={{ mb: 0.3 }}>
-                    {student.firstName} {student.lastName}
-                  </Typography>
-                </Box>
-              </Stack>
-              
-              <Box sx={{ bgcolor: "#f1f5f9", p: 1.75, borderRadius: "12px", mb: 2.5 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: "#475569" }}>
-                  <span style={{ color: "#64748b", fontWeight: 600 }}>تاريخ التسجيل: </span> {student.enrollmentDate}
+                <Typography fontWeight="bold" color="#091c39" sx={{ fontSize: 18 }}>
+                  {student.firstName} {student.lastName}
                 </Typography>
-              </Box>
+              </Stack>
 
-              <ActionButtons student={student} />
-            </Card>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                <SchoolIcon sx={{ color: "#666", fontSize: 18 }} />
+                <Typography color="#666">تاريخ التسجيل:</Typography>
+                <Chip
+                  label={student.enrollmentDate || "---"}
+                  size="small"
+                  sx={{
+                    backgroundColor: "#e3f2fd",
+                    color: "#091c39",
+                    fontWeight: 600,
+                  }}
+                />
+              </Stack>
+
+              <Stack direction="row" justifyContent="flex-end" gap={1} mt={1}>
+                <Tooltip title="عرض التفاصيل">
+                  <IconButton
+                    onClick={() => onView(student)}
+                    sx={{
+                      background: "#dbeafe",
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        background: "#bfdbfe",
+                        transform: "scale(1.1)",
+                      },
+                    }}
+                  >
+                    <VisibilityIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="تعديل الطالب">
+                  <IconButton
+                    onClick={() => onEdit(student)}
+                    sx={{
+                      background: "#e9f7ef",
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        background: "#c8f2dc",
+                        transform: "scale(1.1)",
+                      },
+                    }}
+                  >
+                    <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="حذف الطالب">
+                  <IconButton
+                    onClick={() => onDelete(student)}
+                    sx={{
+                      background: "#fdecea",
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        background: "#f8cfcf",
+                        transform: "scale(1.1)",
+                      },
+                    }}
+                  >
+                    <DeleteIcon sx={{ color: "#e74c3c", fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
           ))}
         </Box>
       ) : (
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: "18px",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 4px 30px rgba(19, 62, 101, 0.05)",
-            direction: "rtl",
-            overflow: "hidden",
-          }}
-        >
-          <Table sx={{ minWidth: 700 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "#f8fafc" }}>
-                <TableCell align="right" sx={{ fontWeight: 700, py: 2.5, color: "#1e293b", fontSize: "0.95rem" }}>
-                  الطالب
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, py: 2.5, color: "#1e293b", fontSize: "0.95rem" }}>
-                  تاريخ التسجيل
-                </TableCell>
-                <TableCell align="center" sx={{ py: 2.5, px: 2 }}>
-                  <TextField
-                    size="small"
-                    dir="rtl"
-                    placeholder="ابحث عن طالب..."
-                    value={searchTerm}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: "#64748b", fontSize: "1.2rem" }} />
-                        </InputAdornment>
-                      ),
-                      sx: {
-                        borderRadius: "14px",
-                        bgcolor: "#f8fafc",
-                        "& fieldset": { border: "none" },
-                        "&:hover fieldset": { border: "none" },
-                        "&.Mui-focused": {
-                          bgcolor: "#ffffff",
-                          boxShadow: "0 2px 12px rgba(19, 62, 101, 0.1)",
-                        },
-                        px: 1.5,
-                        py: 1,
-                      },
-                    }}
+        <Table sx={{ backgroundColor: "white" }}>
+          <TableHead>
+            <TableRow
+              sx={{
+                backgroundColor: "#091c39",
+              }}
+            >
+              {["#", "الطالب", "تاريخ التسجيل", "الإجراءات"].map(
+                (head) => (
+                  <TableCell
+                    key={head}
+                    align="center"
                     sx={{
-                      width: "280px",
-                      "& .MuiInputBase-root": {
-                        paddingY: 0.75,
-                        fontSize: "0.95rem",
-                      },
-                      "& .MuiInputBase-input::placeholder": {
-                        color: "#94a3b8",
-                        opacity: 1,
-                      },
+                      fontWeight: 700,
+                      color: "white",
+                      borderBottom: "none",
+                      py: 2,
+                      fontSize: 15,
+                    }}
+                  >
+                    {head}
+                  </TableCell>
+                )
+              )}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {studentsData.map((student, index) => (
+              <TableRow
+                key={student.id}
+                sx={{
+                  backgroundColor: index % 2 === 0 ? "#fafbfc" : "white",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#f0f4f8",
+                  },
+                }}
+              >
+                <TableCell
+                  align="center"
+                  sx={{
+                    borderBottom: "1px solid #eef2f6",
+                    py: 2,
+                    color: "#444",
+                  }}
+                >
+                  {student.id}
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    borderBottom: "1px solid #eef2f6",
+                    py: 2,
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={4}   sx={{ gap: "12px" }}>
+                    <Avatar
+                      src={student.image}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: "#3b82f6",
+                      }}
+                    >
+                      {student.firstName?.[0] || ""}
+                    </Avatar>
+                    <Typography fontWeight={600} color="#091c39">
+                      {student.firstName} {student.lastName}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    borderBottom: "1px solid #eef2f6",
+                    py: 2,
+                  }}
+                >
+                  <Chip
+                    label={student.enrollmentDate || "---"}
+                    size="medium"
+                    sx={{
+                      backgroundColor: "#e3f2fd",
+                      color: "#091c39",
+                      fontWeight: 600,
                     }}
                   />
                 </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {studentsData.map((student) => (
-                <TableRow
-                  key={student.id}
-                  sx={{ 
-                    "&:hover": { bgcolor: "#fafbfc" },
-                    transition: "background-color 0.2s ease",
-                    borderBottom: "1px solid #f1f5f9",
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    borderBottom: "1px solid #eef2f6",
+                    py: 2,
                   }}
                 >
-                  <TableCell align="right" sx={{ py: 2.25, px: 3 }}>
-                    <Stack direction="row" alignItems="center" spacing={2.5}>
-                      <Avatar 
-                        src={student.image} 
-                        sx={{ 
-                          width: 52, 
-                          height: 52, 
-                          border: "2px solid #ffffff", 
-                          boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
-                          fontSize: "1.2rem",
-                          fontWeight: 700,
+                  <Stack direction="row" justifyContent="center" gap={1}>
+                    <Tooltip title="عرض التفاصيل">
+                      <IconButton
+                        onClick={() => onView(student)}
+                        sx={{
+                          background: "#dbeafe",
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            background: "#bfdbfe",
+                            transform: "scale(1.1)",
+                          },
                         }}
                       >
-                        {student.firstName[0]}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight={700} sx={{ mb: 0.2, fontSize: "1rem", color: "#1e293b" }}>
-                          {student.firstName} {student.lastName}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </TableCell>
-                  <TableCell align="right" sx={{ py: 2.25, px: 3 }}>
-                    <Typography variant="body2" sx={{ fontSize: "0.95rem", color: "#475569", fontWeight: 500 }}>
-                      {student.enrollmentDate}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center" sx={{ py: 2.25, px: 2 }}>
-                    <ActionButtons student={student} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                        <VisibilityIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
+                      
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="تعديل الطالب">
+                      <IconButton
+                        onClick={() => onEdit(student)}
+                        sx={{
+                          background: "#e9f7ef",
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            background: "#c8f2dc",
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                      >
+                        <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="حذف الطالب">
+                      <IconButton
+                        onClick={() => onDelete(student)}
+                        sx={{
+                          background: "#fdecea",
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            background: "#f8cfcf",
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                      >
+                        <DeleteIcon sx={{ color: "#e74c3c", fontSize: 20 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
-    </Box>
+    </TableContainer>
   );
 });
 

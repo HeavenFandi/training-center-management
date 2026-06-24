@@ -1,12 +1,20 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
-import { GetStudentsResponse, getStudents } from "../../../api/studentApi";
+import { getStudents } from "../../../api/studentApi";
+import { RootState } from "../../index";
 
 const actGetStudents = createAsyncThunk(
   "students/actGetStudents",
   async (_, thunkAPI) => {
-    const { rejectWithValue } = thunkAPI;
+    const { rejectWithValue, getState } = thunkAPI;
+    const state = getState() as RootState;
+    
+    // If we already have students data and fetch succeeded before, don't fetch again
+    if (state.students.students.length > 0 && state.students.loading === "succeeded") {
+      // Return existing data to avoid error state
+      return state.students.students;
+    }
+    
     try {
       const response = await getStudents();
       return response;

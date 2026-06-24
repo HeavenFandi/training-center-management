@@ -7,6 +7,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import { TCourse, TSession } from "../../../../types/cardType";
+import CourseCardSkeleton from "../../../Common/CourseCardSkeleton";
 
 interface CourseManagementGridProps {
   courses: TCourse[];
@@ -14,6 +15,8 @@ interface CourseManagementGridProps {
   onEdit: (course: TCourse) => void;
   onAddSession: (course: TCourse) => void;
   onShowSessions: (course: TCourse) => void;
+  onDelete: (course: TCourse) => void;
+  loading?: boolean;
 }
 
 const CourseManagementGrid: React.FC<CourseManagementGridProps> = ({
@@ -22,7 +25,13 @@ const CourseManagementGrid: React.FC<CourseManagementGridProps> = ({
   onEdit,
   onAddSession,
   onShowSessions,
+  onDelete,
+  loading = false,
 }) => {
+  // Don't show skeleton if we already have data
+  if (loading && courses.length === 0) {
+    return <CourseCardSkeleton count={4} />;
+  }
   return (
     <Grid container spacing={3} dir="rtl" sx={{ width: "100%", m: 0 }} alignItems="flex-start">
       {courses.map((course) => (
@@ -37,22 +46,40 @@ const CourseManagementGrid: React.FC<CourseManagementGridProps> = ({
               boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
               overflow: "hidden",
               transition: "all 0.3s ease",
+              position: "relative",
               "&:hover": {
                 transform: "translateY(-4px)",
                 boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
               },
             }}
           >
+            <IconButton
+              onClick={() => onDelete(course)}
+              sx={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                bgcolor: "rgba(255, 77, 79, 0.1)",
+                color: "#ff4d4f",
+                "&:hover": {
+                  bgcolor: "rgba(255, 77, 79, 0.2)",
+                },
+                zIndex: 1,
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
             <Box
               sx={{
                 width: "100%",
                 p: 2,
+                pl: { xs: 6, sm: 6 }, // Add padding to left (which is right in RTL) to make space for delete button
                 display: "flex",
                 flexDirection: "column",
               }}
             >
               <Box sx={{ flexGrow: 1 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                <Stack direction="column" alignItems="flex-start" mb={0.5} gap={0.5}>
                   <Typography variant="h6" fontWeight="900" color="#133E65" sx={{ fontFamily: "Tajawal", fontSize: "1.1rem" }}>
                     {course.title}
                   </Typography>
@@ -89,7 +116,7 @@ const CourseManagementGrid: React.FC<CourseManagementGridProps> = ({
                       عدد الساعات:
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "Tajawal" }}>
-                      {course.duration} ساعة
+                      {course.hours} ساعة
                     </Typography>
                   </Box>
                 </Stack>

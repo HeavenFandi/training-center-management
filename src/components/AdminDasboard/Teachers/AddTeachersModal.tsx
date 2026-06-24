@@ -10,7 +10,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 
-import { TeacherFormData } from "../../../validation/TeacherSchema";
+import { AddTeacherFormData } from "../../../validation/TeacherSchema";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -23,7 +23,7 @@ import { useAddTeacherForm } from "../../../hooks/adminDashboard/useAddTeacherFo
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (data: TeacherFormData & { cvFile: File | null }) => void;
+  onSave?: (data: AddTeacherFormData & { cvFile: File | null }) => void;
 }
 
 const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
@@ -166,6 +166,17 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
             </Grid>
             <Grid size={{ xs: 6, sm: 4 }}>
               <AuthInput
+                label="تأكيد كلمة المرور"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••"
+                {...register("confirmPassword")}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
+                compact
+              />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4 }}>
+              <AuthInput
                 label="التخصص"
                 placeholder="هندسة برمجيات"
                 {...register("specialization")}
@@ -189,13 +200,24 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
               <AuthInput
                 label="سنوات الخبرة"
                 placeholder="5"
-                {...register("experience")}
-                error={!!errors.experience}
-                helperText={errors.experience?.message}
+                type="number"
+                {...register("experienceYears")}
+                error={!!errors.experienceYears}
+                helperText={errors.experienceYears?.message}
                 compact
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 6, sm: 4 }}>
+              <AuthInput
+                label="الشهادات"
+                placeholder="الشهادات (اختياري)"
+                {...register("certificates")}
+                error={!!errors.certificates}
+                helperText={errors.certificates?.message}
+                compact
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <AuthInput
                 label="العنوان"
                 placeholder="دمشق، المزة"
