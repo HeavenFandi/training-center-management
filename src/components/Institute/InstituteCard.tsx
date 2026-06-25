@@ -1,24 +1,30 @@
-import { Card, CardContent, Avatar, Box, Typography, IconButton } from "@mui/material";
+import { Card, CardContent, Avatar, Box, Typography, IconButton, Button } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import PaletteIcon from "@mui/icons-material/Palette";
 import SecurityIcon from "@mui/icons-material/Security";
 import CodeIcon from "@mui/icons-material/Code";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import { TCourse } from "../../types/cardType";
 
 const getIcon = (category: string) => {
   const iconStyle = { fontSize: 26 };
-  if (category === "تصميم") return <PaletteIcon sx={{ ...iconStyle, color: "#4caf50" }} />;
-  if (category === "أمن") return <SecurityIcon sx={{ ...iconStyle, color: "#f44336" }} />;
+  if (category.includes("تصميم")) return <PaletteIcon sx={{ ...iconStyle, color: "#4caf50" }} />;
+  if (category.includes("أمن")) return <SecurityIcon sx={{ ...iconStyle, color: "#f44336" }} />;
   return <CodeIcon sx={{ ...iconStyle, color: "#1976d2" }} />;
 };
 
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-}
-
-export const InstituteCard = ({ course }: { course: Course }) => (
+export const InstituteCard = ({ 
+  course, 
+  isExpanded, 
+  onToggle, 
+  onViewSessions 
+}: { 
+  course: TCourse; 
+  isExpanded: boolean; 
+  onToggle: () => void;
+  onViewSessions: () => void;
+}) => (
   <Card
     elevation={0}
     sx={{
@@ -36,20 +42,29 @@ export const InstituteCard = ({ course }: { course: Course }) => (
       },
     }}
   >
-    <CardContent sx={{ display: "flex", alignItems: "center", p: "18px !important", gap: 2.5 }}>
-      <Avatar sx={{ bgcolor: "rgba(25, 118, 210, 0.06)", width: 54, height: 54, borderRadius: "14px" }}>
-        {getIcon(course.category)}
-      </Avatar>
-      <Box sx={{ flexGrow: 1 }}>
-        <Typography variant="subtitle1" fontWeight="800">{course.title}</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {course.description}
-        </Typography>
+    <CardContent sx={{ p: "18px !important" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, mb: isExpanded ? 2 : 0 }}>
+        <Avatar sx={{ bgcolor: "rgba(25, 118, 210, 0.06)", width: 54, height: 54, borderRadius: "14px" }}>
+          {getIcon(course.categoryName || course.category || "")}
+        </Avatar>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="subtitle1" fontWeight="800">{course.title || course.name}</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {course.description}
+          </Typography>
+        </Box>
+        <Button 
+          variant="contained" 
+          size="small"
+          onClick={onViewSessions}
+          sx={{ mr: 1 }}
+        >
+          الدورات المتاحة
+        </Button>
+        <IconButton size="small" onClick={onToggle}>
+          {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
       </Box>
-      <IconButton size="small" sx={{ color: "divider" }}>
-        <ArrowBackIosNewIcon fontSize="small" />
-      </IconButton>
     </CardContent>
   </Card>
 );
-

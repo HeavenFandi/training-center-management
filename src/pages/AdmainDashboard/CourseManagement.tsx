@@ -41,6 +41,9 @@ const CourseManagement = () => {
     handleCloseAdd,
     handleSaveAdd,
     handleAddSession,
+    handleUpdateSession,
+    handleDeleteSession,
+    handleFetchSessions,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -75,6 +78,7 @@ const CourseManagement = () => {
   const handleOpenSessionsList = (course: TCourse) => {
     setSessionTargetCourse(course);
     setIsSessionsListOpen(true);
+    handleFetchSessions(course.id);
   };
 
   const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
@@ -83,14 +87,10 @@ const CourseManagement = () => {
     setIsSessionDetailsOpen(true);
   }, []);
 
-  const handleUpdateSession = useCallback((updatedSession: TSession) => {
-    if (!sessionTargetCourse) return;
-    const updatedSessions = sessionTargetCourse.sessions?.map(s => 
-      s.id === updatedSession.id ? updatedSession : s
-    );
-    // handleSaveEdit({ ...sessionTargetCourse, sessions: updatedSessions });
+  const handleLocalUpdateSession = useCallback((updatedSession: TSession) => {
+    handleUpdateSession(updatedSession);
     setSelectedSession(updatedSession);
-  }, [sessionTargetCourse]);
+  }, [handleUpdateSession]);
 
   const handleDeleteSessionRequest = useCallback((session: TSession, course: TCourse) => {
     setSessionToDelete({ session, course });
@@ -100,11 +100,10 @@ const CourseManagement = () => {
   const handleConfirmDeleteSession = useCallback(() => {
     if (!sessionToDelete) return;
     const { session, course } = sessionToDelete;
-    const updatedSessions = course.sessions?.filter(s => s.id !== session.id);
-    // handleSaveEdit({ ...course, sessions: updatedSessions });
+    handleDeleteSession(course.id, session.id);
     setIsDeleteSessionOpen(false);
     setSessionToDelete(null);
-  }, [sessionToDelete]);
+  }, [sessionToDelete, handleDeleteSession]);
 
   return (
     <Box sx={{  width: "100%", overflowX: "hidden", flexGrow: 1 }}>
@@ -147,8 +146,8 @@ const CourseManagement = () => {
           open={isSessionDetailsOpen}
           onClose={() => setIsSessionDetailsOpen(false)}
           session={selectedSession}
-          course={sessionTargetCourse || { id: 0, title: "", category: "", price: 0, requirements: "", duration: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
-          onUpdateSession={handleUpdateSession}
+          course={sessionTargetCourse || { id: 0, title: "", category: "", price: 0, requirements: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
+          onUpdateSession={handleLocalUpdateSession}
         />
       )}
 

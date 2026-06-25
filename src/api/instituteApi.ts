@@ -67,6 +67,18 @@ export const getInstituteMonthlyRegistrations = async (id: number | string, year
   return response.data;
 };
 
+export type FinancialMonthly = {
+  month: number;
+  totalRevenue: number;
+  totalPayments: number;
+};
+
+export const getInstituteFinancialMonthly = async (id: number | string, year?: number) => {
+  const params = year ? { year } : {};
+  const response = await axiosClient.get<FinancialMonthly[]>(`institutes/${id}/financial-monthly`, { params });
+  return response.data;
+};
+
 export const createInstitute = async (data: any) => {
   const response = await axiosClient.post<Institute>("institutes", data);
   return response.data;

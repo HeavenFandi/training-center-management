@@ -111,8 +111,8 @@ export const updateStudent = async (
   return response.data;
 };
 
-export const getStudents = async (): Promise<GetStudentsResponse> => {
-  const response = await axiosClient.get<GetStudentsResponse>("/students");
+export const getStudents = async (tenantId: string | number): Promise<GetStudentsResponse> => {
+  const response = await axiosClient.get<GetStudentsResponse>(`/institutes/tenant/${tenantId}/students`);
   return response.data;
 };
 
