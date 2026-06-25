@@ -7,6 +7,7 @@ import actGetTrainingSessions from "./act/actGetTrainingSessions";
 import actSearchTrainingSessions from "./act/actSearchTrainingSessions";
 import actGetTrainingSessionDetails from "./act/actGetTrainingSessionDetails";
 import actGetFilteredTrainingSessions from "./act/actGetFilteredTrainingSessions";
+import actGetActiveOrUpcomingByCourseAndInstitute from "./act/actGetActiveOrUpcomingByCourseAndInstitute";
 import actAddCourseRating from "./act/actAddCourseRating";
 import actEnrollInSession from "./act/actEnrollInSession";
 import actInitiatePayment from "./act/actInitiatePayment";
@@ -52,6 +53,10 @@ interface ITrainingSessionsState {
   locationInput: string;
   appliedFilters: AppliedFilters;
   page: number;
+
+  courseSessions: Record<number, TTrainingSessionListItem[]>;
+  courseSessionsLoading: Record<number, boolean>;
+  courseSessionsError: Record<number, string | null>;
 }
 
 const initialState: ITrainingSessionsState = {
@@ -84,6 +89,9 @@ const initialState: ITrainingSessionsState = {
     location: "",
   },
   page: 1,
+  courseSessions: {},
+  courseSessionsLoading: {},
+  courseSessionsError: {},
 };
 
 const trainingSessionsSlice = createSlice({
@@ -140,6 +148,22 @@ const trainingSessionsSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.pending, (state, action) => {
+      const courseId = action.meta.arg.courseId;
+      state.courseSessionsLoading[courseId] = true;
+      state.courseSessionsError[courseId] = null;
+    });
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.fulfilled, (state, action) => {
+      const courseId = action.meta.arg.courseId;
+      state.courseSessionsLoading[courseId] = false;
+      state.courseSessions[courseId] = action.payload;
+    });
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.rejected, (state, action) => {
+      const courseId = action.meta.arg.courseId;
+      state.courseSessionsLoading[courseId] = false;
+      if (action.payload && typeof action.payload == "string")
+        state.courseSessionsError[courseId] = action.payload;
+    });
     builder.addCase(actGetCategories.pending, (state) => {
       state.categoriesLoading = "pending";
       state.categoriesError = null;
@@ -434,6 +458,7 @@ export {
   actSearchTrainingSessions,
   actGetTrainingSessionDetails,
   actGetFilteredTrainingSessions,
+  actGetActiveOrUpcomingByCourseAndInstitute,
   actAddCourseRating,
   actEnrollInSession,
   actGetCategories,

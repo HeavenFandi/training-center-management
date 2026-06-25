@@ -5,7 +5,7 @@ import { RootState } from "../../index";
 
 const actGetStudents = createAsyncThunk(
   "students/actGetStudents",
-  async (_, thunkAPI) => {
+  async (tenantId: string | number, thunkAPI) => {
     const { rejectWithValue, getState } = thunkAPI;
     const state = getState() as RootState;
     
@@ -16,7 +16,7 @@ const actGetStudents = createAsyncThunk(
     }
     
     try {
-      const response = await getStudents();
+      const response = await getStudents(tenantId);
       return response;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));

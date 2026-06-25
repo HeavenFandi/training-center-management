@@ -39,10 +39,10 @@ export const useStudentManagement = () => {
 
   // Fetch students on load only if we don't have data yet
   useEffect(() => {
-    if (students.length === 0) {
-      dispatch(actGetStudents());
+    if (currentInstitute?.tenantId && students.length === 0) {
+      dispatch(actGetStudents(currentInstitute.tenantId));
     }
-  }, [dispatch, students.length]);
+  }, [dispatch, students.length, currentInstitute?.tenantId]);
 
   // Check active courses for each student when students list changes
   useEffect(() => {
@@ -219,7 +219,9 @@ export const useStudentManagement = () => {
         setStudentToDelete(null);
         setDeleteErrorMessage(null);
         showSnackbar("تم حذف الطالب بنجاح", "success");
-        dispatch(actGetStudents());
+        if (currentInstitute?.tenantId) {
+          dispatch(actGetStudents(currentInstitute.tenantId));
+        }
       } else {
         const errorMessage =
           typeof resultAction.payload === "string"

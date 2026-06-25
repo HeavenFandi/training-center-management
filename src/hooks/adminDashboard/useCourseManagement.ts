@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { TCourse, TSession } from "../../types/cardType";
 import { CourseFormData } from "../../validation/CourseSchema";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -7,10 +7,14 @@ import actCreateCourse from "../../store/Courses/act/actCreateCourse";
 import actDeleteCourse from "../../store/Courses/act/actDeleteCourse";
 import actUpdateCourse from "../../store/Courses/act/actUpdateCourse";
 import actSearchCourses from "../../store/Courses/act/actSearchCourses";
-import { selectCoursesState } from "../../store/Courses/courseSlice";
+import actGetActiveOrUpcomingByCourseAndInstitute from "../../store/Courses/act/actGetActiveOrUpcomingByCourseAndInstitute";
+import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingSession";
+import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
+import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse } from "../../store/Courses/courseSlice";
 import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
+import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
@@ -38,14 +42,10 @@ export const useCourseManagement = () => {
   const [openEditModal, setOpenEditModel] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [courses, setCourses] = useState<TCourse[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Sync local courses with Redux
-  useEffect(() => {
-    setCourses(reduxCourses);
-  }, [reduxCourses]);
+  const courses = reduxCourses;
 
   // Fetch courses when currentInstitute has tenantId only if we don't have data yet
   useEffect(() => {
@@ -53,6 +53,29 @@ export const useCourseManagement = () => {
       dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
     }
   }, [dispatch, currentInstitute?.tenantId, isSearching, reduxCourses.length]);
+
+  // Fetch sessions for all courses once, when we have both courses and currentInstitute
+  const hasFetchedSessionsRef = useRef(false);
+
+  useEffect(() => {
+    if (currentInstitute?.id && courses.length > 0 && !hasFetchedSessionsRef.current) {
+      courses.forEach(course => {
+        dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: course.id, instituteId: currentInstitute.id }));
+      });
+      hasFetchedSessionsRef.current = true;
+    }
+    // Reset the ref if currentInstitute changes
+    if (!currentInstitute?.id) {
+      hasFetchedSessionsRef.current = false;
+    }
+  }, [courses, currentInstitute, dispatch]);
+
+  // Fetch classrooms when currentInstitute is available
+  useEffect(() => {
+    if (currentInstitute?.id) {
+      dispatch(actGetClassroomsByInstituteId(currentInstitute.id));
+    }
+  }, [dispatch, currentInstitute?.id]);
 
   // Show errors
   useEffect(() => {
@@ -196,27 +219,53 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleAddSession = useCallback((sessionData: Omit<TSession, "id" | "lectures">) => {
-    const newSession: TSession = {
-      ...sessionData,
-      id: Date.now(),
-      lectures: [],
-    };
-
-    setCourses((prev) =>
-      prev.map((course) => {
-        if (course.id === sessionData.courseId) {
-          const updatedSessions = [...(course.sessions || []), newSession];
-          const updatedCourse = { ...course, sessions: updatedSessions };
-          if (selectedCourse?.id === sessionData.courseId) {
-            setSelectedCourse(updatedCourse);
-          }
-          return updatedCourse;
+  const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest) => {
+    try {
+      console.log("Creating training session with data:", sessionData);
+      const resultAction = await dispatch(actCreateTrainingSession(sessionData));
+      if (actCreateTrainingSession.fulfilled.match(resultAction)) {
+        console.log("Training session created successfully:", resultAction.payload);
+        showSnackbar("تم إنشاء الدورة بنجاح", "success");
+        // Refresh sessions
+        if (currentInstitute?.id) {
+          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: sessionData.courseId, instituteId: currentInstitute.id }));
         }
-        return course;
-      })
-    );
-  }, [selectedCourse]);
+      } else {
+        console.error("Failed to create training session:", resultAction.payload);
+      }
+    } catch (error) {
+      console.error("Error creating training session:", error);
+      showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
+    }
+  }, [dispatch, currentInstitute, showSnackbar]);
+
+  const handleUpdateSession = useCallback((updatedSession: TSession) => {
+    dispatch(updateSessionInCourse({ courseId: updatedSession.courseId, session: updatedSession }));
+    
+    if (selectedCourse?.id === updatedSession.courseId) {
+      setSelectedCourse(prev => prev ? {
+        ...prev,
+        sessions: prev.sessions?.map(s => s.id === updatedSession.id ? updatedSession : s)
+      } : null);
+    }
+  }, [dispatch, selectedCourse]);
+
+  const handleDeleteSession = useCallback((courseId: number, sessionId: number) => {
+    dispatch(deleteSessionFromCourse({ courseId, sessionId }));
+    
+    if (selectedCourse?.id === courseId) {
+      setSelectedCourse(prev => prev ? {
+        ...prev,
+        sessions: prev.sessions?.filter(s => s.id !== sessionId)
+      } : null);
+    }
+  }, [dispatch, selectedCourse]);
+
+  const handleFetchSessions = useCallback((courseId: number) => {
+    if (currentInstitute?.id) {
+      dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: currentInstitute.id }));
+    }
+  }, [dispatch, currentInstitute]);
 
   return {
     courses,
@@ -245,5 +294,8 @@ export const useCourseManagement = () => {
     handleCloseAdd,
     handleSaveAdd,
     handleAddSession,
+    handleUpdateSession,
+    handleDeleteSession,
+    handleFetchSessions,
   };
 };

@@ -4,7 +4,8 @@ import actCreateCourse from "./act/actCreateCourse";
 import actDeleteCourse from "./act/actDeleteCourse";
 import actUpdateCourse from "./act/actUpdateCourse";
 import actSearchCourses from "./act/actSearchCourses";
-import { TCourse } from "../../types/cardType";
+import actGetActiveOrUpcomingByCourseAndInstitute from "./act/actGetActiveOrUpcomingByCourseAndInstitute";
+import { TCourse, TSession, TTrainingSessionListItem } from "../../types/cardType";
 import { RootState } from "..";
 
 interface CoursesState {
@@ -38,7 +39,35 @@ const initialState: CoursesState = {
 const coursesSlice = createSlice({
   name: "courses",
   initialState,
-  reducers: {},
+  reducers: {
+    addSessionToCourse: (state, action) => {
+      const { courseId, session } = action.payload;
+      const course = state.courses.find(c => c.id === courseId);
+      if (course) {
+        if (!course.sessions) {
+          course.sessions = [];
+        }
+        course.sessions.push(session);
+      }
+    },
+    updateSessionInCourse: (state, action) => {
+      const { courseId, session } = action.payload;
+      const course = state.courses.find(c => c.id === courseId);
+      if (course?.sessions) {
+        const index = course.sessions.findIndex(s => s.id === session.id);
+        if (index !== -1) {
+          course.sessions[index] = session;
+        }
+      }
+    },
+    deleteSessionFromCourse: (state, action) => {
+      const { courseId, sessionId } = action.payload;
+      const course = state.courses.find(c => c.id === courseId);
+      if (course?.sessions) {
+        course.sessions = course.sessions.filter(s => s.id !== sessionId);
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(actGetCoursesByTenantId.pending, (state) => {
       // Only set loading to pending if we don't have data yet
@@ -49,11 +78,14 @@ const coursesSlice = createSlice({
     });
     builder.addCase(actGetCoursesByTenantId.fulfilled, (state, action) => {
       state.loading = "succeeded";
+      console.log("[courseSlice] actGetCoursesByTenantId.fulfilled payload:", action.payload);
       // Map API response fields to TCourse fields
       state.courses = action.payload.map(course => ({
         ...course,
         title: course.title || course.name,
         category: course.category || course.categoryName,
+        // If API returns sessions, map them (but we don't know the shape yet)
+        sessions: course.sessions || [],
       }));
     });
     builder.addCase(actGetCoursesByTenantId.rejected, (state, action) => {
@@ -143,8 +175,44 @@ const coursesSlice = createSlice({
         state.updateError = action.payload;
       }
     });
+    // Add case for actGetActiveOrUpcomingByCourseAndInstitute
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.pending, (state) => {
+      // Maybe add a loading state per course?
+    });
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.fulfilled, (state, action) => {
+      const { courseId } = action.meta.arg;
+      const course = state.courses.find(c => c.id === courseId);
+      if (course) {
+        // Map TTrainingSessionListItem to TSession
+        course.sessions = action.payload.map((session: TTrainingSessionListItem) => ({
+          id: session.id,
+          title: session.title,
+          courseId: courseId,
+          instructorId: 0, // We don't have this from this endpoint, default to 0
+          semester: "", // Default to empty
+          price: session.price,
+          availableSeats: session.availableSeats,
+          minCapacity: 0, // Default to 0
+          sessionsCount: 0, // Default to 0
+          duration: session.duration,
+          status: "نشطة", // Default to active
+          requiredEquipment: "", // Default to empty
+          startDate: "", // Default to empty
+          startTime: "", // Default to empty
+          endDate: "", // Default to empty
+          days: [], // Default to empty
+          hall: session.location, // Use location as hall
+          image: session.image,
+          lectures: [], // Default to empty
+        }));
+      }
+    });
+    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.rejected, (state, action) => {
+      console.error("Failed to fetch sessions:", action.payload);
+    });
   },
 });
 
+export const { addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse } = coursesSlice.actions;
 export const selectCoursesState = (state: RootState) => state.courses;
 export default coursesSlice.reducer;

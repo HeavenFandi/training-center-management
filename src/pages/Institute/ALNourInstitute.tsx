@@ -5,23 +5,42 @@ import {
   Stack,
   Container,
   CircularProgress,
+  Card,
+  CardContent,
+  
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  coursesData,
   instituteInfo as defaultInstituteInfo,
 } from "../../data/coursedata";
 import { InstituteCard } from "../../components/Institute/InstituteCard";
 import { SidebarInfo } from "../../components/Institute/SidebarInfo";
 import { getInstituteById, Institute } from "../../api/instituteApi";
+import { getCoursesByTenantId } from "../../api/courseApi";
+import { TCourse } from "../../types/cardType";
+import { RootState, AppDispatch } from "../../store";
+import { actGetActiveOrUpcomingByCourseAndInstitute } from "../../store/Courses/trainingSessionsSlice";
 
 const ALNourInstitute = memo(() => {
   const { id } = useParams();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [institute, setInstitute] = useState<Institute | null>(null);
+  const [courses, setCourses] = useState<TCourse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [coursesLoading, setCoursesLoading] = useState(false);
   const [error, setError] = useState("");
+  const [expandedCourseId, setExpandedCourseId] = useState<number | null>(null);
+
+  const courseSessions = useSelector((state: RootState) => {
+    const sessions = state.trainingSessions.courseSessions;
+    console.log("[DEBUG] courseSessions from store:", sessions);
+    return sessions;
+  });
+  const courseSessionsLoading = useSelector((state: RootState) => state.trainingSessions.courseSessionsLoading);
+  const courseSessionsError = useSelector((state: RootState) => state.trainingSessions.courseSessionsError);
 
   useEffect(() => {
     const fetchInstitute = async () => {
@@ -30,7 +49,9 @@ const ALNourInstitute = memo(() => {
         setError("");
 
         const instituteId = id || 1;
+        console.log("[DEBUG] Fetching institute with ID:", instituteId);
         const data = await getInstituteById(instituteId);
+        console.log("[DEBUG] Institute data received:", data);
 
         setInstitute(data);
       } catch (error) {
@@ -43,6 +64,26 @@ const ALNourInstitute = memo(() => {
 
     fetchInstitute();
   }, [id]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      if (!institute?.tenantId) return;
+      
+      try {
+        setCoursesLoading(true);
+        console.log("[DEBUG] Fetching courses for tenantId:", institute.tenantId);
+        const coursesData = await getCoursesByTenantId(String(institute.tenantId));
+        console.log("[DEBUG] Courses data received:", coursesData);
+        setCourses(coursesData);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      } finally {
+        setCoursesLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [institute?.tenantId]);
 
   const displayInfo = useMemo(() => {
     if (institute) {
@@ -82,15 +123,24 @@ const ALNourInstitute = memo(() => {
     return defaultInstituteInfo;
   }, [institute]);
 
-  const instituteCourses = coursesData.filter((course) => {
-    const instituteName = displayInfo?.name || "";
+  // We'll use the courses from API directly, no need to filter
+  const instituteCourses = courses;
 
-    return (
-      course.institute?.includes(instituteName) ||
-      course.institute?.includes("النور") ||
-      course.institute?.includes("النخبة")
-    );
-  });
+  const handleViewSessions = async (courseId: number) => {
+    console.log("[DEBUG] handleViewSessions called with courseId:", courseId);
+    console.log("[DEBUG] Current institute:", institute);
+    if (institute) {
+      console.log("[DEBUG] Dispatching actGetActiveOrUpcomingByCourseAndInstitute with courseId:", courseId, "instituteId:", institute.id);
+      await dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: institute.id }));
+      setExpandedCourseId(courseId === expandedCourseId ? null : courseId);
+    } else {
+      console.warn("[DEBUG] No institute available!");
+    }
+  };
+
+  const handleToggle = (courseId: number) => {
+    setExpandedCourseId(courseId === expandedCourseId ? null : courseId);
+  };
 
   if (loading) {
     return (
@@ -188,15 +238,81 @@ const ALNourInstitute = memo(() => {
                 display: "flex",
                 alignItems: "center",
                 gap: 1.5,
-              }}>
+              }}
+            >
               <SchoolIcon color="primary" />
               الدورات التدريبية المتاحة
             </Typography>
 
             <Stack spacing={2}>
-              {instituteCourses.length > 0 ? (
+              {coursesLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+                  <CircularProgress />
+                </Box>
+              ) : instituteCourses.length > 0 ? (
                 instituteCourses.map((course) => (
-                  <InstituteCard key={course.id} course={course} />
+                  <React.Fragment key={course.id}>
+                    <InstituteCard 
+                      course={course} 
+                      isExpanded={expandedCourseId === course.id}
+                      onToggle={() => handleToggle(course.id)}
+                      onViewSessions={() => handleViewSessions(course.id)}
+                    />
+                    {expandedCourseId === course.id && (
+                      <Box sx={{ pl: 2, pr: 2, pb: 2 }}>
+                        {courseSessionsLoading[course.id] ? (
+                          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        ) : courseSessionsError[course.id] ? (
+                          <Typography color="error" textAlign="center">
+                            {courseSessionsError[course.id]}
+                          </Typography>
+                        ) : courseSessions[course.id] && courseSessions[course.id].length > 0 ? (
+                          <Stack spacing={1}>
+                            {courseSessions[course.id].map((session) => (
+                              <Card 
+                                key={session.id}
+                                sx={{
+                                  borderRadius: "12px",
+                                  backgroundColor: "rgba(255,255,255,0.8)",
+                                  border: "1px solid rgba(19, 62, 101, 0.1)"
+                                }}
+                              >
+                                <CardContent sx={{ p: 2 }}>
+                                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Box>
+                                      <Typography variant="subtitle2" fontWeight="bold">
+                                        {session.title}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary">
+                                        المدرب: {session.teacherName} | المدة: {session.duration}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary">
+                                        المكان: {session.location}
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ textAlign: "left" }}>
+                                      <Typography variant="h6" color="primary" fontWeight="bold">
+                                        ${session.price}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        المقاعد المتاحة: {session.availableSeats}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </Stack>
+                        ) : (
+                          <Typography textAlign="center" color="text.secondary">
+                            لا توجد دورات متاحة حاليًا لهذه الدورة
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </React.Fragment>
                 ))
               ) : (
                 <Typography
@@ -207,7 +323,8 @@ const ALNourInstitute = memo(() => {
                     p: 2,
                     textAlign: "center",
                     fontWeight: 700,
-                  }}>
+                  }}
+                >
                   لا توجد دورات متاحة حاليًا لهذا المعهد
                 </Typography>
               )}

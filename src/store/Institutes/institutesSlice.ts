@@ -6,6 +6,7 @@ import actGetInstituteByUserId from "./act/actGetInstituteByUserId";
 import actUpdateInstitute from "./act/actUpdateInstitute";
 import actGetInstituteMonthlyRegistrations from "./act/actGetInstituteMonthlyRegistrations";
 import actGetStudentsCount from "./act/actGetStudentsCount";
+import actGetInstituteFinancialMonthly from "./act/actGetInstituteFinancialMonthly";
 
 interface InstitutesState {
   createLoading: boolean;
@@ -24,6 +25,9 @@ interface InstitutesState {
   studentsCount: number | null;
   studentsCountLoading: boolean;
   studentsCountError: string | null;
+  financialMonthly: any[];
+  financialMonthlyLoading: boolean;
+  financialMonthlyError: string | null;
 }
 
 const initialState: InstitutesState = {
@@ -43,6 +47,9 @@ const initialState: InstitutesState = {
   studentsCount: null,
   studentsCountLoading: false,
   studentsCountError: null,
+  financialMonthly: [],
+  financialMonthlyLoading: false,
+  financialMonthlyError: null,
 };
 
 const institutesSlice = createSlice({
@@ -161,10 +168,23 @@ const institutesSlice = createSlice({
       .addCase(actGetStudentsCount.rejected, (state, action) => {
         state.studentsCountLoading = false;
         state.studentsCountError = action.payload as string;
+      })
+      .addCase(actGetInstituteFinancialMonthly.pending, (state) => {
+        state.financialMonthlyLoading = true;
+        state.financialMonthlyError = null;
+      })
+      .addCase(actGetInstituteFinancialMonthly.fulfilled, (state, action) => {
+        state.financialMonthlyLoading = false;
+        state.financialMonthlyError = null;
+        state.financialMonthly = action.payload;
+      })
+      .addCase(actGetInstituteFinancialMonthly.rejected, (state, action) => {
+        state.financialMonthlyLoading = false;
+        state.financialMonthlyError = action.payload as string;
       });
   },
 });
 
-export { actCreateInstitute, actGetInstituteById, actGetInstituteByTenantId, actGetInstituteByUserId, actUpdateInstitute, actGetInstituteMonthlyRegistrations, actGetStudentsCount };
+export { actCreateInstitute, actGetInstituteById, actGetInstituteByTenantId, actGetInstituteByUserId, actUpdateInstitute, actGetInstituteMonthlyRegistrations, actGetStudentsCount, actGetInstituteFinancialMonthly };
 export const { resetInstituteState } = institutesSlice.actions;
 export default institutesSlice.reducer;

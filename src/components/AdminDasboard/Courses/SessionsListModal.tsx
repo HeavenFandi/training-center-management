@@ -55,7 +55,7 @@ const SessionsListModal: React.FC<SessionsListModalProps> = ({
       }}
     >
       <DialogTitle sx={{ p: 3, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography variant="h6" fontWeight="900" color="#133E65" sx={{ fontFamily: "Tajawal" }}>
+        <Typography variant="h6" component="div" fontWeight="900" color="#133E65" sx={{ fontFamily: "Tajawal" }}>
           الدورات المتاحة - {course.title}
         </Typography>
         <IconButton onClick={onClose} size="small" sx={{ bgcolor: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>

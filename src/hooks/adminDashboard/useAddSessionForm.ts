@@ -4,17 +4,58 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { sessionSchema, SessionFormData } from "../../validation/SessionSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TSession } from "../../types/cardType";
+import { useAppSelector } from "../../store/hooks";
+import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
+
+// Map Arabic day names to English for API
+const dayMap: Record<string, string> = {
+  "الاثنين": "MONDAY",
+  "الثلاثاء": "TUESDAY",
+  "الأربعاء": "WEDNESDAY",
+  "الخميس": "THURSDAY",
+  "الأحد": "SUNDAY"
+};
 
 interface UseAddSessionFormProps {
   onClose: () => void;
-  onSave: (sessionData: Omit<TSession, "id" | "lectures">) => void;
+  onSave: (sessionData: CreateTrainingSessionRequest) => void;
   initialSession?: TSession | null;
+  courseId?: number;
 }
 
-export const useAddSessionForm = ({ onClose, onSave, initialSession }: UseAddSessionFormProps) => {
-  const { showSnackbar } = useSnackbar();
-  const [selectedDays, setSelectedDays] = useState<string[]>(initialSession?.days || []);
+// Convert "HH:mm" to "HH:mm:ss" for LocalTime
+const formatTimeForApi = (timeStr: string) => {
+  if (!timeStr) return "00:00:00";
+  const parts = timeStr.split(":");
+  const hour = parts[0]?.padStart(2, "0") || "00";
+  const minute = parts[1]?.padStart(2, "0") || "00";
+  return `${hour}:${minute}:00`;
+};
+
+// Helper to convert any time value (string or object) to "HH:mm" for form state
+const parseTimeToFormState = (time: any): string => {
+  if (!time) return "09:00";
   
+  // If time is a string (already "HH:mm" or "HH:mm:ss")
+  if (typeof time === "string") {
+    const parts = time.split(":");
+    return `${parts[0]?.padStart(2, "0") || "09"}:${parts[1]?.padStart(2, "0") || "00"}`;
+  }
+  
+  // If time is an object with hour and minute
+  if (typeof time === "object" && time !== null && "hour" in time && "minute" in time) {
+    return `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
+  }
+  
+  return "09:00";
+};
+
+export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }: UseAddSessionFormProps) => {
+  const { showSnackbar } = useSnackbar();
+  // selectedDays will hold Arabic day names for display
+  const [selectedDays, setSelectedDays] = useState<string[]>(initialSession?.days || []);
+  const classrooms = useAppSelector((state) => state.classrooms.list);
+
   const {
     register,
     handleSubmit,
@@ -25,124 +66,77 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession }: UseAddSes
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
-    defaultValues: initialSession ? {
-      courseId: initialSession.courseId,
-      instructorId: initialSession.instructorId,
-      semester: initialSession.semester,
-      price: String(initialSession.price),
-      availableSeats: String(initialSession.availableSeats),
-      minCapacity: String(initialSession.minCapacity),
-      sessionsCount: String(initialSession.sessionsCount),
-      duration: initialSession.duration,
-      status: initialSession.status,
-      requiredEquipment: initialSession.requiredEquipment,
-      startDate: initialSession.startDate,
-      startTime: initialSession.startTime,
-      endDate: initialSession.endDate,
-      days: initialSession.days,
-      image: initialSession.image || "",
-    } : {
-      courseId: 0,
-      instructorId: 0,
-      semester: "",
-      price: "",
-      availableSeats: "",
-      minCapacity: "",
-      sessionsCount: "",
-      duration: "",
-      status: "قيد الانتظار",
-      requiredEquipment: "",
-      startDate: "",
-      startTime: "",
-      endDate: "",
-      days: [],
-      image: "",
+    defaultValues: {
+      courseId: courseId || 0,
+      teacherId: 0,
+      classroomId: 0,
+      price: initialSession?.price || 0,
+      availableSeats: initialSession?.availableSeats || 0,
+      minSeats: initialSession?.minCapacity || 0,
+      numberOfLectures: initialSession?.sessionsCount || 0,
+      duration: initialSession?.duration || "",
+      status: "UPCOMING",
+      requiredEquipment: initialSession?.requiredEquipment || "",
+      startDate: initialSession?.startDate || "",
+      startTime: parseTimeToFormState(initialSession?.startTime),
+      endTime: "10:00",
+      daysOfWeek: [],
     },
   });
 
+  // When classrooms are available, set classroomId to first available if it's still 0
+  useEffect(() => {
+    if (classrooms.length > 0 && watch("classroomId") === 0) {
+      setValue("classroomId", classrooms[0].id);
+    }
+  }, [classrooms, watch, setValue]);
 
   useEffect(() => {
-    if (initialSession) {
-      reset({
-        courseId: initialSession.courseId,
-        instructorId: initialSession.instructorId,
-        semester: initialSession.semester,
-        price: String(initialSession.price),
-        availableSeats: String(initialSession.availableSeats),
-        minCapacity: String(initialSession.minCapacity),
-        sessionsCount: String(initialSession.sessionsCount),
-        duration: initialSession.duration,
-        status: initialSession.status,
-        requiredEquipment: initialSession.requiredEquipment,
-        startDate: initialSession.startDate,
-        startTime: initialSession.startTime,
-        endDate: initialSession.endDate,
-        days: initialSession.days,
-        image: initialSession.image || "",
-      });
-      setSelectedDays(initialSession.days);
-    } else {
-      reset({
-        courseId: 0,
-        instructorId: 0,
-        semester: "",
-        price: "",
-        availableSeats: "",
-        minCapacity: "",
-        sessionsCount: "",
-        duration: "",
-        status: "قيد الانتظار",
-        requiredEquipment: "",
-        startDate: "",
-        startTime: "",
-        endDate: "",
-        days: [],
-        image: "",
-      });
-      setSelectedDays([]);
+    if (courseId) {
+      setValue("courseId", courseId);
     }
-  }, [initialSession, reset]);
+  }, [courseId, setValue]);
 
-  const toggleDay = useCallback((day: string) => {
-    setSelectedDays((prevDays) => {
-      const newDays = prevDays.includes(day)
-        ? prevDays.filter((d) => d !== day)
-        : [...prevDays, day];
+  const toggleDay = useCallback((arabicDay: string) => {
+    setSelectedDays((prevArabicDays) => {
+      const newArabicDays = prevArabicDays.includes(arabicDay)
+        ? prevArabicDays.filter((d) => d !== arabicDay)
+        : [...prevArabicDays, arabicDay];
 
-      setValue("days", newDays, { shouldValidate: true });
-      return newDays;
+      // Convert Arabic days to English for the API
+      const newEnglishDays = newArabicDays.map((d) => dayMap[d]);
+
+      console.log("Toggling day:", arabicDay, "New Arabic days:", newArabicDays, "New English days:", newEnglishDays);
+      setValue("daysOfWeek", newEnglishDays, { shouldValidate: true });
+      return newArabicDays;
     });
   }, [setValue]);
 
   const onSubmit = useCallback((data: SessionFormData) => {
-    
-    
-    
-    
-    onSave({
-      title: `كورس - ${data.semester}`,
-      courseId: data.courseId,
-      instructorId: data.instructorId,
-      semester: data.semester,
-      price: Number(data.price),
-      availableSeats: Number(data.availableSeats),
-      minCapacity: Number(data.minCapacity),
-      sessionsCount: Number(data.sessionsCount),
-      duration: data.duration,
-      status: data.status,
-      requiredEquipment: data.requiredEquipment || "",
-      startDate: data.startDate,
-      startTime: data.startTime,
-      endDate: data.endDate,
-      days: data.days,
-      image: data.image,
-      hall: data.semester, 
-    });
-    reset();
-    setSelectedDays([]);
-    showSnackbar("تم إنشاء الدورة بنجاح", "success");
+    // Convert times to LocalTime format "HH:mm:ss"
+    const apiData: CreateTrainingSessionRequest = {
+      ...data,
+      startTime: formatTimeForApi(data.startTime),
+      endTime: formatTimeForApi(data.endTime),
+    };
+    console.log("Submitting session data to API:", apiData);
+    onSave(apiData);
     onClose();
-  }, [onClose, onSave, reset, showSnackbar]);
+  }, [onClose, onSave]);
+
+  const handleTimeChange = (field: "startTime" | "endTime", timeStr: string) => {
+    setValue(field, timeStr, { shouldValidate: true });
+  };
+
+  // Override the reset to also reset selectedDays
+  const resetSelectedDays = useCallback(() => {
+    setSelectedDays(initialSession?.days || []);
+  }, [initialSession]);
+
+  const resetWithDays = useCallback((values?: Partial<SessionFormData>) => {
+    reset(values);
+    resetSelectedDays();
+  }, [reset, resetSelectedDays]);
 
   return {
     register,
@@ -153,6 +147,9 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession }: UseAddSes
     toggleDay,
     onSubmit,
     watch,
+    handleTimeChange,
+    classrooms,
+    reset: resetWithDays,
   };
 };
 

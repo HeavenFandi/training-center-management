@@ -5,7 +5,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
-import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly } from "../../store/Institutes/institutesSlice";
 import MonthlyRegistrationChart from "../../components/AdminDasboard/MainDashboard/MonthlyRegistrationChart";
 import FinancialCard from "../../components/AdminDasboard/MainDashboard/FinancialCard";
 import ScheduleCard from "../../components/AdminDasboard/MainDashboard/ScheduleCard";
@@ -37,7 +37,7 @@ const AdminOverview: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError } =
+  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError } =
     useAppSelector((state) => state.institutes);
     
   const showInstituteLoading = useDelayedLoading(currentInstituteLoading);
@@ -69,6 +69,34 @@ const AdminOverview: React.FC = () => {
     return result;
   }, [monthlyRegistrations]);
 
+  // Process financial monthly data
+  const processedFinancialData = useMemo(() => {
+    console.log("Financial monthly response (processedFinancialData):", financialMonthly);
+    const result: { name: string; totalRevenue: number; totalPayments: number }[] = [];
+
+    for (let i = 1; i <= 12; i++) {
+      const monthData = financialMonthly.find((item) => 
+        item.month === i || item.Month === i || item.monthNumber === i || item.MonthNumber === i
+      );
+      result.push({
+        name: arabicMonths[i],
+        totalRevenue: monthData?.totalRevenue ?? 0,
+        totalPayments: monthData?.totalPayments ?? 0,
+      });
+    }
+    console.log("AdminOverview: processedFinancialData:", result);
+    return result;
+  }, [financialMonthly]);
+
+  // Calculate total revenue and total payments for the year
+  const totalYearlyRevenue = useMemo(() => {
+    return processedFinancialData.reduce((sum, item) => sum + item.totalRevenue, 0);
+  }, [processedFinancialData]);
+
+  const totalYearlyPayments = useMemo(() => {
+    return processedFinancialData.reduce((sum, item) => sum + item.totalPayments, 0);
+  }, [processedFinancialData]);
+
   const handleLogout = () => {
     dispatch(logout());
     navigate("/");
@@ -94,6 +122,18 @@ const AdminOverview: React.FC = () => {
       return; // Guard clause
     }
     dispatch(actGetInstituteMonthlyRegistrations({ id: instituteId, year: currentYear }));
+  }, [dispatch, currentInstitute, currentYear]);
+
+  // Fetch financial monthly data only when currentInstitute exists
+  useEffect(() => {
+    const instituteId = currentInstitute?.id;
+    console.log("currentInstitute (financial):", currentInstitute);
+    console.log("currentInstitute.id (financial):", currentInstitute?.id);
+    console.log("Year (financial):", currentYear);
+    if (!currentInstitute?.id) {
+      return; // Guard clause
+    }
+    dispatch(actGetInstituteFinancialMonthly({ id: instituteId, year: currentYear }));
   }, [dispatch, currentInstitute, currentYear]);
 
   // Log state changes
@@ -199,7 +239,11 @@ const AdminOverview: React.FC = () => {
                  <ScheduleCard data={schedule} />
                </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <FinancialCard data={financialData} total={4500} previous={3500} />
+          <FinancialCard 
+            data={processedFinancialData.map(item => ({ value: item.totalRevenue }))} 
+            total={totalYearlyRevenue} 
+            previous={totalYearlyPayments} 
+          />
         </Grid>
       </Grid>
     </>
