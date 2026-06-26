@@ -41,6 +41,14 @@ export interface TTrainingSessionListItem {
   institute: string;
   location: string;
   image: string;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  days?: string[];
+  minSeats?: number;
+  numberOfLectures?: number;
+  requiredEquipment?: string;
+  classroomName?: string;
 }
 
 export interface TTrainingSessionDetails {
@@ -118,6 +126,7 @@ export interface TSession {
   lectures: TLecture[];
   date?: string;
   time?: string;
+  teacherName?: string;
 }
 
 export type TSuggestionType = "ROOM_SWAP" | "SERIES_SHIFT" | "PARTIAL";
