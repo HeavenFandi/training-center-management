@@ -54,7 +54,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
   setPendingImageFile,
   imageUpdateLoading = false,
 }) => {
-  const [tempImageUrl, setTempImageUrl] = useState<string | undefined>(teacher?.image);
+  const [tempImageUrl, setTempImageUrl] = useState<string | undefined>(teacher?.image ?? undefined);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -95,7 +95,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
       setValue("address", teacher.address || "");
       setValue("cv", teacher.cv || "");
       setValue("experienceYears", teacher.experienceYears || 0);
-      setTempImageUrl(teacher.image);
+      setTempImageUrl(teacher.image ?? undefined);
       setValidationError(null);
     }
   }, [teacher, open, setValue]);

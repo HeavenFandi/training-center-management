@@ -97,7 +97,7 @@ const actAuthRegister = createAsyncThunk<
           statusText: error.response?.statusText,
           serverData,
           message: error.message,
-          requestURL: error.config?.baseURL + error.config?.url,
+          requestURL: (error.config?.baseURL ?? "") + (error.config?.url ?? ""),
           requestMethod: error.config?.method,
         });
 

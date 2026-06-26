@@ -136,8 +136,20 @@ const CourseManagement = () => {
           course={sessionTargetCourse}
           onSave={(data) => {
             if (editingSession) {
-              handleUpdateSession({ ...editingSession, ...data });
-              handleCloseAddSession();
+              // Map status to Arabic for TSession
+              const statusMap: Record<string, any> = {
+                "UPCOMING": "قيد الانتظار",
+                "ACTIVE": "نشطة",
+                "COMPLETED": "مكتملة"
+              };
+              handleUpdateSession({
+                ...editingSession,
+                ...data,
+                status: statusMap[data.status as string],
+                minCapacity: data.minSeats,
+                sessionsCount: data.numberOfLectures,
+                hall: "", // We don't have hall from form data, keep existing or empty
+              } as TSession);
             } else {
               handleAddSession(data, handleCloseAddSession);
             }
@@ -157,7 +169,7 @@ const CourseManagement = () => {
           open={isSessionDetailsOpen}
           onClose={() => setIsSessionDetailsOpen(false)}
           session={selectedSession}
-          course={sessionTargetCourse || { id: 0, title: "", category: "", price: 0, requirements: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
+          course={sessionTargetCourse || { id: 0, title: "", category: "", categoryName: "", price: 0, requirements: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, hours: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
           onUpdateSession={handleLocalUpdateSession}
         />
       )}

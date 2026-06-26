@@ -216,6 +216,7 @@ export const useStudentDashboard = () => {
     gender: "",
     birthDate: "",
     address: "",
+    interest: "",
     bio: "",
     enrollmentDate: "",
     image: "",

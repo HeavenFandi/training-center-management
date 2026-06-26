@@ -34,7 +34,10 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   };
 
   return (
-    <Stack spacing={3}>
+
+
+    <Stack spacing={3} sx={{margin:"10px"}}>
+
      
           <Stack direction={{ xs: "column", sm: "row"}} sx={{gap:"10px"}}  alignItems="flex-start">
             {session.image && (
@@ -80,7 +83,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   <Grid container spacing={3} rowSpacing={3}  >
  
   <Grid size={{ xs: 12, sm: 6 }} >
-    <Stack direction="row" spacing={2} alignItems="center">
+
+    <Stack direction="row" spacing={2} alignItems="center" sx={{gap:"10px"}}>
+
       <CalendarTodayIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography
@@ -102,7 +107,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
 
 
     <Grid size={{ xs: 12, sm: 6 }}>
-    <Stack direction="row" spacing={2} alignItems="center">
+
+    <Stack direction="row" spacing={2} alignItems="center" sx={{gap:"10px"}}>
+
       <AccessTimeIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography
@@ -132,7 +139,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   </Grid>
 
    <Grid size={{ xs: 12, sm: 6 }}>
-    <Stack direction="row" spacing={2} alignItems="center">
+
+    <Stack direction="row" spacing={2} alignItems="center" sx={{gap:"10px"}}>
+
       <PersonIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography
@@ -153,7 +162,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   </Grid>
 
   <Grid size={{ xs: 12, sm: 6 }}>
-    <Stack direction="row" spacing={2} alignItems="center">
+
+    <Stack direction="row" spacing={2} alignItems="center"sx={{gap:"10px"}}>
+
       <MeetingRoomIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography
@@ -174,7 +185,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   </Grid>
 
   <Grid size={{ xs: 12, sm: 6 }}>
-    <Stack direction="row" spacing={2} alignItems="center">
+
+    <Stack direction="row" spacing={2} alignItems="center" sx={{gap:"10px"}}>
+
       <AttachMoneyIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography
@@ -197,7 +210,7 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
   </Grid>
 
   <Grid size={{ xs: 12, sm: 6 }}>
-    <Stack direction="row" spacing={2} alignItems="center">
+    <Stack direction="row" spacing={2} alignItems="center" sx={{gap:"10px"}}>
       <EventSeatIcon sx={{ fontSize: 20, color: "#133e65" }} />
       <Box>
         <Typography

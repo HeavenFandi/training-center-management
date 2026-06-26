@@ -9,7 +9,7 @@ axiosClient.interceptors.request.use((config) => {
     url: config.url,
     method: config.method,
     baseURL: config.baseURL,
-    fullURL: config.baseURL + config.url,
+    fullURL: (config.baseURL ?? "") + (config.url ?? ""),
     headers: config.headers,
     data: config.data,
     dataType: typeof config.data

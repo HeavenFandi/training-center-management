@@ -167,7 +167,7 @@ export const useStudentManagement = () => {
       address: mergedData.address,
       bio: mergedData.bio,
       interest: mergedData.interest,
-      profilePicture: pendingImageFile,
+      profilePicture: pendingImageFile ?? undefined,
     };
     console.log("Update payload:", updatePayload);
 
