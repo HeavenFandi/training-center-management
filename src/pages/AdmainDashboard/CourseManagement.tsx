@@ -30,7 +30,6 @@ const CourseManagement = () => {
     adminCoursesLoading,
     tenantId,
     searchQuery,
-     creatingSession,
     handleSearch,
     handleClearSearch,
     handleDeleteCourse,
@@ -49,6 +48,9 @@ const CourseManagement = () => {
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,
+    handleSelectSuggestion,
+    submittingSuggestion,
+    creatingSession,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -151,6 +153,7 @@ const CourseManagement = () => {
                 sessionsCount: data.numberOfLectures,
                 hall: "", // We don't have hall from form data, keep existing or empty
               } as TSession);
+              handleCloseAddSession();
             } else {
               handleAddSession(data, handleCloseAddSession);
             }
@@ -164,6 +167,9 @@ const CourseManagement = () => {
         open={openConflictDialog}
         onClose={handleCloseConflictDialog}
         conflictData={conflictData}
+        onSelectSuggestion={handleSelectSuggestion}
+        submitting={submittingSuggestion}
+        onSuccess={handleCloseAddSession}
       />
 
       {isSessionDetailsOpen && (
