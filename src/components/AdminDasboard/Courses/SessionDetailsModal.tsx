@@ -92,33 +92,43 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
       open={open} 
       onClose={onClose} 
       fullWidth 
-      maxWidth="sm" 
+      maxWidth="md" 
       dir="rtl"
       PaperProps={{
         sx: {
-          borderRadius: "28px",
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.4)",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+          borderRadius: "24px",
+          backgroundColor: "#fff",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           overflow: "hidden",
         }
       }}
     >
-      <DialogTitle sx={{ fontFamily: "Tajawal", fontWeight: "bold", bgcolor: "rgba(248, 249, 250, 0.4)" }}>
+      <DialogTitle sx={{ 
+        fontFamily: "Tajawal", 
+        fontWeight: 700, 
+        bgcolor: "#f8fafc",
+        borderBottom: "1px solid #e2e8f0",
+        px: 3,
+        py: 2.5
+      }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight="bold" sx={{ fontFamily: "Tajawal" }}>
-            تفاصيل الدورة: {session.title}
+          <Typography variant="h5" fontWeight="700" sx={{ fontFamily: "Tajawal", color: "#0f172a" }}>
+            تفاصيل الجلسة: {session.title}
           </Typography>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" sx={{ color: "#64748b" }}>
             <CloseIcon />
           </IconButton>
         </Stack>
       </DialogTitle>
 
-      <DialogContent sx={{ mt: 2 }}>
+      <DialogContent sx={{ 
+        mt: 0, 
+        p: 3,
+        maxHeight: "80vh",
+        overflowY: "auto"
+      }}>
         <SessionBasicInfo session={session} course={course} />
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ my: 3 }} />
         <LecturesList 
           lectures={session.lectures} 
           onAddLecture={handleOpenAddLecture} 

@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createSessionSchema, SessionFormData } from "../../validation/SessionSchema";
+import { sessionSchema, SessionFormData } from "../../validation/SessionSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TSession } from "../../types/cardType";
 import { useAppSelector } from "../../store/hooks";
@@ -69,12 +69,6 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
   // selectedDays will hold Arabic day names for display
   const [selectedDays, setSelectedDays] = useState<string[]>(initialSession?.days || []);
   const classrooms = useAppSelector((state) => state.classrooms.list);
-  const currentInstitute = useAppSelector((state) => state.institutes.currentInstitute);
-
-  // Create dynamic schema based on current institute
-  const dynamicSchema = useMemo(() => {
-    return createSessionSchema(currentInstitute);
-  }, [currentInstitute]);
 
   const {
     register,
@@ -84,7 +78,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     reset,
     watch,
   } = useForm<SessionFormData>({
-    resolver: zodResolver(dynamicSchema),
+    resolver: zodResolver(sessionSchema),
     mode: "onChange",
     defaultValues: {
       courseId: courseId || 0,
