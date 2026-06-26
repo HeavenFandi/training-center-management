@@ -44,6 +44,8 @@ export const useCourseManagement = () => {
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [openConflictDialog, setOpenConflictDialog] = useState(false);
+  const [conflictData, setConflictData] = useState<any>(null);
 
   const courses = reduxCourses;
 
@@ -219,7 +221,12 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest) => {
+  const handleCloseConflictDialog = useCallback(() => {
+    setOpenConflictDialog(false);
+    setConflictData(null);
+  }, []);
+
+  const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest, onSuccess?: () => void) => {
     try {
       console.log("Creating training session with data:", sessionData);
       const resultAction = await dispatch(actCreateTrainingSession(sessionData));
@@ -230,8 +237,18 @@ export const useCourseManagement = () => {
         if (currentInstitute?.id) {
           dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: sessionData.courseId, instituteId: currentInstitute.id }));
         }
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         console.error("Failed to create training session:", resultAction.payload);
+        const payload = resultAction.payload as any;
+        if (payload?.status === 409) {
+          setConflictData(payload.data);
+          setOpenConflictDialog(true);
+        } else {
+          showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
+        }
       }
     } catch (error) {
       console.error("Error creating training session:", error);
@@ -274,6 +291,8 @@ export const useCourseManagement = () => {
     openEditModal,
     openAddModal,
     openDetailsModal,
+    openConflictDialog,
+    conflictData,
     createLoading,
     updateLoading,
     searchLoading,
@@ -297,5 +316,6 @@ export const useCourseManagement = () => {
     handleUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    handleCloseConflictDialog,
   };
 };

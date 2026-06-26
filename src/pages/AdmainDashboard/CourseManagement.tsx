@@ -11,6 +11,7 @@ import CourseManagementGrid from "../../components/AdminDasboard/Courses/CourseM
 import AddSessionModal from "../../components/AdminDasboard/Courses/AddSessionModal";
 import SessionDetailsModal from "../../components/AdminDasboard/Courses/SessionDetailsModal";
 import SessionsListModal from "../../components/AdminDasboard/Courses/SessionsListModal";
+import SchedulingConflictDialog from "../../components/AdminDasboard/Courses/SchedulingConflictDialog";
 import { TCourse, TSession } from "../../types/cardType";
 
 const CourseManagement = () => {
@@ -21,6 +22,8 @@ const CourseManagement = () => {
     openEditModal,
     openAddModal,
     openDetailsModal,
+    openConflictDialog,
+    conflictData,
     createLoading,
     updateLoading,
     searchLoading,
@@ -44,6 +47,7 @@ const CourseManagement = () => {
     handleUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    handleCloseConflictDialog,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -133,13 +137,20 @@ const CourseManagement = () => {
           onSave={(data) => {
             if (editingSession) {
               handleUpdateSession({ ...editingSession, ...data });
+              handleCloseAddSession();
             } else {
-              handleAddSession(data);
+              handleAddSession(data, handleCloseAddSession);
             }
           }}
           initialSession={editingSession}
         />
       )}
+
+      <SchedulingConflictDialog
+        open={openConflictDialog}
+        onClose={handleCloseConflictDialog}
+        conflictData={conflictData}
+      />
 
       {isSessionDetailsOpen && (
         <SessionDetailsModal
