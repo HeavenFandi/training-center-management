@@ -30,6 +30,7 @@ const CourseManagement = () => {
     adminCoursesLoading,
     tenantId,
     searchQuery,
+     creatingSession,
     handleSearch,
     handleClearSearch,
     handleDeleteCourse,
