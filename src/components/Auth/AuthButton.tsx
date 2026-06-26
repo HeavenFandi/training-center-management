@@ -4,8 +4,9 @@ interface IButton {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
   sx?: SxProps<Theme>;
+  disabled?: boolean;
 }
-const AuthButton = ({ children, type = "submit", sx }: IButton) => {
+const AuthButton = ({ children, type = "submit", sx, disabled }: IButton) => {
 
 
   return(
@@ -14,6 +15,7 @@ const AuthButton = ({ children, type = "submit", sx }: IButton) => {
     variant="contained"
     size="large"
     type={type}
+    disabled={disabled}
     sx={{
       py: 1.5,
    

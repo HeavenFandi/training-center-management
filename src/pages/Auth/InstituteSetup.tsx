@@ -38,15 +38,7 @@ const dayNameMap: Record<string, string> = {
 
 const buildTimeObject = (time?: string) => {
   if (!time) return undefined;
-  const [hourStr, minuteStr] = time.split(":");
-  const hour = Number(hourStr);
-  const minute = Number(minuteStr);
-  return {
-    hour,
-    minute,
-    second: 0,
-    nano: 0,
-  };
+  return time;
 };
 
 const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];

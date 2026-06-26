@@ -119,7 +119,7 @@ const HallsManagement = () => {
             setOpenAddModal(false);
             setEditingHall(null);
           } else if (actUpdateClassroom.rejected.match(resultAction)) {
-            showSnackbar(resultAction.payload || "حدث خطأ أثناء تعديل القاعة", "error");
+            showSnackbar(typeof resultAction.payload === "string" ? resultAction.payload : "حدث خطأ أثناء تعديل القاعة", "error");
           }
         } else {
           const resultAction = await dispatch(
@@ -136,7 +136,7 @@ const HallsManagement = () => {
             showSnackbar("تم إضافة القاعة بنجاح", "success");
             setOpenAddModal(false);
           } else if (actCreateClassroom.rejected.match(resultAction)) {
-            showSnackbar(resultAction.payload || "حدث خطأ أثناء إضافة القاعة", "error");
+            showSnackbar(typeof resultAction.payload === "string" ? resultAction.payload : "حدث خطأ أثناء إضافة القاعة", "error");
           }
         }
       } catch (error) {
@@ -156,7 +156,7 @@ const HallsManagement = () => {
           setOpenDelete(false);
           setSelectedHall(null);
         } else if (actDeleteClassroom.rejected.match(resultAction)) {
-          showSnackbar(resultAction.payload || "حدث خطأ أثناء حذف القاعة", "error");
+          showSnackbar(typeof resultAction.payload === "string" ? resultAction.payload : "حدث خطأ أثناء حذف القاعة", "error");
         }
       } catch (error) {
         console.error("Error deleting classroom:", error);

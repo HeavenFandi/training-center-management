@@ -90,7 +90,7 @@ const TeacherDetailsModal: React.FC<Props> = ({ open, onClose, teacher }) => {
           }}
         >
           <Avatar
-            src={teacher.image}
+            src={teacher.image ?? undefined}
             sx={{
               width: 160,
               height: 160,

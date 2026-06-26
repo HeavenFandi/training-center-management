@@ -134,8 +134,6 @@ const Studentmanagment: React.FC = () => {
 
       <StudentsTable
         studentsData={filteredStudents}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
         onView={handleViewClick}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}

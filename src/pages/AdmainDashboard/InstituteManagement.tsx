@@ -160,7 +160,7 @@ const InstituteManagement: React.FC = () => {
     if (currentInstitute) {
       const timeRange = `${formatTime(currentInstitute.startTime)} - ${formatTime(currentInstitute.endTime)}`;
       const forbiddenDays = ["الجمعة", "السبت", "FRIDAY", "SATURDAY"];
-      const mappedDays = (currentInstitute.workingDays ?? []).map((day: string) => mapWorkingDay(day)).filter(day => !forbiddenDays.includes(day));
+      const mappedDays = (currentInstitute.workingDays ?? []).map((day: string) => mapWorkingDay(day)).filter((day: string) => !forbiddenDays.includes(day));
       setInstituteInfo({
         name: currentInstitute.name ?? "",
         description: currentInstitute.description ?? "",

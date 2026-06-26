@@ -7,7 +7,7 @@ import {
   actSendOtp,
   actVerifyOtp,
   resetOtpState,
-} from "../../store/Otp/otpSlice";
+} from "../../store/OTP/otpSlice";
 import actGetInstituteByUserId from "../../store/Institutes/act/actGetInstituteByUserId";
 
 const useLogin = () => {

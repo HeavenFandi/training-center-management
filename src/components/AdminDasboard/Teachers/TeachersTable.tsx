@@ -35,6 +35,7 @@ interface Props {
   loading?: "idle" | "pending" | "succeeded" | "failed";
   showLoading?: boolean;
   hasData?: boolean;
+  searchTerm?: string;
 }
 
 const TeachersTable: React.FC<Props> = memo(({
@@ -87,7 +88,7 @@ const TeachersTable: React.FC<Props> = memo(({
             >
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
                 <Avatar
-                  src={teacher.image}
+                  src={teacher.image ?? undefined}
                   sx={{
                     width: 48,
                     height: 48,
@@ -249,7 +250,7 @@ const TeachersTable: React.FC<Props> = memo(({
                 >
                   <Stack direction="row" alignItems="center" spacing={2} sx={{ gap: "12px" }} >
                     <Avatar
-                      src={teacher.image}
+                      src={teacher.image ?? undefined}
                       sx={{
                         width: 40,
                         height: 40,
