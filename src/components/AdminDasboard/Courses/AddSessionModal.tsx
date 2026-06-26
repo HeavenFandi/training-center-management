@@ -10,6 +10,7 @@ import {
   Grid,
   Chip,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -27,9 +28,10 @@ interface Props {
   course: TCourse | null;
   onSave: (sessionData: CreateTrainingSessionRequest) => void;
   initialSession?: TSession | null;
+  isLoading?: boolean;
 }
 
-const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initialSession }) => {
+const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initialSession, isLoading }) => {
   const [teachers, setTeachers] = React.useState<TeacherApiResponse[]>([]);
   const {
     register,
@@ -199,7 +201,7 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <AuthInput
-                label="عدد الجلسات *"
+                label="عدد المحاضرات *"
                 type="number"
                 placeholder="0"
                 {...register("numberOfLectures", { valueAsNumber: true })}
@@ -245,7 +247,7 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
               </Grid>
           </Grid>
 
-          <Typography variant="subtitle2" fontWeight="bold" mt={1.5} mb={1} color="#133E65">جدول الجلسات</Typography>
+          <Typography variant="subtitle2" fontWeight="bold" mt={1.5} mb={1} color="#133E65">جدول المحاضرات</Typography>
           <Grid container spacing={1.5}>
             <Grid size={{ xs: 12, sm: 4 }}>
               <AuthInput
@@ -357,9 +359,11 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
               <Button
                 type="submit"
                 variant="contained"
+                disabled={isLoading}
                 sx={{ 
                   bgcolor: "#133E65", 
                   "&:hover": { bgcolor: "#1e5a91" }, 
+                  "&:disabled": { bgcolor: "#94a3b8" },
                   borderRadius: "10px", 
                   px: 4,
                   height: "44px",
@@ -370,7 +374,14 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
                   minWidth: { xs: "calc(50% - 8px)", sm: "120px" },
                 }}
               >
-                {initialSession ? "حفظ التعديلات" : "إنشاء الدورة"}
+                {isLoading ? (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={20} sx={{ color: "#fff" }} />
+                    جاري الحفظ...
+                  </Box>
+                ) : (
+                  initialSession ? "حفظ التعديلات" : "إنشاء الدورة"
+                )}
               </Button>
             </Box>
           </Box>

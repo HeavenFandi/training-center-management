@@ -3,6 +3,7 @@ import {
   TTrainingSessionListItem,
   TTrainingSessionDetails,
 } from "../../types/cardType";
+import { LectureResponse } from "../../api/trainingSessionApi";
 import actGetTrainingSessions from "./act/actGetTrainingSessions";
 import actSearchTrainingSessions from "./act/actSearchTrainingSessions";
 import actGetTrainingSessionDetails from "./act/actGetTrainingSessionDetails";
@@ -14,6 +15,9 @@ import actInitiatePayment from "./act/actInitiatePayment";
 import actGetCategories, { Category } from "./act/actGetCategories";
 import actGetCourseRatings, { CourseRating } from "./act/actGetCourseRatings";
 import actGetCourseAverageRating from "./act/actGetCourseAverageRating";
+import actGetLecturesBySessionId from "./act/actGetLecturesBySessionId";
+import actUpdateLecture from "./act/actUpdateLecture";
+import actDeleteLecture from "./act/actDeleteLecture";
 import { RootState } from "..";
 
 interface AppliedFilters {
@@ -57,6 +61,16 @@ interface ITrainingSessionsState {
   courseSessions: Record<number, TTrainingSessionListItem[]>;
   courseSessionsLoading: Record<number, boolean>;
   courseSessionsError: Record<number, string | null>;
+
+  sessionLectures: Record<number, LectureResponse[]>;
+  sessionLecturesLoading: Record<number, boolean>;
+  sessionLecturesError: Record<number, string | null>;
+
+  lectureUpdateLoading: boolean;
+  lectureUpdateError: string | null;
+
+  lectureDeleteLoading: boolean;
+  lectureDeleteError: string | null;
 }
 
 const initialState: ITrainingSessionsState = {
@@ -92,6 +106,13 @@ const initialState: ITrainingSessionsState = {
   courseSessions: {},
   courseSessionsLoading: {},
   courseSessionsError: {},
+  sessionLectures: {},
+  sessionLecturesLoading: {},
+  sessionLecturesError: {},
+  lectureUpdateLoading: false,
+  lectureUpdateError: null,
+  lectureDeleteLoading: false,
+  lectureDeleteError: null,
 };
 
 const trainingSessionsSlice = createSlice({
@@ -341,6 +362,55 @@ const trainingSessionsSlice = createSlice({
           ? action.payload
           : null;
     });
+    
+    // actGetLecturesBySessionId
+    builder.addCase(actGetLecturesBySessionId.pending, (state, action) => {
+      const sessionId = action.meta.arg;
+      state.sessionLecturesLoading[sessionId] = true;
+      state.sessionLecturesError[sessionId] = null;
+    });
+    builder.addCase(actGetLecturesBySessionId.fulfilled, (state, action) => {
+      const { sessionId, lectures } = action.payload;
+      state.sessionLecturesLoading[sessionId] = false;
+      state.sessionLectures[sessionId] = lectures;
+      state.sessionLecturesError[sessionId] = null;
+    });
+    builder.addCase(actGetLecturesBySessionId.rejected, (state, action) => {
+      const sessionId = action.meta.arg;
+      state.sessionLecturesLoading[sessionId] = false;
+      if (action.payload && typeof action.payload == "string")
+        state.sessionLecturesError[sessionId] = action.payload;
+    });
+
+    // actUpdateLecture
+    builder.addCase(actUpdateLecture.pending, (state) => {
+      state.lectureUpdateLoading = true;
+      state.lectureUpdateError = null;
+    });
+    builder.addCase(actUpdateLecture.fulfilled, (state) => {
+      state.lectureUpdateLoading = false;
+      state.lectureUpdateError = null;
+    });
+    builder.addCase(actUpdateLecture.rejected, (state, action) => {
+      state.lectureUpdateLoading = false;
+      if (action.payload && typeof action.payload == "string")
+        state.lectureUpdateError = action.payload;
+    });
+
+    // actDeleteLecture
+    builder.addCase(actDeleteLecture.pending, (state) => {
+      state.lectureDeleteLoading = true;
+      state.lectureDeleteError = null;
+    });
+    builder.addCase(actDeleteLecture.fulfilled, (state) => {
+      state.lectureDeleteLoading = false;
+      state.lectureDeleteError = null;
+    });
+    builder.addCase(actDeleteLecture.rejected, (state, action) => {
+      state.lectureDeleteLoading = false;
+      if (action.payload && typeof action.payload == "string")
+        state.lectureDeleteError = action.payload;
+    });
   },
 });
 export const {
@@ -464,5 +534,8 @@ export {
   actGetCategories,
   actGetCourseRatings,
   actGetCourseAverageRating,
+  actGetLecturesBySessionId,
+  actUpdateLecture,
+  actDeleteLecture,
 };
 export default trainingSessionsSlice.reducer;

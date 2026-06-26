@@ -37,6 +37,35 @@ export type TrainingSessionResponse = {
   image: string;
 };
 
+export type TimeObject = {
+  hour: number;
+  minute: number;
+  second?: number;
+  nano?: number;
+};
+
+export type LectureResponse = {
+  id: number;
+  lectureDate: string;
+  startTime: TimeObject;
+  endTime: TimeObject;
+  sessionName: string;
+  classroomNumber: string;
+  teacherName: string;
+  classroomId?: number;
+  teacherId?: number;
+  sessionId?: number;
+};
+
+export type UpdateLectureRequest = {
+  lectureDate: string;
+  startTime: TimeObject;
+  endTime: TimeObject;
+  classroomId: number;
+  teacherId: number;
+  sessionId: number;
+};
+
 export const createTrainingSession = async (
   data: CreateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
@@ -45,4 +74,30 @@ export const createTrainingSession = async (
     data,
   );
   return response.data;
+};
+
+export const getLecturesBySessionId = async (
+  sessionId: number,
+): Promise<LectureResponse[]> => {
+  const response = await axiosClient.get<LectureResponse[]>(
+    `lectures/session/${sessionId}`,
+  );
+  return response.data;
+};
+
+export const updateLecture = async (
+  id: number,
+  data: UpdateLectureRequest,
+): Promise<LectureResponse> => {
+  const response = await axiosClient.put<LectureResponse>(
+    `lectures/${id}`,
+    data,
+  );
+  return response.data;
+};
+
+export const deleteLecture = async (
+  id: number,
+): Promise<void> => {
+  await axiosClient.delete(`lectures/${id}`);
 };

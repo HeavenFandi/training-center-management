@@ -77,6 +77,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     setValue,
     reset,
     watch,
+    getValues,
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
@@ -165,6 +166,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     handleTimeChange,
     classrooms,
     reset: resetWithDays,
+    getValues,
   };
 };
 

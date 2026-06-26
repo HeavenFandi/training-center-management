@@ -46,6 +46,9 @@ export const useCourseManagement = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [openConflictDialog, setOpenConflictDialog] = useState(false);
   const [conflictData, setConflictData] = useState<any>(null);
+  const [originalFormData, setOriginalFormData] = useState<CreateTrainingSessionRequest | null>(null);
+  const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
+  const [creatingSession, setCreatingSession] = useState(false);
 
   const courses = reduxCourses;
 
@@ -224,9 +227,59 @@ export const useCourseManagement = () => {
   const handleCloseConflictDialog = useCallback(() => {
     setOpenConflictDialog(false);
     setConflictData(null);
+    setOriginalFormData(null);
   }, []);
 
+  const handleSelectSuggestion = useCallback(async (suggestion: any, onSuccess?: () => void) => {
+    if (!originalFormData) return;
+
+    // Try to extract fields from the suggestion:
+    let updatedData: any = { ...originalFormData };
+    
+    // Check for common field names:
+    if (suggestion.classroomId !== undefined) updatedData.classroomId = Number(suggestion.classroomId);
+    if (suggestion.startTime) updatedData.startTime = suggestion.startTime;
+    if (suggestion.endTime) updatedData.endTime = suggestion.endTime;
+    if (suggestion.startDate) updatedData.startDate = suggestion.startDate;
+    if (suggestion.daysOfWeek) updatedData.daysOfWeek = suggestion.daysOfWeek;
+    if (suggestion.teacherId !== undefined) updatedData.teacherId = Number(suggestion.teacherId);
+    if (suggestion.roomId !== undefined) updatedData.classroomId = Number(suggestion.roomId);
+    if (suggestion.hallId !== undefined) updatedData.classroomId = Number(suggestion.hallId);
+    
+    setSubmittingSuggestion(true);
+    try {
+      console.log("Submitting suggestion with updated data:", updatedData);
+      const resultAction = await dispatch(actCreateTrainingSession(updatedData as CreateTrainingSessionRequest));
+      if (actCreateTrainingSession.fulfilled.match(resultAction)) {
+        console.log("Training session created successfully:", resultAction.payload);
+        showSnackbar("تم إنشاء الدورة بنجاح", "success");
+        if (currentInstitute?.id) {
+          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: updatedData.courseId, instituteId: currentInstitute.id }));
+        }
+        setOpenConflictDialog(false);
+        setConflictData(null);
+        setOriginalFormData(null);
+        if (onSuccess) onSuccess();
+      } else {
+          console.error("Failed to create training session with suggestion:", resultAction.payload);
+          const payload = resultAction.payload as any;
+          if (payload?.status === 409) {
+            // New conflict, update the data
+            setConflictData(payload.data);
+          } else {
+            showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
+          }
+        }
+    } catch (error) {
+      console.error("Error submitting suggestion:", error);
+      showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
+    } finally {
+      setSubmittingSuggestion(false);
+    }
+  }, [originalFormData, dispatch, currentInstitute, showSnackbar]);
+
   const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest, onSuccess?: () => void) => {
+    setCreatingSession(true);
     try {
       console.log("Creating training session with data:", sessionData);
       const resultAction = await dispatch(actCreateTrainingSession(sessionData));
@@ -244,6 +297,7 @@ export const useCourseManagement = () => {
         console.error("Failed to create training session:", resultAction.payload);
         const payload = resultAction.payload as any;
         if (payload?.status === 409) {
+          setOriginalFormData(sessionData);
           setConflictData(payload.data);
           setOpenConflictDialog(true);
         } else {
@@ -253,6 +307,8 @@ export const useCourseManagement = () => {
     } catch (error) {
       console.error("Error creating training session:", error);
       showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
+    } finally {
+      setCreatingSession(false);
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
@@ -317,5 +373,8 @@ export const useCourseManagement = () => {
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,
+    handleSelectSuggestion,
+    submittingSuggestion,
+    creatingSession,
   };
 };

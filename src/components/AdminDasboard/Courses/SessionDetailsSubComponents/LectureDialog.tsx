@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, Stack, Button, Box, Typography, IconButton } from "@mui/material";
+import { Dialog, DialogContent, Stack, Button, Box, Typography, IconButton, CircularProgress } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { TLecture } from "../../../../types/cardType";
@@ -18,6 +18,7 @@ interface LectureDialogProps {
   setLectureStartTime: (val: string) => void;
   lectureEndTime: string;
   setLectureEndTime: (val: string) => void;
+  isLoading?: boolean;
 }
 
 const LectureDialog: React.FC<LectureDialogProps> = ({
@@ -33,6 +34,7 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
   setLectureStartTime,
   lectureEndTime,
   setLectureEndTime,
+  isLoading = false,
 }) => {
   return (
     <Dialog 
@@ -60,7 +62,7 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
         }}
       >
         <Typography variant="h6" fontWeight="900" color="#133E65" sx={{ fontFamily: "Tajawal" }}>
-          {editingLecture ? "تعديل جلسة" : "إضافة جلسة جديدة"}
+          {editingLecture ? "تعديل محاضرة" : "إضافة محاضرة جديدة"}
         </Typography>
         <IconButton onClick={onClose} sx={{ bgcolor: "#fff" }}>
           <CloseIcon fontSize="small" />
@@ -70,14 +72,14 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
       <DialogContent sx={{ fontFamily: "Tajawal", p: 4, pt: 2, bgcolor: "#F8FAFC" }}>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <AuthInput
-            label="اسم الجلسة"
-            placeholder="أدخل اسم الجلسة"
+            label="اسم المحاضرة"
+            placeholder="أدخل اسم المحاضرة"
             value={lectureTitle}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLectureTitle(e.target.value)}
             compact
           />
           <AuthInput
-            label="تاريخ الجلسة"
+            label="تاريخ المحاضرة"
             type="date"
             value={lectureDate}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLectureDate(e.target.value)}
@@ -85,14 +87,14 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
           />
           <Stack direction="row" spacing={2} gap={2}>
             <AuthInput
-              label="بداية الجلسة"
+              label="بداية المحاضرة"
               type="time"
               value={lectureStartTime}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLectureStartTime(e.target.value)}
               compact
             />
             <AuthInput
-              label="نهاية الجلسة"
+              label="نهاية المحاضرة"
               type="time"
               value={lectureEndTime}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLectureEndTime(e.target.value)}
@@ -106,6 +108,7 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
             onClick={onSave}
             variant="contained"
             fullWidth
+            disabled={isLoading}
             sx={{
               backgroundColor: "#133E65",
               borderRadius: "12px",
@@ -119,11 +122,14 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
                 backgroundColor: "#1e5a91",
                 transform: "translateY(-2px)",
                 boxShadow: "0 10px 25px rgba(19, 62, 101, 0.3)",
+              },
+              "&:disabled": {
+                backgroundColor: "#94a3b8",
               }
             }}
-            startIcon={<SaveIcon sx={{ ml: 1 }} />}
+            startIcon={!isLoading ? <SaveIcon sx={{ ml: 1 }} /> : <CircularProgress size={20} sx={{ color: "#fff", ml: 1 }} />}
           >
-            {editingLecture ? "حفظ التعديلات" : "إضافة الجلسة"}
+            {isLoading ? "جارٍ الحفظ..." : (editingLecture ? "حفظ التعديلات" : "إضافة المحاضرة")}
           </Button>
         </Box>
       </DialogContent>

@@ -155,6 +155,7 @@ const CourseManagement = () => {
             }
           }}
           initialSession={editingSession}
+          isLoading={creatingSession}
         />
       )}
 
@@ -247,5 +248,3 @@ const CourseManagement = () => {
 };
 
 export default CourseManagement;
-
-
