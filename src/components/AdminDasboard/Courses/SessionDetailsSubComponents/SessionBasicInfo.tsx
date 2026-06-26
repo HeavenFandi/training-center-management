@@ -51,7 +51,7 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
                 <PersonIcon sx={{ fontSize: 18, color: "#133E65" }} />
               </Box>
               <Typography variant="body2" sx={{ fontFamily: "Tajawal", color: "#475569", fontWeight: "500" }}>
-                المدرس: <strong>{session.teacherName || course.instructor?.name || "غير متاح"}</strong>
+                المدرس: <strong>{course.instructor?.name || "غير متاح"}</strong>
               </Typography>
             </Stack>
             <Stack direction="row" spacing={1.5} alignItems="center">

@@ -47,27 +47,30 @@ export const createSessionSchema = (institute?: {
       if (!institute?.startTime) return true;
       const minutes = timeToMinutes(time);
       return minutes >= instituteStartMin;
-    }, {
-      message: institute?.startTime 
-        ? `وقت البداية يجب أن يكون بعد ${instituteStartTime}` 
-        : "لا توجد أوقات عمل للمعهد محددة"
+    }, (time) => {
+      if (!institute?.startTime) {
+        return { message: "لا توجد أوقات عمل للمعهد محددة" };
+      }
+      return { message: `وقت البداية يجب أن يكون بعد ${instituteStartTime}` };
     }),
     endTime: z.string().min(1, "وقت النهاية مطلوب").refine((time) => {
       if (!institute?.endTime) return true;
       const minutes = timeToMinutes(time);
       return minutes <= instituteEndMin;
-    }, {
-      message: institute?.endTime 
-        ? `وقت النهاية يجب أن يكون قبل ${instituteEndTime}` 
-        : "لا توجد أوقات عمل للمعهد محددة"
+    }, (time) => {
+      if (!institute?.endTime) {
+        return { message: "لا توجد أوقات عمل للمعهد محددة" };
+      }
+      return { message: `وقت النهاية يجب أن يكون قبل ${instituteEndTime}` };
     }),
     daysOfWeek: z.array(z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"])).min(1, "اختر يوما واحدا على الأقل").refine((days) => {
       if (!institute?.workingDays || institute.workingDays.length === 0) return true;
       return days.every((day) => workingDaysSet.has(day));
-    }, {
-      message: (!institute?.workingDays || institute.workingDays.length === 0) 
-        ? "لا توجد أيام عمل للمعهد محددة" 
-        : "بعض الأيام المختارة ليست ضمن أيام عمل المعهد"
+    }, (days) => {
+      if (!institute?.workingDays || institute.workingDays.length === 0) {
+        return { message: "لا توجد أيام عمل للمعهد محددة" };
+      }
+      return { message: "بعض الأيام المختارة ليست ضمن أيام عمل المعهد" };
     }),
   }).refine((data) => {
     const startMin = timeToMinutes(data.startTime);

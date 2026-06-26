@@ -192,19 +192,18 @@ const coursesSlice = createSlice({
           semester: "", // Default to empty
           price: session.price,
           availableSeats: session.availableSeats,
-          minCapacity: session.minSeats || 0, // Map from session
-          sessionsCount: session.numberOfLectures || 0, // Map from session
+          minCapacity: 0, // Default to 0
+          sessionsCount: 0, // Default to 0
           duration: session.duration,
           status: "نشطة", // Default to active
-          requiredEquipment: session.requiredEquipment || "", // Map from session
-          startDate: session.startDate || "", // Map from session
-          startTime: session.startTime || "", // Map from session
+          requiredEquipment: "", // Default to empty
+          startDate: "", // Default to empty
+          startTime: "", // Default to empty
           endDate: "", // Default to empty
-          days: session.days || [], // Map from session
-          hall: session.location || session.classroomName || "", // Use location or classroomName as hall
+          days: [], // Default to empty
+          hall: session.location, // Use location as hall
           image: session.image,
           lectures: [], // Default to empty
-          teacherName: session.teacherName,
         }));
       }
     });

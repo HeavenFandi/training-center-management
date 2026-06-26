@@ -21,10 +21,6 @@ interface TTrainingSessionResponse {
   location?: string;
   categoryName?: string;
   image?: string;
-  startDate?: string;
-  startTime?: string;
-  endTime?: string;
-  days?: string[];
 }
 
 interface ActGetActiveOrUpcomingArgs {
@@ -67,14 +63,6 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
         institute: item.instituteName || item.tenantName || "",
         location: item.location || item.classroomName || "",
         image: item.image || "",
-        startDate: item.startDate,
-        startTime: item.startTime,
-        endTime: item.endTime,
-        days: item.days,
-        minSeats: item.minSeats,
-        numberOfLectures: item.numberOfLectures,
-        requiredEquipment: item.requiredEquipment,
-        classroomName: item.classroomName,
       }));
 
       return mappedSessions;
