@@ -5,7 +5,7 @@ export function useDelayedLoading(
   delay: number = 500
 ): boolean {
   const [showLoading, setShowLoading] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const isLoadingState = typeof isLoading === "boolean" 
     ? isLoading 

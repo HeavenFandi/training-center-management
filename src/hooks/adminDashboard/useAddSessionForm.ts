@@ -16,6 +16,20 @@ const dayMap: Record<string, string> = {
   "الأحد": "SUNDAY"
 };
 
+// Map Arabic status to English for form/API
+const arabicToEnglishStatus: Record<string, "UPCOMING" | "ACTIVE" | "COMPLETED"> = {
+  "قيد الانتظار": "UPCOMING",
+  "نشطة": "ACTIVE",
+  "مكتملة": "COMPLETED"
+};
+
+// Map English status to Arabic for TSession
+const englishToArabicStatus: Record<string, string> = {
+  "UPCOMING": "قيد الانتظار",
+  "ACTIVE": "نشطة",
+  "COMPLETED": "مكتملة"
+};
+
 interface UseAddSessionFormProps {
   onClose: () => void;
   onSave: (sessionData: CreateTrainingSessionRequest) => void;
@@ -75,7 +89,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
       minSeats: initialSession?.minCapacity || 0,
       numberOfLectures: initialSession?.sessionsCount || 0,
       duration: initialSession?.duration || "",
-      status: "UPCOMING",
+      status: initialSession?.status ? arabicToEnglishStatus[initialSession.status] : "UPCOMING",
       requiredEquipment: initialSession?.requiredEquipment || "",
       startDate: initialSession?.startDate || "",
       startTime: parseTimeToFormState(initialSession?.startTime),
@@ -104,7 +118,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
         : [...prevArabicDays, arabicDay];
 
       // Convert Arabic days to English for the API
-      const newEnglishDays = newArabicDays.map((d) => dayMap[d]);
+      const newEnglishDays = newArabicDays.map((d) => dayMap[d]) as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
 
       console.log("Toggling day:", arabicDay, "New Arabic days:", newArabicDays, "New English days:", newEnglishDays);
       setValue("daysOfWeek", newEnglishDays, { shouldValidate: true });
@@ -118,6 +132,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
       ...data,
       startTime: formatTimeForApi(data.startTime),
       endTime: formatTimeForApi(data.endTime),
+      requiredEquipment: data.requiredEquipment || "",
     };
     console.log("Submitting session data to API:", apiData);
     onSave(apiData);

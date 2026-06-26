@@ -34,6 +34,7 @@ interface Props {
   loading?: "idle" | "pending" | "succeeded" | "failed";
   showLoading?: boolean;
   hasData?: boolean;
+  searchTerm?: string;
 }
 
 const StudentsTable: React.FC<Props> = memo(({
@@ -84,7 +85,7 @@ const StudentsTable: React.FC<Props> = memo(({
                 },
               }}
             >
-              <Stack direction="row"  sx={{ gap: "12px" }} alignItems="center" spacing={4} sx={{ mb: 2 }}>
+              <Stack direction="row" sx={{ gap: "12px", mb: 2 }} alignItems="center" spacing={4}>
                 <Avatar
                   src={student.image}
                   sx={{

@@ -5,7 +5,7 @@ import { studentSchema, StudentFormData } from "../../validation/StudentSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { CreateStudentResponse } from "../../api/studentApi";
 import { useAppDispatch } from "../../store/hooks";
-import actCreateStudent from "../../store/students/act/actCreateStudent";
+import actCreateStudent from "../../store/Students/act/actCreateStudent";
 
 interface UseAddStudentFormProps {
   onClose: () => void;

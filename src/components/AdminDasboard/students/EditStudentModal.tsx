@@ -28,8 +28,23 @@ const Transition = React.forwardRef(function Transition(
 interface EditStudentModalProps {
   open: boolean;
   onClose: () => void;
-  student: CreateStudentResponse | null;
-  onSave: (updatedStudent: CreateStudentResponse) => void;
+  student: (CreateStudentResponse | {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+    email?: string;
+    contactInfo?: string;
+    gender?: string;
+    birthDate?: string;
+    address?: string;
+    interest?: string;
+    bio?: string;
+    enrollmentDate?: string;
+    image?: string;
+    userId?: number;
+  }) | null;
+  onSave: (updatedStudent: any) => void;
   onImageUpdate?: () => Promise<void>;
   loading?: boolean;
   success?: boolean;
@@ -50,7 +65,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
   setPendingImageFile,
   imageUpdateLoading = false,
 }) => {
-  const [formData, setFormData] = useState<CreateStudentResponse | null>(student);
+  const [formData, setFormData] = useState<any>(student);
   const [tempImageUrl, setTempImageUrl] = useState<string | undefined>(student?.image);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -71,10 +86,10 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     }
   }, [student?.image]);
 
-  const handleChange = (field: keyof CreateStudentResponse) => (
+  const handleChange = (field: string) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setFormData((prev) => (prev ? { ...prev, [field]: e.target.value } : null));
+    setFormData((prev: any) => (prev ? { ...prev, [field]: e.target.value } : null));
   };
 
   const handleImageChange = (imageUrl: string, file?: File) => {

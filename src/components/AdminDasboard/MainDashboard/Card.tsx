@@ -32,7 +32,7 @@ const Card: React.FC<CardProps> = ({ item }) => (
         justifyContent: "center",
       }}
     >
-      {React.cloneElement(item.icon as React.ReactElement, { sx: { fontSize: "1.8rem" } })}
+      <Box sx={{ fontSize: "1.8rem" }}>{item.icon}</Box>
     </Box>
     <Typography
       variant="body2"
