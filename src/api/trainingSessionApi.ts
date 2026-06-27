@@ -101,3 +101,9 @@ export const deleteLecture = async (
 ): Promise<void> => {
   await axiosClient.delete(`lectures/${id}`);
 };
+
+export const deleteTrainingSession = async (
+  id: number,
+): Promise<void> => {
+  await axiosClient.delete(`/training-sessions/${id}`);
+};

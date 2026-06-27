@@ -14,7 +14,7 @@ interface CoursesState {
   error: string | null;
   createLoading: "idle" | "pending" | "succeeded" | "failed";
   createError: string | null;
-  deleteLoading: "idle" | "pending" | "succeeded" | "failed";
+  deletingCourseId: number | null;
   deleteError: string | null;
   updateLoading: "idle" | "pending" | "succeeded" | "failed";
   updateError: string | null;
@@ -28,7 +28,7 @@ const initialState: CoursesState = {
   error: null,
   createLoading: "idle",
   createError: null,
-  deleteLoading: "idle",
+  deletingCourseId: null,
   deleteError: null,
   updateLoading: "idle",
   updateError: null,
@@ -139,16 +139,16 @@ const coursesSlice = createSlice({
         state.createError = action.payload;
       }
     });
-    builder.addCase(actDeleteCourse.pending, (state) => {
-      state.deleteLoading = "pending";
+    builder.addCase(actDeleteCourse.pending, (state, action) => {
+      state.deletingCourseId = action.meta.arg;
       state.deleteError = null;
     });
     builder.addCase(actDeleteCourse.fulfilled, (state, action) => {
-      state.deleteLoading = "succeeded";
+      state.deletingCourseId = null;
       state.courses = state.courses.filter((course) => course.id !== action.payload);
     });
     builder.addCase(actDeleteCourse.rejected, (state, action) => {
-      state.deleteLoading = "failed";
+      state.deletingCourseId = null;
       if (action.payload && typeof action.payload === "string") {
         state.deleteError = action.payload;
       }

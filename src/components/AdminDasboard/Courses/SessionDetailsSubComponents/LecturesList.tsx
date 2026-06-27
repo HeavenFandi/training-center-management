@@ -30,12 +30,10 @@ interface LecturesListProps {
 const formatTime = (time: any) => {
   if (!time) return "00:00";
   
-  // If it's already a string (like "HH:mm"), just return it
   if (typeof time === "string") {
     return time;
   }
   
-  // If it's an object with hour/minute
   const hour = typeof time.hour === "number" ? time.hour.toString().padStart(2, "0") : "00";
   const minute = typeof time.minute === "number" ? time.minute.toString().padStart(2, "0") : "00";
   return `${hour}:${minute}`;
@@ -50,7 +48,6 @@ const LecturesList: React.FC<LecturesListProps> = ({
   onDeleteLecture 
 }) => {
   
-  // Check if it's a LectureResponse array
   const isLectureResponse = (item: any): item is LectureResponse => {
     return item && typeof item === "object" && "lectureDate" in item && "startTime" in item;
   };
@@ -93,45 +90,53 @@ const LecturesList: React.FC<LecturesListProps> = ({
           <List sx={{ p: 0 }}>
             {lectures.map((lecture, index) => (
               <React.Fragment key={(lecture as any).id}>
-                <ListItem
-                  secondaryAction={
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="تعديل">
-                        <IconButton size="small" onClick={() => onEditLecture(lecture)}>
-                          <EditIcon fontSize="small" color="primary" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="إلغاء المحاضرة">
-                        <IconButton size="small" onClick={() => onDeleteLecture((lecture as any).id)}>
-                          <DeleteIcon fontSize="small" color="error" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  }
-                  sx={{ py: 1.5 }}
-                >
-                  <Stack direction="column" spacing={0.5} sx={{ flex: 1 }}>
+                <ListItem sx={{ py: 1.5, display: "flex", width: "100%", alignItems: "center" }}>
+                  
+                  {/* اليمين: نصوص تفاصيل المحاضرة تأخذ كامل المساحة المتاحة لتجبر الأيقونات على الذهاب لليسار */}
+                  <Stack direction="column" spacing={0.5} sx={{ flexGrow: 1, minWidth: 0, textAlign: "right" }}>
                     <Typography 
                       variant="body1" 
-                      sx={{ fontFamily: "Tajawal", fontSize: "0.95rem", fontWeight: "bold" }}
+                      sx={{ 
+                        fontFamily: "Tajawal", 
+                        fontSize: "0.95rem", 
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      }}
                     >
                       {`${index + 1}. ${isLectureResponse(lecture) ? lecture.sessionName : (lecture as TLecture).title}`}
                     </Typography>
                     {isLectureResponse(lecture) ? (
                       <>
-                        <Typography variant="body2" sx={{ fontFamily: "Tajawal", fontSize: "0.85rem" }}>
+                        <Typography variant="body2" sx={{ fontFamily: "Tajawal", fontSize: "0.85rem", color: "text.secondary" }}>
                           {lecture.lectureDate} | {formatTime(lecture.startTime)} - {formatTime(lecture.endTime)}
                         </Typography>
-                        <Typography variant="caption" sx={{ fontFamily: "Tajawal" }}>
+                        <Typography variant="caption" sx={{ fontFamily: "Tajawal", color: "text.secondary" }}>
                           قاعة: {lecture.classroomNumber} | مدرس: {lecture.teacherName}
                         </Typography>
                       </>
                     ) : (
-                      <Typography variant="body2" sx={{ fontFamily: "Tajawal", fontSize: "0.85rem" }}>
+                      <Typography variant="body2" sx={{ fontFamily: "Tajawal", fontSize: "0.85rem", color: "text.secondary" }}>
                         {(lecture as TLecture).date || ""} | {(lecture as TLecture).startTime || ""} - {(lecture as TLecture).endTime || ""}
                       </Typography>
                     )}
                   </Stack>
+
+                  {/* اليسار: الأيقونات منجذبة لأقصى اليسار بفضل mr: "auto" في نظام الـ RTL */}
+                  <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mr: "auto", pl: 1 }}>
+                    <Tooltip title="تعديل">
+                      <IconButton size="small" onClick={() => onEditLecture(lecture)}>
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="إلغاء المحاضرة">
+                      <IconButton size="small" onClick={() => onDeleteLecture((lecture as any).id)}>
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+
                 </ListItem>
                 {index < lectures.length - 1 && <Divider />}
               </React.Fragment>
@@ -148,5 +153,3 @@ const LecturesList: React.FC<LecturesListProps> = ({
 };
 
 export default React.memo(LecturesList);
-
-

@@ -8,6 +8,7 @@ import actDeleteCourse from "../../store/Courses/act/actDeleteCourse";
 import actUpdateCourse from "../../store/Courses/act/actUpdateCourse";
 import actSearchCourses from "../../store/Courses/act/actSearchCourses";
 import actGetActiveOrUpcomingByCourseAndInstitute from "../../store/Courses/act/actGetActiveOrUpcomingByCourseAndInstitute";
+import actDeleteTrainingSession from "../../store/Courses/act/actDeleteTrainingSession";
 import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingSession";
 import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
 import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse } from "../../store/Courses/courseSlice";
@@ -19,7 +20,8 @@ import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
-  const { courses: reduxCourses, loading: adminCoursesLoading, error: adminCoursesError, createLoading, createError, updateLoading, updateError, searchLoading, searchError } = useAppSelector(selectCoursesState);
+  const { courses: reduxCourses, loading: adminCoursesLoading, error: adminCoursesError, createLoading, createError, updateLoading, updateError, searchLoading, searchError, deletingCourseId, deleteError } = useAppSelector(selectCoursesState);
+  const { deletingSessionId, sessionDeleteError } = useAppSelector((state) => state.trainingSessions);
   const { currentInstitute } = useAppSelector((state) => state.institutes);
   const { user } = useAppSelector((state) => state.auth);
 
@@ -124,6 +126,8 @@ export const useCourseManagement = () => {
       if (actDeleteCourse.fulfilled.match(resultAction)) {
         showSnackbar("تم حذف الكورس بنجاح", "success");
         setIsDeleteOpen(false);
+      } else if (actDeleteCourse.rejected.match(resultAction)) {
+        showSnackbar(resultAction.payload as string, "error");
       }
     } catch (error) {
       console.error("Error deleting course:", error);
@@ -357,15 +361,29 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, selectedCourse]);
 
-  const handleDeleteSession = useCallback((courseId: number, sessionId: number) => {
-    dispatch(deleteSessionFromCourse({ courseId, sessionId }));
-    if (selectedCourse?.id === courseId) {
-      setSelectedCourse(prev => prev ? {
-        ...prev,
-        sessions: prev.sessions?.filter(s => s.id !== sessionId)
-      } : null);
+  const handleDeleteSession = useCallback(async (courseId: number, sessionId: number) => {
+    try {
+      const resultAction = await dispatch(actDeleteTrainingSession(sessionId));
+      if (actDeleteTrainingSession.fulfilled.match(resultAction)) {
+        dispatch(deleteSessionFromCourse({ courseId, sessionId }));
+        if (selectedCourse?.id === courseId) {
+          setSelectedCourse(prev => prev ? {
+            ...prev,
+            sessions: prev.sessions?.filter(s => s.id !== sessionId)
+          } : null);
+        }
+        showSnackbar("تم حذف الدورة بنجاح", "success");
+        return true; // return success so caller can close modal
+      } else if (actDeleteTrainingSession.rejected.match(resultAction)) {
+        showSnackbar(resultAction.payload as string, "error");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      showSnackbar("حدث خطأ أثناء حذف الدورة", "error");
+      return false;
     }
-  }, [dispatch, selectedCourse]);
+  }, [dispatch, selectedCourse, showSnackbar]);
 
   const handleFetchSessions = useCallback((courseId: number) => {
     if (currentInstitute?.id) {
@@ -409,5 +427,9 @@ export const useCourseManagement = () => {
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    deletingCourseId,
+    deletingSessionId,
+    deleteError,
+    sessionDeleteError,
   };
 };

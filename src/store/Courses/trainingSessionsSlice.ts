@@ -18,6 +18,7 @@ import actGetCourseAverageRating from "./act/actGetCourseAverageRating";
 import actGetLecturesBySessionId from "./act/actGetLecturesBySessionId";
 import actUpdateLecture from "./act/actUpdateLecture";
 import actDeleteLecture from "./act/actDeleteLecture";
+import actDeleteTrainingSession from "./act/actDeleteTrainingSession";
 import { RootState } from "..";
 
 interface AppliedFilters {
@@ -71,6 +72,8 @@ interface ITrainingSessionsState {
 
   deletingLectureId: number | null;
   lectureDeleteError: string | null;
+  deletingSessionId: number | null;
+  sessionDeleteError: string | null;
 }
 
 const initialState: ITrainingSessionsState = {
@@ -113,6 +116,8 @@ const initialState: ITrainingSessionsState = {
   lectureUpdateError: null,
   deletingLectureId: null,
   lectureDeleteError: null,
+  deletingSessionId: null,
+  sessionDeleteError: null,
 };
 
 const trainingSessionsSlice = createSlice({
@@ -410,6 +415,21 @@ const trainingSessionsSlice = createSlice({
       state.deletingLectureId = null;
       if (action.payload && typeof action.payload == "string")
         state.lectureDeleteError = action.payload;
+    });
+
+    // actDeleteTrainingSession
+    builder.addCase(actDeleteTrainingSession.pending, (state, action) => {
+      state.deletingSessionId = action.meta.arg;
+      state.sessionDeleteError = null;
+    });
+    builder.addCase(actDeleteTrainingSession.fulfilled, (state) => {
+      state.deletingSessionId = null;
+      state.sessionDeleteError = null;
+    });
+    builder.addCase(actDeleteTrainingSession.rejected, (state, action) => {
+      state.deletingSessionId = null;
+      if (action.payload && typeof action.payload == "string")
+        state.sessionDeleteError = action.payload;
     });
   },
 });

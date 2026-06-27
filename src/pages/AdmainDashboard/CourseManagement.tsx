@@ -51,6 +51,10 @@ const CourseManagement = () => {
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    deletingCourseId,
+    deletingSessionId,
+    deleteError,
+    sessionDeleteError,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -104,12 +108,14 @@ const CourseManagement = () => {
     setIsDeleteSessionOpen(true);
   }, []);
 
-  const handleConfirmDeleteSession = useCallback(() => {
+  const handleConfirmDeleteSession = useCallback(async () => {
     if (!sessionToDelete) return;
     const { session, course } = sessionToDelete;
-    handleDeleteSession(course.id, session.id);
-    setIsDeleteSessionOpen(false);
-    setSessionToDelete(null);
+    const success = await handleDeleteSession(course.id, session.id);
+    if (success) {
+      setIsDeleteSessionOpen(false);
+      setSessionToDelete(null);
+    }
   }, [sessionToDelete, handleDeleteSession]);
 
   return (
@@ -201,6 +207,8 @@ const CourseManagement = () => {
           title="تأكيد حذف الكورس"
           description="هل أنت متأكد من رغبتك في حذف الكورس"
           itemName={selectedCourse?.title}
+          isLoading={deletingCourseId === selectedCourse?.id}
+          errorMessage={deleteError}
         />
       )}
 
@@ -212,6 +220,8 @@ const CourseManagement = () => {
           title="تأكيد حذف الدورة"
           description="هل أنت متأكد من رغبتك في حذف الدورة"
           itemName={sessionToDelete?.session.title}
+          isLoading={deletingSessionId === sessionToDelete?.session.id}
+          errorMessage={sessionDeleteError}
         />
       )}
 
