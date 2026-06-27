@@ -16,7 +16,7 @@ export const sessionSchema = z.object({
   price: z.number().min(0, "السعر مطلوب"),
   availableSeats: z.number().min(1, "المقاعد المتاحة مطلوبة"),
   minSeats: z.number().min(1, "الحد الأدنى للمقاعد مطلوب"),
-  numberOfLectures: z.number().min(1, "عدد الجلسات مطلوب"),
+  numberOfLectures: z.number().min(1, "عدد المحاضرات مطلوب"),
   duration: z.string().min(1, "المدة مطلوبة"),
   status: z.enum(["UPCOMING", "ACTIVE", "COMPLETED"]),
   requiredEquipment: z.string().optional(),

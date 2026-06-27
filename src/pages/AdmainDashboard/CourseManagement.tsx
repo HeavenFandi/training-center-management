@@ -11,6 +11,7 @@ import CourseManagementGrid from "../../components/AdminDasboard/Courses/CourseM
 import AddSessionModal from "../../components/AdminDasboard/Courses/AddSessionModal";
 import SessionDetailsModal from "../../components/AdminDasboard/Courses/SessionDetailsModal";
 import SessionsListModal from "../../components/AdminDasboard/Courses/SessionsListModal";
+import SchedulingConflictDialog from "../../components/AdminDasboard/Courses/SchedulingConflictDialog";
 import { TCourse, TSession } from "../../types/cardType";
 
 const CourseManagement = () => {
@@ -21,6 +22,8 @@ const CourseManagement = () => {
     openEditModal,
     openAddModal,
     openDetailsModal,
+    openConflictDialog,
+    conflictData,
     createLoading,
     updateLoading,
     searchLoading,
@@ -44,6 +47,10 @@ const CourseManagement = () => {
     handleUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    handleCloseConflictDialog,
+    handleSelectSuggestion,
+    submittingSuggestion,
+    creatingSession,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -146,13 +153,24 @@ const CourseManagement = () => {
                 sessionsCount: data.numberOfLectures,
                 hall: "", // We don't have hall from form data, keep existing or empty
               } as TSession);
+              handleCloseAddSession();
             } else {
-              handleAddSession(data);
+              handleAddSession(data, handleCloseAddSession);
             }
           }}
           initialSession={editingSession}
+          isLoading={creatingSession}
         />
       )}
+
+      <SchedulingConflictDialog
+        open={openConflictDialog}
+        onClose={handleCloseConflictDialog}
+        conflictData={conflictData}
+        onSelectSuggestion={handleSelectSuggestion}
+        submitting={submittingSuggestion}
+        onSuccess={handleCloseAddSession}
+      />
 
       {isSessionDetailsOpen && (
         <SessionDetailsModal
@@ -237,5 +255,3 @@ const CourseManagement = () => {
 };
 
 export default CourseManagement;
-
-

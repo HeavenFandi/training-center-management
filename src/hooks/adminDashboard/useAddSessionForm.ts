@@ -77,6 +77,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     setValue,
     reset,
     watch,
+    getValues,
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
@@ -136,8 +137,8 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     };
     console.log("Submitting session data to API:", apiData);
     onSave(apiData);
-    onClose();
-  }, [onClose, onSave]);
+    // Don't close the modal automatically - let the parent decide based on success/conflict
+  }, [onSave]);
 
   const handleTimeChange = (field: "startTime" | "endTime", timeStr: string) => {
     setValue(field, timeStr, { shouldValidate: true });
@@ -165,6 +166,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     handleTimeChange,
     classrooms,
     reset: resetWithDays,
+    getValues,
   };
 };
 

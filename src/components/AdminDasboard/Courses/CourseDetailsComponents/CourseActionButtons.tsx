@@ -81,7 +81,7 @@ const CourseActionButtons: React.FC<CourseActionButtonsProps> = ({
             fontFamily: "Tajawal",
           }}
         >
-          إضافة جلسة
+          إضافة محاضرة
         </Button>
 
         <Button
