@@ -107,7 +107,11 @@ const SchedulingConflictDialog: React.FC<Props> = ({
           },
           ...(submitting && { opacity: 0.6, cursor: "not-allowed" }),
         }}
-        onClick={() => !submitting && onSelectSuggestion(suggestion, onSuccess)}
+        onClick={() => {
+          console.log("=== Suggestion card clicked ===");
+          console.log("suggestion:", suggestion);
+          if (!submitting) onSelectSuggestion(suggestion, onSuccess);
+        }}
       >
         <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
@@ -231,12 +235,23 @@ const SchedulingConflictDialog: React.FC<Props> = ({
                   }
                   color="primary"
                   variant="outlined"
+                  onClick={() => {
+                    console.log("=== Available hall chip clicked ===");
+                    console.log("hall:", hall);
+                    if (!submitting) onSelectSuggestion(hall, onSuccess);
+                  }}
                   sx={{
                     py: 2.5,
                     px: 1.5,
                     minWidth: 120,
                     fontFamily: "Tajawal",
                     borderRadius: "12px",
+                    cursor: "pointer",
+                    "&:hover": {
+                      bgcolor: "rgba(19,62,101,0.05)",
+                      borderColor: "#133E65",
+                    },
+                    ...(submitting && { opacity: 0.6, cursor: "not-allowed" }),
                   }}
                 />
               ))}
