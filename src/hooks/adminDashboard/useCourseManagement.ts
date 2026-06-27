@@ -27,7 +27,7 @@ export const useCourseManagement = () => {
   console.log("[useCourseManagement] currentInstitute?.tenantId:", currentInstitute?.tenantId);
   console.log("[useCourseManagement] user:", user);
 
-  // First, fetch institute by userId (like AdminOverview)
+  // Fetch institute by userId
   useEffect(() => {
     const userId = user?.id;
     console.log("[useCourseManagement] userId:", userId);
@@ -52,16 +52,15 @@ export const useCourseManagement = () => {
 
   const courses = reduxCourses;
 
-  // Fetch courses when currentInstitute has tenantId only if we don't have data yet
+  // Fetch courses when currentInstitute has tenantId
   useEffect(() => {
     if (currentInstitute?.tenantId && !isSearching && reduxCourses.length === 0) {
       dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
     }
   }, [dispatch, currentInstitute?.tenantId, isSearching, reduxCourses.length]);
 
-  // Fetch sessions for all courses once, when we have both courses and currentInstitute
+  // Fetch sessions for all courses once
   const hasFetchedSessionsRef = useRef(false);
-
   useEffect(() => {
     if (currentInstitute?.id && courses.length > 0 && !hasFetchedSessionsRef.current) {
       courses.forEach(course => {
@@ -69,7 +68,6 @@ export const useCourseManagement = () => {
       });
       hasFetchedSessionsRef.current = true;
     }
-    // Reset the ref if currentInstitute changes
     if (!currentInstitute?.id) {
       hasFetchedSessionsRef.current = false;
     }
@@ -84,18 +82,10 @@ export const useCourseManagement = () => {
 
   // Show errors
   useEffect(() => {
-    if (adminCoursesError) {
-      showSnackbar(adminCoursesError, "error");
-    }
-    if (createError) {
-      showSnackbar(createError, "error");
-    }
-    if (updateError) {
-      showSnackbar(updateError, "error");
-    }
-    if (searchError) {
-      showSnackbar(searchError, "error");
-    }
+    if (adminCoursesError) showSnackbar(adminCoursesError, "error");
+    if (createError) showSnackbar(createError, "error");
+    if (updateError) showSnackbar(updateError, "error");
+    if (searchError) showSnackbar(searchError, "error");
   }, [adminCoursesError, createError, updateError, searchError, showSnackbar]);
 
   // Handle search with debounce
@@ -173,9 +163,7 @@ export const useCourseManagement = () => {
       if (actUpdateCourse.fulfilled.match(resultAction)) {
         showSnackbar("تم التعديل بنجاح", "success");
         setSelectedCourse(resultAction.payload);
-        if (onClose) {
-          onClose();
-        }
+        if (onClose) onClose();
       }
     } catch (error) {
       console.error("Error updating course:", error);
@@ -191,10 +179,7 @@ export const useCourseManagement = () => {
   }, []);
 
   const handleSaveAdd = useCallback(async (data: CourseFormData) => {
-    console.log("[useCourseManagement] handleSaveAdd called with data: ", data);
-    console.log("[useCourseManagement] currentInstitute in handleSaveAdd: ", currentInstitute);
     if (!currentInstitute?.tenantId) {
-      console.log("[useCourseManagement] currentInstitute or tenantId missing!");
       showSnackbar("لم يتم تحميل معلومات المعهد", "error");
       return;
     }
@@ -207,17 +192,13 @@ export const useCourseManagement = () => {
       categoryId: parseInt(data.categoryId, 10),
       tenantId: parseInt(currentInstitute.tenantId, 10)
     };
-    console.log("[useCourseManagement] POST payload: ", payload);
 
     try {
       const resultAction = await dispatch(actCreateCourse(payload));
       if (actCreateCourse.fulfilled.match(resultAction)) {
         showSnackbar("تم إضافة الكورس بنجاح", "success");
         setOpenAddModal(false);
-        // Refresh courses list
-        if (currentInstitute?.tenantId) {
-          dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
-        }
+        dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
       }
     } catch (error) {
       console.error("Error creating course: ", error);
@@ -230,46 +211,106 @@ export const useCourseManagement = () => {
     setOriginalFormData(null);
   }, []);
 
+  const formatTimeForApi = (timeStr: any) => {
+    if (!timeStr) return "00:00:00";
+    if (typeof timeStr === "string") {
+      const parts = timeStr.split(":");
+      const hour = parts[0]?.padStart(2, "0") || "00";
+      const minute = parts[1]?.padStart(2, "0") || "00";
+      return `${hour}:${minute}:00`;
+    }
+    if (typeof timeStr === "object" && timeStr !== null && "hour" in timeStr && "minute" in timeStr) {
+      const hour = String(timeStr.hour).padStart(2, "0");
+      const minute = String(timeStr.minute).padStart(2, "0");
+      return `${hour}:${minute}:00`;
+    }
+    return "00:00:00";
+  };
+
+  // دالة اختيار اقتراح الباك إند المحدّثة لمعالجة تكرار الـ 409 وحساب الوقت بدقة
   const handleSelectSuggestion = useCallback(async (suggestion: any, onSuccess?: () => void) => {
+    console.log("=== handleSelectSuggestion CALLED ===");
+    console.log("originalFormData:", originalFormData);
+    console.log("Selected Suggestion:", suggestion);
+    
     if (!originalFormData) return;
 
-    // Try to extract fields from the suggestion:
-    let updatedData: any = { ...originalFormData };
+    let updatedData = { ...originalFormData };
+
+    // 1. استخراج معرف القاعة بشكل صحيح
+    const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
+    if (newClassroomId !== undefined && newClassroomId !== null) {
+      updatedData.classroomId = Number(newClassroomId);
+    }
+
+    // 2. تحديث التوقيت الزمني
+    if (suggestion.startTime) updatedData.startTime = formatTimeForApi(suggestion.startTime);
     
-    // Check for common field names:
-    if (suggestion.classroomId !== undefined) updatedData.classroomId = Number(suggestion.classroomId);
-    if (suggestion.startTime) updatedData.startTime = suggestion.startTime;
-    if (suggestion.endTime) updatedData.endTime = suggestion.endTime;
-    if (suggestion.startDate) updatedData.startDate = suggestion.startDate;
-    if (suggestion.daysOfWeek) updatedData.daysOfWeek = suggestion.daysOfWeek;
-    if (suggestion.teacherId !== undefined) updatedData.teacherId = Number(suggestion.teacherId);
-    if (suggestion.roomId !== undefined) updatedData.classroomId = Number(suggestion.roomId);
-    if (suggestion.hallId !== undefined) updatedData.classroomId = Number(suggestion.hallId);
-    
+    if (suggestion.endTime) {
+      updatedData.endTime = formatTimeForApi(suggestion.endTime);
+    } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
+      // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
+      const [origStartH, origStartM] = originalFormData.startTime.split(':').map(Number);
+      const [origEndH, origEndM] = originalFormData.endTime.split(':').map(Number);
+      const durationInMinutes = (origEndH * 60 + origEndM) - (origStartH * 60 + origStartM);
+
+      const [newStartH, newStartM] = updatedData.startTime.split(':').map(Number);
+      const totalEndMinutes = (newStartH * 60 + newStartM) + durationInMinutes;
+      
+      const newEndH = Math.floor(totalEndMinutes / 60) % 24;
+      const newEndM = totalEndMinutes % 60;
+      updatedData.endTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
+    }
+
+    // 3. تحديث تاريخ البدء المقترح
+    if (suggestion.date) updatedData.startDate = suggestion.date;
+    else if (suggestion.startDate) updatedData.startDate = suggestion.startDate;
+
+    // 4. بناء الـ Payload النهائي النظيف
+    const cleanPayload: CreateTrainingSessionRequest = {
+      courseId: Number(updatedData.courseId),
+      teacherId: Number(updatedData.teacherId),
+      classroomId: Number(updatedData.classroomId),
+      price: Number(updatedData.price),
+      availableSeats: Number(updatedData.availableSeats),
+      minSeats: Number(updatedData.minSeats),
+      numberOfLectures: Number(updatedData.numberOfLectures),
+      duration: updatedData.duration,
+      status: updatedData.status,
+      requiredEquipment: updatedData.requiredEquipment,
+      startDate: updatedData.startDate,
+      startTime: updatedData.startTime,
+      endTime: updatedData.endTime,
+      daysOfWeek: updatedData.daysOfWeek,
+    };
+
+    console.log("=== cleanPayload to submit ===", cleanPayload);
     setSubmittingSuggestion(true);
+    
     try {
-      console.log("Submitting suggestion with updated data:", updatedData);
-      const resultAction = await dispatch(actCreateTrainingSession(updatedData as CreateTrainingSessionRequest));
+      const resultAction = await dispatch(actCreateTrainingSession(cleanPayload));
       if (actCreateTrainingSession.fulfilled.match(resultAction)) {
-        console.log("Training session created successfully:", resultAction.payload);
-        showSnackbar("تم إنشاء الدورة بنجاح", "success");
+        showSnackbar("تم إنشاء الدورة بنجاح باستخدام اقتراح النظام", "success");
         if (currentInstitute?.id) {
-          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: updatedData.courseId, instituteId: currentInstitute.id }));
+          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: cleanPayload.courseId, instituteId: currentInstitute.id }));
         }
         setOpenConflictDialog(false);
         setConflictData(null);
         setOriginalFormData(null);
         if (onSuccess) onSuccess();
       } else {
-          console.error("Failed to create training session with suggestion:", resultAction.payload);
-          const payload = resultAction.payload as any;
-          if (payload?.status === 409) {
-            // New conflict, update the data
-            setConflictData(payload.data);
-          } else {
-            showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
-          }
+        const payload = resultAction.payload as any;
+        
+        // إذا واجه الاقتراح الحالي تضارباً إضافياً، يتم تحديث الديالوج بالاقتراحات الجديدة فوراً
+        if (payload?.status === 409 || resultAction.meta.requestStatus === "rejected") {
+          const errorData = payload?.data || payload;
+          console.log("New Conflict from suggestion. Updating dialogue:", errorData);
+          setConflictData(errorData);
+          showSnackbar("الاقتراح المختار واجه تعارضاً زملانياً آخر، تم تحديث كروت الخيارات.", "warning");
+        } else {
+          showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
         }
+      }
     } catch (error) {
       console.error("Error submitting suggestion:", error);
       showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
@@ -281,20 +322,14 @@ export const useCourseManagement = () => {
   const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest, onSuccess?: () => void) => {
     setCreatingSession(true);
     try {
-      console.log("Creating training session with data:", sessionData);
       const resultAction = await dispatch(actCreateTrainingSession(sessionData));
       if (actCreateTrainingSession.fulfilled.match(resultAction)) {
-        console.log("Training session created successfully:", resultAction.payload);
         showSnackbar("تم إنشاء الدورة بنجاح", "success");
-        // Refresh sessions
         if (currentInstitute?.id) {
           dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: sessionData.courseId, instituteId: currentInstitute.id }));
         }
-        if (onSuccess) {
-          onSuccess();
-        }
+        if (onSuccess) onSuccess();
       } else {
-        console.error("Failed to create training session:", resultAction.payload);
         const payload = resultAction.payload as any;
         if (payload?.status === 409) {
           setOriginalFormData(sessionData);
@@ -314,7 +349,6 @@ export const useCourseManagement = () => {
 
   const handleUpdateSession = useCallback((updatedSession: TSession) => {
     dispatch(updateSessionInCourse({ courseId: updatedSession.courseId, session: updatedSession }));
-    
     if (selectedCourse?.id === updatedSession.courseId) {
       setSelectedCourse(prev => prev ? {
         ...prev,
@@ -325,7 +359,6 @@ export const useCourseManagement = () => {
 
   const handleDeleteSession = useCallback((courseId: number, sessionId: number) => {
     dispatch(deleteSessionFromCourse({ courseId, sessionId }));
-    
     if (selectedCourse?.id === courseId) {
       setSelectedCourse(prev => prev ? {
         ...prev,

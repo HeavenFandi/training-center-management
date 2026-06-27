@@ -55,7 +55,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
   const sessionLecturesError = useAppSelector((state) => state.trainingSessions.sessionLecturesError);
   const lectureUpdateLoading = useAppSelector((state) => state.trainingSessions.lectureUpdateLoading);
   const lectureUpdateError = useAppSelector((state) => state.trainingSessions.lectureUpdateError);
-  const deletingLectureId = useAppSelector((state) => state.trainingSessions.deletingLectureId);
+   const deletingLectureId = useAppSelector((state) => state.trainingSessions.deletingLectureId);
   const lectureDeleteError = useAppSelector((state) => state.trainingSessions.lectureDeleteError);
   
   const lectures = session?.id ? (sessionLectures[session.id] || []) : [];
@@ -109,7 +109,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
 
   // Watch for delete success
   useEffect(() => {
-    if (deleteInitiated && !deletingLectureId && !lectureDeleteError) {
+     if (deleteInitiated && !deletingLectureId && !lectureDeleteError) {
       setIsDeleteModalOpen(false);
       setLectureToDelete(null);
       setDeleteInitiated(false);

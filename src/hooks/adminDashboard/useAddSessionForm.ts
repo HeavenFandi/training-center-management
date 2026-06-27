@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sessionSchema, SessionFormData } from "../../validation/SessionSchema";
+import { createSessionSchema, SessionFormData } from "../../validation/SessionSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TSession } from "../../types/cardType";
 import { useAppSelector } from "../../store/hooks";
@@ -70,6 +70,9 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
   const [selectedDays, setSelectedDays] = useState<string[]>(initialSession?.days || []);
   const classrooms = useAppSelector((state) => state.classrooms.list);
 
+  // Create schema with classrooms context using useMemo to prevent recreation
+  const sessionSchema = useMemo(() => createSessionSchema(classrooms), [classrooms]);
+
   const {
     register,
     handleSubmit,
@@ -102,7 +105,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
   // When classrooms are available, set classroomId to first available if it's still 0
   useEffect(() => {
     if (classrooms.length > 0 && watch("classroomId") === 0) {
-      setValue("classroomId", classrooms[0].id);
+      setValue("classroomId", classrooms[0].id, { shouldValidate: true });
     }
   }, [classrooms, watch, setValue]);
 
@@ -169,4 +172,3 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     getValues,
   };
 };
-

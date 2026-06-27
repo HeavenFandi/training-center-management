@@ -5,15 +5,11 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  console.log("[DEBUG axiosClient] Request config:", {
-    url: config.url,
-    method: config.method,
-    baseURL: config.baseURL,
-    fullURL: (config.baseURL ?? "") + (config.url ?? ""),
-    headers: config.headers,
-    data: config.data,
-    dataType: typeof config.data
-  });
+  console.log("=== [DEBUG axiosClient] REQUEST SENDING ===");
+  console.log("Full URL:", (config.baseURL ?? "") + (config.url ?? ""));
+  console.log("Method:", config.method?.toUpperCase());
+  console.log("Request Payload (JSON stringified):", JSON.stringify(config.data, null, 2));
+  console.log("Request Payload raw:", config.data);
   
   const user = localStorage.getItem("user");
   if (user) {
@@ -37,13 +33,11 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error("[DEBUG axiosClient] Response error:", {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: error.config
-    });
+    console.error("=== [DEBUG axiosClient] RESPONSE ERROR ===");
+    console.error("Status:", error.response?.status);
+    console.error("Status Text:", error.response?.statusText);
+    console.error("Error Response Data (full):", error.response?.data);
+    console.error("Error message:", error.message);
     return Promise.reject(error);
   }
 );
