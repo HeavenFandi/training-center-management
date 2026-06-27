@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
   Stack,
   Box,
   Zoom,
+  CircularProgress,
 } from "@mui/material";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import { useSnackbar } from "../../Context/SnackbarContext";
@@ -21,6 +22,7 @@ interface GenericDeleteModalProps {
   confirmButtonText?: string;
   cancelButtonText?: string;
   errorMessage?: string | null;
+  isLoading?: boolean;
 }
 
 const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
@@ -33,21 +35,9 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
   confirmButtonText = "حذف البيانات",
   cancelButtonText = "إلغاء",
   errorMessage,
+  isLoading = false,
 }) => {
   const { showSnackbar } = useSnackbar();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    if (errorMessage) return;
-    setIsDeleting(true);
-    try {
-      await onConfirm();
-    } catch (error) {
-      console.error("Delete error:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   return (
     <Dialog
@@ -121,8 +111,8 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
             <Button
               variant="contained"
               fullWidth
-              onClick={handleDelete}
-              disabled={isDeleting || !!errorMessage}
+              onClick={onConfirm}
+              disabled={isLoading || !!errorMessage}
               sx={{
                
                 bgcolor: "#ff4d4f",
@@ -140,14 +130,18 @@ const GenericDeleteModal: React.FC<GenericDeleteModalProps> = ({
                 }
               }}
             >
-              {isDeleting ? "جارٍ الحذف..." : confirmButtonText}
+              {isLoading ? (
+                <CircularProgress size={20} color="inherit" sx={{ mx: 1 }} />
+              ) : (
+                confirmButtonText
+              )}
             </Button>
 
             <Button
               variant="outlined"
              
               onClick={onClose}
-              disabled={isDeleting}
+              disabled={isLoading}
               sx={{
               
                 borderRadius: "14px",
