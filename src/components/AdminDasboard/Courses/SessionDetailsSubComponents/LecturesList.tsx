@@ -6,7 +6,6 @@ import {
   Button, 
   List, 
   ListItem, 
-  ListItemText, 
   IconButton, 
   Divider, 
   Tooltip, 
@@ -96,19 +95,19 @@ const LecturesList: React.FC<LecturesListProps> = ({
               <React.Fragment key={(lecture as any).id}>
                 <ListItem
                   secondaryAction={
-                      <Stack direction="row" spacing={1}>
-                        <Tooltip title="تعديل">
-                          <IconButton size="small" onClick={() => onEditLecture(lecture)}>
-                            <EditIcon fontSize="small" color="primary" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="إلغاء المحاضرة">
-                          <IconButton size="small" onClick={() => onDeleteLecture((lecture as any).id)}>
-                            <DeleteIcon fontSize="small" color="error" />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    }
+                    <Stack direction="row" spacing={1}>
+                      <Tooltip title="تعديل">
+                        <IconButton size="small" onClick={() => onEditLecture(lecture)}>
+                          <EditIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="إلغاء المحاضرة">
+                        <IconButton size="small" onClick={() => onDeleteLecture((lecture as any).id)}>
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  }
                   sx={{ py: 1.5 }}
                 >
                   <Stack direction="column" spacing={0.5} sx={{ flex: 1 }}>

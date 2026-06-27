@@ -55,7 +55,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
   const sessionLecturesError = useAppSelector((state) => state.trainingSessions.sessionLecturesError);
   const lectureUpdateLoading = useAppSelector((state) => state.trainingSessions.lectureUpdateLoading);
   const lectureUpdateError = useAppSelector((state) => state.trainingSessions.lectureUpdateError);
-  const deletingLectureId = useAppSelector((state) => state.trainingSessions.deletingLectureId);
+  const lectureDeleteLoading = useAppSelector((state) => state.trainingSessions.lectureDeleteLoading);
   const lectureDeleteError = useAppSelector((state) => state.trainingSessions.lectureDeleteError);
   
   const lectures = session?.id ? (sessionLectures[session.id] || []) : [];
@@ -109,7 +109,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
 
   // Watch for delete success
   useEffect(() => {
-    if (deleteInitiated && !deletingLectureId && !lectureDeleteError) {
+    if (deleteInitiated && !lectureDeleteLoading && !lectureDeleteError) {
       setIsDeleteModalOpen(false);
       setLectureToDelete(null);
       setDeleteInitiated(false);
@@ -121,7 +121,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
       setDeleteInitiated(false);
       showSnackbar(lectureDeleteError, "error");
     }
-  }, [deletingLectureId, lectureDeleteError, deleteInitiated, dispatch, session, showSnackbar]);
+  }, [lectureDeleteLoading, lectureDeleteError, deleteInitiated, dispatch, session, showSnackbar]);
 
   // Reset deleteInitiated when delete modal closes
   useEffect(() => {
@@ -290,7 +290,6 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
         itemName={undefined}
         confirmButtonText="حذف المحاضرة"
         errorMessage={lectureDeleteError}
-        isLoading={deletingLectureId !== null}
       />
     </Dialog>
   );
