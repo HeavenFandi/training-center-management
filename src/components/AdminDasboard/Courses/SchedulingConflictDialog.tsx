@@ -83,10 +83,14 @@ const SchedulingConflictDialog: React.FC<Props> = ({
 
   // Helper to render a suggestion card
   const renderSuggestion = (suggestion: any, index: number) => {
-    const entries = Object.entries(suggestion);
+    // Filter out note keys and clean up values
+    const entries = Object.entries(suggestion).filter(([key]) => !key.toLowerCase().includes("note"));
     
-    // Try to find a label or title
-    const label = suggestion.label || suggestion.title || suggestion.name || `اقتراح ${index + 1}`;
+    // Try to find a label or title, exclude note
+    let label = suggestion.label || suggestion.title || suggestion.name || `اقتراح ${index + 1}`;
+    
+    // Clean label from note prefixes
+    label = label.replace(/^note:/i, "").replace(/:note:$/i, "").trim();
     
     return (
       <Card
@@ -166,9 +170,7 @@ const SchedulingConflictDialog: React.FC<Props> = ({
               fontSize: "1.25rem",
             }}
           >
-            {conflictCount > 0
-              ? `خطأ: تم اكتشاف تعارض في ${conflictCount} موعد${conflictCount > 1 ? "اً" : ""}`
-              : "خطأ: تم اكتشاف تعارض في جدولة الجلسات"}
+            تضارب في المواعيد
           </DialogTitle>
         </Box>
         <IconButton onClick={onClose} sx={{ bgcolor: "#fff" }} disabled={submitting}>
@@ -178,7 +180,7 @@ const SchedulingConflictDialog: React.FC<Props> = ({
 
       <DialogContent sx={{ fontFamily: "Tajawal", p: 3, pt: 0, bgcolor: "#F8FAFC" }}>
         {/* Backend Message */}
-        {conflictData.message && (
+        {conflictData.message && !conflictData.message.toLowerCase().includes("conflict detected on") && (
           <Alert
             severity="error"
             sx={{
@@ -194,7 +196,8 @@ const SchedulingConflictDialog: React.FC<Props> = ({
           </Alert>
         )}
 
-     
+
+
         {/* Available Halls */}
         {conflictData.availableHalls && conflictData.availableHalls.length > 0 && (
           <Box sx={{ mb: 3 }}>

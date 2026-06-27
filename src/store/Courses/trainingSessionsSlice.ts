@@ -69,7 +69,7 @@ interface ITrainingSessionsState {
   lectureUpdateLoading: boolean;
   lectureUpdateError: string | null;
 
-  deletingLectureId: number | null;
+  lectureDeleteLoading: boolean;
   lectureDeleteError: string | null;
 }
 
@@ -111,7 +111,7 @@ const initialState: ITrainingSessionsState = {
   sessionLecturesError: {},
   lectureUpdateLoading: false,
   lectureUpdateError: null,
-  deletingLectureId: null,
+  lectureDeleteLoading: false,
   lectureDeleteError: null,
 };
 
@@ -398,16 +398,16 @@ const trainingSessionsSlice = createSlice({
     });
 
     // actDeleteLecture
-    builder.addCase(actDeleteLecture.pending, (state, action) => {
-      state.deletingLectureId = action.meta.arg;
+    builder.addCase(actDeleteLecture.pending, (state) => {
+      state.lectureDeleteLoading = true;
       state.lectureDeleteError = null;
     });
     builder.addCase(actDeleteLecture.fulfilled, (state) => {
-      state.deletingLectureId = null;
+      state.lectureDeleteLoading = false;
       state.lectureDeleteError = null;
     });
     builder.addCase(actDeleteLecture.rejected, (state, action) => {
-      state.deletingLectureId = null;
+      state.lectureDeleteLoading = false;
       if (action.payload && typeof action.payload == "string")
         state.lectureDeleteError = action.payload;
     });
