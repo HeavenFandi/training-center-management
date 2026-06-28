@@ -49,17 +49,17 @@ export type UpdateInstituteApiRequest = {
 };
 
 export const getInstituteById = async (id: string | number) => {
-  const response = await axiosClient.get<Institute>(`institutes/${id}`);
+  const response = await axiosClient.get<Institute>(`/institutes/${id}`);
   return response.data;
 };
 
 export const getInstituteByTenantId = async (tenantId: string) => {
-  const response = await axiosClient.get<Institute[]>(`institutes/tenant/${tenantId}`);
+  const response = await axiosClient.get<Institute[]>(`/institutes/tenant/${tenantId}`);
   return response.data;
 };
 
 export const getInstituteByUserId = async (userId: string | number) => {
-  const response = await axiosClient.get<Institute | Institute[]>(`institutes/user/${userId}`);
+  const response = await axiosClient.get<Institute | Institute[]>(`/institutes/user/${userId}`);
   const raw = response.data;
   const institute = Array.isArray(raw)
     ? raw[0] ?? null
@@ -75,7 +75,7 @@ export const updateInstitute = async (id: number, data: UpdateInstituteRequest) 
     endTime: formatTimeToHHmmss(data.endTime),
     workingDays: data.workingDays.map(day => day.toUpperCase()),
   };
-  const response = await axiosClient.put<Institute>(`institutes/${id}`, apiPayload);
+  const response = await axiosClient.put<Institute>(`/institutes/${id}`, apiPayload);
   return response.data;
 };
 
@@ -85,7 +85,7 @@ export type MonthlyRegistration = {
 };
 
 export const getInstituteMonthlyRegistrations = async (id: number | string, year: number) => {
-  const response = await axiosClient.get<MonthlyRegistration[]>(`institutes/${id}/registration-monthly?year=${year}`);
+  const response = await axiosClient.get<MonthlyRegistration[]>(`/institutes/${id}/registration-monthly?year=${year}`);
   return response.data;
 };
 
@@ -97,16 +97,16 @@ export type FinancialMonthly = {
 
 export const getInstituteFinancialMonthly = async (id: number | string, year?: number) => {
   const params = year ? { year } : {};
-  const response = await axiosClient.get<FinancialMonthly[]>(`institutes/${id}/financial-monthly`, { params });
+  const response = await axiosClient.get<FinancialMonthly[]>(`/institutes/${id}/financial-monthly`, { params });
   return response.data;
 };
 
 export const createInstitute = async (data: any) => {
-  const response = await axiosClient.post<Institute>("institutes", data);
+  const response = await axiosClient.post<Institute>("/institutes", data);
   return response.data;
 };
 
 export const getStudentsCount = async (tenantId: string | number) => {
-  const response = await axiosClient.get<number>(`institutes/tenant/${tenantId}/students-count`);
+  const response = await axiosClient.get<number>(`/institutes/tenant/${tenantId}/students-count`);
   return response.data;
 };

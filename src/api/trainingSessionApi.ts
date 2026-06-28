@@ -1,5 +1,21 @@
 import axiosClient from "./axiosClient";
 
+export type TimeObject = {
+  hour: number;
+  minute: number;
+  second?: number;
+  nano?: number;
+};
+
+export type CreateLectureRequest = {
+  sessionName: string;
+  lectureDate: string;
+  startTime: string; // LocalTime format "HH:mm:ss"
+  endTime: string; // LocalTime format "HH:mm:ss"
+  classroomId: number;
+  teacherId: number;
+};
+
 export type CreateTrainingSessionRequest = {
   price: number;
   availableSeats: number;
@@ -37,13 +53,6 @@ export type TrainingSessionResponse = {
   image: string;
 };
 
-export type TimeObject = {
-  hour: number;
-  minute: number;
-  second?: number;
-  nano?: number;
-};
-
 export type LectureResponse = {
   id: number;
   lectureDate: string;
@@ -58,11 +67,12 @@ export type LectureResponse = {
 };
 
 export type UpdateLectureRequest = {
-  lectureDate: string;
-  startTime: TimeObject;
-  endTime: TimeObject;
-  classroomId: number;
-  teacherId: number;
+  sessionName?: string;
+  lectureDate?: string;
+  startTime?: string; // LocalTime format "HH:mm:ss"
+  endTime?: string; // LocalTime format "HH:mm:ss"
+  classroomId?: number;
+  teacherId?: number;
   sessionId: number;
 };
 
@@ -76,11 +86,25 @@ export const createTrainingSession = async (
   return response.data;
 };
 
+export const createLecture = async (
+  sessionId: number,
+  data: CreateLectureRequest,
+): Promise<LectureResponse> => {
+  console.log("sessionId:", sessionId);
+  console.log("URL:", `/api/lectures/session/${sessionId}`);
+  console.log("Payload:", data);
+  const response = await axiosClient.post<LectureResponse>(
+    `/lectures/session/${sessionId}`,
+    data,
+  );
+  return response.data;
+};
+
 export const getLecturesBySessionId = async (
   sessionId: number,
 ): Promise<LectureResponse[]> => {
   const response = await axiosClient.get<LectureResponse[]>(
-    `lectures/session/${sessionId}`,
+    `/lectures/session/${sessionId}`,
   );
   return response.data;
 };
@@ -89,8 +113,12 @@ export const updateLecture = async (
   id: number,
   data: UpdateLectureRequest,
 ): Promise<LectureResponse> => {
+  console.log("[DEBUG updateLecture] Data received from frontend:", data);
+  
+  console.log("[DEBUG updateLecture] Payload being sent to API:", data);
+  
   const response = await axiosClient.put<LectureResponse>(
-    `lectures/${id}`,
+    `/lectures/${id}`,
     data,
   );
   return response.data;
@@ -99,7 +127,7 @@ export const updateLecture = async (
 export const deleteLecture = async (
   id: number,
 ): Promise<void> => {
-  await axiosClient.delete(`lectures/${id}`);
+  await axiosClient.delete(`/lectures/${id}`);
 };
 
 export const deleteTrainingSession = async (

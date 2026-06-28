@@ -67,6 +67,10 @@ const coursesSlice = createSlice({
         course.sessions = course.sessions.filter(s => s.id !== sessionId);
       }
     },
+    clearDeleteCourseState: (state) => {
+      state.deletingCourseId = null;
+      state.deleteError = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(actGetCoursesByTenantId.pending, (state) => {
@@ -148,7 +152,7 @@ const coursesSlice = createSlice({
       state.courses = state.courses.filter((course) => course.id !== action.payload);
     });
     builder.addCase(actDeleteCourse.rejected, (state, action) => {
-      state.deletingCourseId = null;
+      // Keep deletingCourseId as is until user closes modal
       if (action.payload && typeof action.payload === "string") {
         state.deleteError = action.payload;
       }
@@ -214,6 +218,6 @@ const coursesSlice = createSlice({
   },
 });
 
-export const { addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse } = coursesSlice.actions;
+export const { addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse, clearDeleteCourseState } = coursesSlice.actions;
 export const selectCoursesState = (state: RootState) => state.courses;
 export default coursesSlice.reducer;

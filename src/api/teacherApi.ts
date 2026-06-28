@@ -74,18 +74,18 @@ export interface TeacherCourseProgress {
 }
 
 export const getTeachers = async () => {
-  const response = await axiosClient.get<TeacherApiResponse[]>(`teachers`);
+  const response = await axiosClient.get<TeacherApiResponse[]>(`/teachers`);
   return response.data;
 };
 
 export const getTeacherById = async (id: string | number) => {
-  const response = await axiosClient.get<TeacherApiResponse>(`teachers/${id}`);
+  const response = await axiosClient.get<TeacherApiResponse>(`/teachers/${id}`);
   return response.data;
 };
 
 export const getTeacherCourseProgress = async (id: string | number) => {
   const response = await axiosClient.get<TeacherCourseProgress[]>(
-    `teachers/${id}/course-progress`,
+    `/teachers/${id}/course-progress`,
   );
   return response.data;
 };
