@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
 import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly } from "../../store/Institutes/institutesSlice";
+import { actGetAllLectures } from "../../store/Courses/trainingSessionsSlice";
 import MonthlyRegistrationChart from "../../components/AdminDasboard/MainDashboard/MonthlyRegistrationChart";
 import FinancialCard from "../../components/AdminDasboard/MainDashboard/FinancialCard";
 import ScheduleCard from "../../components/AdminDasboard/MainDashboard/ScheduleCard";
@@ -14,7 +15,6 @@ import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 import {
   statsAdmin,
   financialData,
-  schedule
 } from "../../data/DasboardData";
 
 const arabicMonths: Record<number, string> = {
@@ -39,8 +39,27 @@ const AdminOverview: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError } =
     useAppSelector((state) => state.institutes);
+  const { allLectures, allLecturesLoading, allLecturesError } =
+    useAppSelector((state) => state.trainingSessions);
     
   const showInstituteLoading = useDelayedLoading(currentInstituteLoading);
+
+  const getTodayDate = (): string => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayLectures = useMemo(() => {
+    const today = getTodayDate();
+    console.log("allLectures from Redux:", allLectures);
+    console.log("today date:", today);
+    const filtered = allLectures.filter(lecture => lecture.lectureDate === today);
+    console.log("filtered todayLectures:", filtered);
+    return filtered;
+  }, [allLectures]);
 
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const currentYear = selectedYear;
@@ -135,6 +154,11 @@ const AdminOverview: React.FC = () => {
     }
     dispatch(actGetInstituteFinancialMonthly({ id: instituteId, year: currentYear }));
   }, [dispatch, currentInstitute, currentYear]);
+
+  // Fetch all lectures on mount
+  useEffect(() => {
+    dispatch(actGetAllLectures());
+  }, [dispatch]);
 
   // Log state changes
   useEffect(() => {
@@ -236,7 +260,11 @@ const AdminOverview: React.FC = () => {
           />
         </Grid>
          <Grid size={{ xs: 12, md: 7 }}>
-                 <ScheduleCard data={schedule} />
+                 <ScheduleCard 
+                   data={todayLectures} 
+                   loading={allLecturesLoading === "pending"} 
+                   error={allLecturesError} 
+                 />
                </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
           <FinancialCard 

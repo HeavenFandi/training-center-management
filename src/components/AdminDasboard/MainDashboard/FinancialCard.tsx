@@ -15,7 +15,7 @@ const FinancialCard: React.FC<Props> = ({ data, total, previous }) => {
   return (
     <Paper
       sx={{
-        p: 2,
+        p: 3,
         borderRadius: 5,
         backgroundColor: "rgba(255, 255, 255, 0.6)",
         backdropFilter: "blur(10px)",
@@ -54,13 +54,13 @@ const FinancialCard: React.FC<Props> = ({ data, total, previous }) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-end",
-              gap: 0.5,
+              gap: 1,
             }}
           >
             <Typography variant="caption" fontWeight="bold">
               الأداء المالي
             </Typography>
-            <TrendingUp sx={{ fontSize: 16, color: "#6d7fa0" }} />
+            <TrendingUp sx={{ fontSize: 30, color: "#6d7fa0" }} />
           </Box>
 
           <Typography
