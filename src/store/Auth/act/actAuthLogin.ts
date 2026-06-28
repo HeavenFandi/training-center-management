@@ -29,7 +29,7 @@ const actAuthLogin = createAsyncThunk<
 >("auth/actAuthLogin", async (data, thunkAPI) => {
   try {
     const loginData = {
-      email: data.email.trim().toLowerCase(),
+      email: data.email.trim(),
       password: data.password,
     };
     console.log("[DEBUG actAuthLogin] === START LOGIN ===");

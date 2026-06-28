@@ -56,7 +56,7 @@ const AuthInputComponent = React.forwardRef<HTMLInputElement, IInput>(function A
           "& .MuiOutlinedInput-root": {
             borderRadius: "10px",
             minHeight: compact ? { xs: "28px", md: "32px" } : { xs: "40px", md: "48px" },
-            height: select || type === "date" || multiline ? "auto" : (compact ? { xs: "28px", md: "32px" } : { xs: "40px", md: "48px" }),
+            height: select || type === "date" || type === "time" || multiline ? "auto" : (compact ? { xs: "28px", md: "32px" } : { xs: "40px", md: "48px" }),
             backgroundColor: "transparent",
             fontSize: compact ? { xs: "0.75rem", md: "0.8rem" } : { xs: "0.9rem", md: "1rem" },
           },
