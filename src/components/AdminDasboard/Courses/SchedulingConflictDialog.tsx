@@ -202,7 +202,7 @@ const SchedulingConflictDialog: React.FC<Props> = ({
 
 
 
-        {/* Available Halls */}
+       
         {conflictData.availableHalls && conflictData.availableHalls.length > 0 && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" fontWeight="bold" mb={2} color="#133E65">
@@ -218,8 +218,8 @@ const SchedulingConflictDialog: React.FC<Props> = ({
                       <Box sx={{ fontWeight: "bold" }}>
                         {hall.name ||
                           hall.number ||
-                          hall.roomId ||
-                          hall.id ||
+                       
+                         
                           `قاعة ${index + 1}`}
                       </Box>
                       {hall.capacity && (

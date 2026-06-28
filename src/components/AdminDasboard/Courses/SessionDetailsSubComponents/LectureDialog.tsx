@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, Stack, Button, Box, Typography, IconButton, CircularProgress } from "@mui/material";
+import { Dialog, DialogContent, Stack, Button, Box, Typography, IconButton, CircularProgress, Alert } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { TLecture } from "../../../../types/cardType";
@@ -19,6 +19,7 @@ interface LectureDialogProps {
   lectureEndTime: string;
   setLectureEndTime: (val: string) => void;
   isLoading?: boolean;
+  errorMessage?: string | null;
 }
 
 const LectureDialog: React.FC<LectureDialogProps> = ({
@@ -35,6 +36,7 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
   lectureEndTime,
   setLectureEndTime,
   isLoading = false,
+  errorMessage = null,
 }) => {
   return (
     <Dialog 
@@ -70,6 +72,11 @@ const LectureDialog: React.FC<LectureDialogProps> = ({
       </Box>
 
       <DialogContent sx={{ fontFamily: "Tajawal", p: 4, pt: 2, bgcolor: "#F8FAFC" }}>
+        {errorMessage && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {errorMessage}
+          </Alert>
+        )}
         <Stack spacing={3} sx={{ mt: 1 }}>
           <AuthInput
             label="اسم المحاضرة"

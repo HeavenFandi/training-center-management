@@ -11,8 +11,9 @@ import actGetActiveOrUpcomingByCourseAndInstitute from "../../store/Courses/act/
 import actDeleteTrainingSession from "../../store/Courses/act/actDeleteTrainingSession";
 import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingSession";
 import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
-import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse } from "../../store/Courses/courseSlice";
+import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse, clearDeleteCourseState } from "../../store/Courses/courseSlice";
 import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
+import { clearDeleteSessionState, clearDeleteLectureState } from "../../store/Courses/trainingSessionsSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
 import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
@@ -126,9 +127,8 @@ export const useCourseManagement = () => {
       if (actDeleteCourse.fulfilled.match(resultAction)) {
         showSnackbar("تم حذف الكورس بنجاح", "success");
         setIsDeleteOpen(false);
-      } else if (actDeleteCourse.rejected.match(resultAction)) {
-        showSnackbar(resultAction.payload as string, "error");
       }
+      // Don't close the modal on rejection, so the user can see the error in DeleteModal
     } catch (error) {
       console.error("Error deleting course:", error);
     }
@@ -159,7 +159,8 @@ export const useCourseManagement = () => {
 
   const handleCloseDelete = useCallback(() => {
     setIsDeleteOpen(false);
-  }, []);
+    dispatch(clearDeleteCourseState());
+  }, [dispatch]);
 
   const handleSaveEdit = useCallback(async (updateData: UpdateCourseRequest, onClose?: () => void) => {
     try {
@@ -373,15 +374,11 @@ export const useCourseManagement = () => {
           } : null);
         }
         showSnackbar("تم حذف الدورة بنجاح", "success");
-        return true; // return success so caller can close modal
-      } else if (actDeleteTrainingSession.rejected.match(resultAction)) {
-        showSnackbar(resultAction.payload as string, "error");
-        return false;
+        return true;
       }
+      // Don't show snackbar on rejection - error will appear in DeleteModal
     } catch (error) {
       console.error("Error deleting session:", error);
-      showSnackbar("حدث خطأ أثناء حذف الدورة", "error");
-      return false;
     }
   }, [dispatch, selectedCourse, showSnackbar]);
 
@@ -390,6 +387,14 @@ export const useCourseManagement = () => {
       dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: currentInstitute.id }));
     }
   }, [dispatch, currentInstitute]);
+
+  const handleClearDeleteSessionState = useCallback(() => {
+    dispatch(clearDeleteSessionState());
+  }, [dispatch]);
+
+  const handleClearDeleteLectureState = useCallback(() => {
+    dispatch(clearDeleteLectureState());
+  }, [dispatch]);
 
   return {
     courses,
@@ -431,5 +436,7 @@ export const useCourseManagement = () => {
     deletingSessionId,
     deleteError,
     sessionDeleteError,
+    handleClearDeleteSessionState,
+    handleClearDeleteLectureState,
   };
 };

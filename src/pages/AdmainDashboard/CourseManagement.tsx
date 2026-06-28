@@ -55,6 +55,7 @@ const CourseManagement = () => {
     deletingSessionId,
     deleteError,
     sessionDeleteError,
+    handleClearDeleteSessionState,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -117,6 +118,12 @@ const CourseManagement = () => {
       setSessionToDelete(null);
     }
   }, [sessionToDelete, handleDeleteSession]);
+
+  const handleCloseDeleteSession = useCallback(() => {
+    setIsDeleteSessionOpen(false);
+    setSessionToDelete(null);
+    handleClearDeleteSessionState();
+  }, [handleClearDeleteSessionState]);
 
   return (
     <Box sx={{  width: "100%", overflowX: "hidden", flexGrow: 1 }}>
@@ -215,7 +222,7 @@ const CourseManagement = () => {
       {isDeleteSessionOpen && (
         <GenericDeleteModal
           open={isDeleteSessionOpen}
-          onClose={() => setIsDeleteSessionOpen(false)}
+          onClose={handleCloseDeleteSession}
           onConfirm={handleConfirmDeleteSession}
           title="تأكيد حذف الدورة"
           description="هل أنت متأكد من رغبتك في حذف الدورة"
