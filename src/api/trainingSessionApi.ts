@@ -135,3 +135,8 @@ export const deleteTrainingSession = async (
 ): Promise<void> => {
   await axiosClient.delete(`/training-sessions/${id}`);
 };
+
+export const getAllLectures = async (): Promise<LectureResponse[]> => {
+  const response = await axiosClient.get<LectureResponse[]>("/lectures");
+  return response.data;
+};

@@ -20,6 +20,7 @@ import actUpdateLecture from "./act/actUpdateLecture";
 import actDeleteLecture from "./act/actDeleteLecture";
 import actDeleteTrainingSession from "./act/actDeleteTrainingSession";
 import actCreateLecture from "./act/actCreateLecture";
+import actGetAllLectures from "./act/actGetAllLectures";
 import { RootState } from "..";
 
 interface AppliedFilters {
@@ -77,6 +78,10 @@ interface ITrainingSessionsState {
   sessionDeleteError: string | null;
   lectureCreateLoading: boolean;
   lectureCreateError: string | null;
+
+  allLectures: LectureResponse[];
+  allLecturesLoading: "idle" | "pending" | "succeeded" | "failed";
+  allLecturesError: string | null;
 }
 
 const initialState: ITrainingSessionsState = {
@@ -123,6 +128,9 @@ const initialState: ITrainingSessionsState = {
   sessionDeleteError: null,
   lectureCreateLoading: false,
   lectureCreateError: null,
+  allLectures: [],
+  allLecturesLoading: "idle",
+  allLecturesError: null,
 };
 
 const trainingSessionsSlice = createSlice({
@@ -405,18 +413,6 @@ const trainingSessionsSlice = createSlice({
       state.lectureUpdateLoading = true;
       state.lectureUpdateError = null;
     });
-    builder.addCase(actUpdateLecture.fulfilled, (state, action) => {
-      state.lectureUpdateLoading = false;
-      state.lectureUpdateError = null;
-      // Update the lecture in sessionLectures
-      const updatedLecture = action.payload;
-      const sessionId = updatedLecture.sessionId;
-      if (sessionId && state.sessionLectures[sessionId]) {
-        state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(lecture => 
-          lecture.id === updatedLecture.id ? updatedLecture : lecture
-        );
-      }
-    });
     builder.addCase(actUpdateLecture.rejected, (state, action) => {
       state.lectureUpdateLoading = false;
       if (action.payload && typeof action.payload == "string")
@@ -427,19 +423,6 @@ const trainingSessionsSlice = createSlice({
     builder.addCase(actDeleteLecture.pending, (state, action) => {
       state.deletingLectureId = action.meta.arg;
       state.lectureDeleteError = null;
-    });
-    builder.addCase(actDeleteLecture.fulfilled, (state, action) => {
-      state.deletingLectureId = null;
-      state.lectureDeleteError = null;
-      // Remove the deleted lecture from sessionLectures
-      const deletedLectureId = action.meta.arg;
-      // We need to find which session this lecture belonged to
-      for (const sessionId in state.sessionLectures) {
-        if (state.sessionLectures[sessionId].some(lecture => lecture.id === deletedLectureId)) {
-          state.sessionLectures[sessionId] = state.sessionLectures[sessionId].filter(lecture => lecture.id !== deletedLectureId);
-          break;
-        }
-      }
     });
     builder.addCase(actDeleteLecture.rejected, (state, action) => {
       // Keep deletingLectureId as is until user closes modal
@@ -460,11 +443,63 @@ const trainingSessionsSlice = createSlice({
       if (sessionId && state.sessionLectures[sessionId]) {
         state.sessionLectures[sessionId] = [...state.sessionLectures[sessionId], newLecture];
       }
+      // Also add to allLectures
+      state.allLectures = [...state.allLectures, newLecture];
     });
     builder.addCase(actCreateLecture.rejected, (state, action) => {
       state.lectureCreateLoading = false;
       if (action.payload && typeof action.payload == "string")
         state.lectureCreateError = action.payload;
+    });
+
+    // actGetAllLectures
+    builder.addCase(actGetAllLectures.pending, (state) => {
+      state.allLecturesLoading = "pending";
+      state.allLecturesError = null;
+    });
+    builder.addCase(actGetAllLectures.fulfilled, (state, action) => {
+      state.allLecturesLoading = "succeeded";
+      state.allLectures = action.payload;
+    });
+    builder.addCase(actGetAllLectures.rejected, (state, action) => {
+      state.allLecturesLoading = "failed";
+      if (action.payload && typeof action.payload == "string")
+        state.allLecturesError = action.payload;
+    });
+
+    // When a lecture is updated, also update it in allLectures
+    builder.addCase(actUpdateLecture.fulfilled, (state, action) => {
+      state.lectureUpdateLoading = false;
+      state.lectureUpdateError = null;
+      // Update the lecture in sessionLectures
+      const updatedLecture = action.payload;
+      const sessionId = updatedLecture.sessionId;
+      if (sessionId && state.sessionLectures[sessionId]) {
+        state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(lecture => 
+          lecture.id === updatedLecture.id ? updatedLecture : lecture
+        );
+      }
+      // Also update in allLectures
+      state.allLectures = state.allLectures.map(lecture => 
+        lecture.id === updatedLecture.id ? updatedLecture : lecture
+      );
+    });
+
+    // When a lecture is deleted, also remove it from allLectures
+    builder.addCase(actDeleteLecture.fulfilled, (state, action) => {
+      state.deletingLectureId = null;
+      state.lectureDeleteError = null;
+      // Remove the deleted lecture from sessionLectures
+      const deletedLectureId = action.meta.arg;
+      // We need to find which session this lecture belonged to
+      for (const sessionId in state.sessionLectures) {
+        if (state.sessionLectures[sessionId].some(lecture => lecture.id === deletedLectureId)) {
+          state.sessionLectures[sessionId] = state.sessionLectures[sessionId].filter(lecture => lecture.id !== deletedLectureId);
+          break;
+        }
+      }
+      // Also remove from allLectures
+      state.allLectures = state.allLectures.filter(lecture => lecture.id !== deletedLectureId);
     });
 
     // actDeleteTrainingSession
@@ -622,5 +657,6 @@ export {
   actUpdateLecture,
   actDeleteLecture,
   actCreateLecture,
+  actGetAllLectures,
 };
 export default trainingSessionsSlice.reducer;
