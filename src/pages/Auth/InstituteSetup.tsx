@@ -337,6 +337,7 @@ const InstituteSetup: React.FC = () => {
                     <MenuItem value="open">متاح</MenuItem>
                     <MenuItem value="closed">مغلق</MenuItem>
                   </AuthInput>
+                </Grid>
 
                 {mainStatus === "open" && (
                   <>
@@ -360,7 +361,6 @@ const InstituteSetup: React.FC = () => {
                     </Grid>
                   </>
                 )}
-                </Grid>
               </GridRow>
             </Stack>
           </FormSection>

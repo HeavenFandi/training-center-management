@@ -1,4 +1,5 @@
 import axiosClient from "./axiosClient";
+import { ApiTimeObject } from "../utils/timeUtils";
 
 export type Institute = {
   id: number;
@@ -14,12 +15,26 @@ export type Institute = {
   tenantName: string;
   phoneNumber?: string;
   workingDays?: string[];
-  startTime?: string;
-  endTime?: string;
+  startTime?: string | ApiTimeObject;
+  endTime?: string | ApiTimeObject;
   status?: string;
 };
 
 export type UpdateInstituteRequest = {
+  userId?: number;
+  tenantId?: any;
+  name: string;
+  location: string;
+  description: string;
+  phoneNumber: string;
+  email: string;
+  startTime: string;
+  endTime: string;
+  workingDays: string[];
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type UpdateInstituteApiRequest = {
   userId?: number;
   tenantId?: any;
   name: string;
@@ -53,7 +68,14 @@ export const getInstituteByUserId = async (userId: string | number) => {
 };
 
 export const updateInstitute = async (id: number, data: UpdateInstituteRequest) => {
-  const response = await axiosClient.put<Institute>(`institutes/${id}`, data);
+  const { formatTimeToHHmmss } = await import("../utils/timeUtils");
+  const apiPayload = {
+    ...data,
+    startTime: formatTimeToHHmmss(data.startTime),
+    endTime: formatTimeToHHmmss(data.endTime),
+    workingDays: data.workingDays.map(day => day.toUpperCase()),
+  };
+  const response = await axiosClient.put<Institute>(`institutes/${id}`, apiPayload);
   return response.data;
 };
 
