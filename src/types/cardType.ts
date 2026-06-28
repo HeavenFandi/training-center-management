@@ -153,4 +153,5 @@ export interface TCourse extends TCourseListItem {
   sessions?: TSession[];
   image: string;
   duration?: string;
+  status?: string;
 }

@@ -88,6 +88,7 @@ const coursesSlice = createSlice({
         ...course,
         title: course.title || course.name,
         category: course.category || course.categoryName,
+        status: course.status,
         // If API returns sessions, map them (but we don't know the shape yet)
         sessions: course.sessions || [],
       }));

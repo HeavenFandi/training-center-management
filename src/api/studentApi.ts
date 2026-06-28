@@ -134,3 +134,8 @@ export const getStudentActiveCourses = async (studentId: number): Promise<any[]>
   }
   return [];
 };
+
+export const getAllStudents = async (): Promise<GetStudentsResponse> => {
+  const response = await axiosClient.get<GetStudentsResponse>("/students");
+  return response.data;
+};

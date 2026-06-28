@@ -7,15 +7,17 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
 import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly } from "../../store/Institutes/institutesSlice";
 import { actGetAllLectures } from "../../store/Courses/trainingSessionsSlice";
+import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
+import { selectCoursesState } from "../../store/Courses/courseSlice";
 import MonthlyRegistrationChart from "../../components/AdminDasboard/MainDashboard/MonthlyRegistrationChart";
 import FinancialCard from "../../components/AdminDasboard/MainDashboard/FinancialCard";
 import ScheduleCard from "../../components/AdminDasboard/MainDashboard/ScheduleCard";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import { useDelayedLoading } from "../../hooks/useDelayedLoading";
-import {
-  statsAdmin,
-  financialData,
-} from "../../data/DasboardData";
+import { getAllStudents } from "../../api/studentApi";
+import { getTeachers } from "../../api/teacherApi";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 const arabicMonths: Record<number, string> = {
   1: "يناير",
@@ -41,8 +43,15 @@ const AdminOverview: React.FC = () => {
     useAppSelector((state) => state.institutes);
   const { allLectures, allLecturesLoading, allLecturesError } =
     useAppSelector((state) => state.trainingSessions);
+  const { courses, loading: coursesLoading, error: coursesError } = useAppSelector(selectCoursesState);
     
   const showInstituteLoading = useDelayedLoading(currentInstituteLoading);
+  
+  // State for students and teachers
+  const [students, setStudents] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   const getTodayDate = (): string => {
     const today = new Date();
@@ -159,6 +168,37 @@ const AdminOverview: React.FC = () => {
   useEffect(() => {
     dispatch(actGetAllLectures());
   }, [dispatch]);
+  
+  // Fetch courses when currentInstitute exists
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    if (tenantId) {
+      dispatch(actGetCoursesByTenantId(tenantId.toString()));
+    }
+  }, [dispatch, currentInstitute]);
+  
+  // Fetch students and teachers
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setUsersLoading(true);
+      setUsersError(null);
+      try {
+        const [studentsData, teachersData] = await Promise.all([
+          getAllStudents(),
+          getTeachers()
+        ]);
+        setStudents(studentsData);
+        setTeachers(teachersData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setUsersError("خطأ في جلب المستخدمين");
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
 
   // Log state changes
   useEffect(() => {
@@ -168,6 +208,34 @@ const AdminOverview: React.FC = () => {
   }, [monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError]);
 
   const userId = user?.id;
+
+  // Calculate total registered users
+  const totalUsers = useMemo(() => {
+    return students.length + teachers.length;
+  }, [students, teachers]);
+  
+  // Calculate active courses
+  const activeCoursesCount = useMemo(() => {
+    return courses.filter(course => {
+      return course.status === "active" || course.status === "نشطة" || !course.status; // If no status, assume active
+    }).length;
+  }, [courses]);
+  
+  // Create dynamic stats
+  const dynamicStats = useMemo(() => [
+    {
+      title: "اجمالي المستخدمين",
+      value: usersLoading ? "..." : (usersError ? "خطأ" : totalUsers.toString()),
+      icon: <PeopleAltIcon />,
+      color: "#1a2c4e",
+    },
+    {
+      title: "الدورات النشطة",
+      value: coursesLoading === "pending" ? "..." : (coursesError ? "خطأ" : activeCoursesCount.toString()),
+      icon: <MenuBookIcon />,
+      color: "#f39c12",
+    },
+  ], [totalUsers, activeCoursesCount, usersLoading, usersError, coursesLoading, coursesError]);
 
   // Handle missing userId
   if (!userId) {
@@ -243,7 +311,7 @@ const AdminOverview: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        {statsAdmin.map((s, index) => (
+        {dynamicStats.map((s, index) => (
           <Grid size={{ xs: 12, sm: 6, md: 6 }} key={index}>
             <Card item={s} />
           </Grid>
