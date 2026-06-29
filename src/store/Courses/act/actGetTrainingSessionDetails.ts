@@ -28,6 +28,7 @@ interface TTrainingSessionResponse {
   teacherName: string;
   instituteName: string;
   image: string;
+  enrolledStudentsCount?: number;
 
   // مهم: ضفنا هدول لأن الباك ممكن يرجع id المعلم بأحد هالأسماء
   teacherId?: number;
@@ -69,6 +70,8 @@ const actGetTrainingSessionDetails = createAsyncThunk(
 
       console.log("RAW TRAINING SESSION DETAILS (full):", JSON.stringify(item, null, 2));
       console.log("RAW TRAINING SESSION DETAILS (object):", item);
+      console.log("All keys in response object:", Object.keys(item));
+      console.log("enrolledStudentsCount from backend:", item.enrolledStudentsCount);
 
       // Parse duration to extract numeric part if it's a messy string
       let parsedDuration = item.duration;
@@ -146,6 +149,7 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         teacherName: item.teacherName,
         instituteName: item.instituteName,
         image: item.image,
+        enrolledStudentsCount: item.enrolledStudentsCount ?? (item as any).enrolledCount ?? (item as any).registeredStudentsCount ?? (item as any).studentsCount,
 
         instructor: {
           ...(instructorId !== undefined ? { id: instructorId } : {}),

@@ -31,8 +31,10 @@ export interface TCourseListItem {
 
 export interface TTrainingSessionListItem {
   id: number;
+  courseId?: number;
   title: string;
   teacherName: string;
+  teacherId?: number;
   duration: string;
   price: number;
   availableSeats: number;
@@ -41,6 +43,7 @@ export interface TTrainingSessionListItem {
   institute: string;
   location: string;
   image: string;
+  description?: string;
   startDate?: string;
   startTime?: string;
   endTime?: string;
@@ -49,6 +52,7 @@ export interface TTrainingSessionListItem {
   numberOfLectures?: number;
   requiredEquipment?: string;
   classroomName?: string;
+  enrolledStudentsCount?: number;
 }
 
 export interface TTrainingSessionDetails {
@@ -69,14 +73,18 @@ export interface TTrainingSessionDetails {
   image: string;
   instructor?: TInstructor;
   reviews?: TReview[];
+  enrolledStudentsCount?: number;
 }
 export interface TReview {
-  id: number;
-  name: string;
-  role: string;
-  text: string;
-  image: string;
-  rating: number | null;
+  courseName?: string;
+  username?: string;
+  rating?: number | null;
+  review?: string;
+  id?: number;
+  role?: string;
+  image?: string;
+  text?: string;
+  name?: string;
 }
 export interface TInstructor {
   id?: number;
