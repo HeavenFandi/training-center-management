@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   Avatar,
   Box,
@@ -9,6 +10,9 @@ import {
   Rating,
   LinearProgress,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { selectSessions, actGetTrainingSessions } from "../../store/Courses/trainingSessionsSlice";
 
 import GroupIcon from "@mui/icons-material/Group";
 import SlowMotionVideoIcon from "@mui/icons-material/SlowMotionVideo";
@@ -22,6 +26,48 @@ import useTeacherDetails from "../../hooks/teacherDashboard/useTeacherDetails";
 
 export default function TeacherDetailsContent() {
   const { teacher, teacherCourses, loading, error } = useTeacherDetails();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const sessions = useAppSelector(selectSessions);
+
+  // Fetch training sessions when component mounts if not already loaded
+  useEffect(() => {
+    if (sessions.length === 0) {
+      dispatch(actGetTrainingSessions());
+    }
+  }, [dispatch, sessions.length]);
+
+  const handleCourseClick = (courseId: number, courseName: string) => {
+    console.log("=== handleCourseClick ===");
+    console.log("courseId:", courseId);
+    console.log("courseName:", courseName);
+    console.log("All sessions:", sessions);
+    
+    // First try to match by courseId
+    let matchingSession = sessions.find((session) => {
+      console.log("Checking session courseId:", session.courseId, "vs target:", courseId);
+      return session.courseId === courseId;
+    });
+    
+    // If no match by courseId, try matching by courseName
+    if (!matchingSession) {
+      console.log("No match by courseId, trying courseName");
+      matchingSession = sessions.find((session) => {
+        console.log("Checking session title:", session.title, "vs target:", courseName);
+        return session.title === courseName;
+      });
+    }
+    
+    console.log("matchingSession:", matchingSession);
+    
+    if (matchingSession) {
+      console.log("Navigating to session details:", matchingSession.id);
+      navigate(`/main/training-session-details/${matchingSession.id}`);
+    } else {
+      console.log("No matching session found, navigating to courses list");
+      navigate("/main/courses");
+    }
+  };
 
   const statCardSx = {
     width: 280,
@@ -280,11 +326,18 @@ export default function TeacherDetailsContent() {
                   teacherCourses.map((course) => (
                     <Box
                       key={course.courseId}
+                      onClick={() => handleCourseClick(course.courseId, course.courseName)}
                       sx={{
                         p: 2,
                         borderRadius: "16px",
                         bgcolor: "rgba(255, 255, 255, 0.75)",
                         border: "1px solid rgba(232, 238, 245, 0.9)",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        },
                       }}>
                       <Typography
                         sx={{

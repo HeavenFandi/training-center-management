@@ -553,50 +553,6 @@ function TrainingSessionDetailsContent() {
                     </Box>
                   </Grid>
 
-                  {/* القاعة */}
-                  <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        px: 2,
-                        py: 1,
-                        direction: "rtl",
-                        justifyContent: "flex-start",
-                      }}
-                    >
-                      <Box sx={{ flexShrink: 0 }}>
-                        <MeetingRoomOutlinedIcon
-                          sx={{ fontSize: "1.3rem", color: "#3C8DBC" }}
-                        />
-                      </Box>
-                      <Box sx={{ minWidth: 0, textAlign: "right" }}>
-                        <Typography
-                          sx={{
-                            fontFamily: "Tajawal",
-                            color: "#7b8794",
-                            fontSize: "0.8rem",
-                            mb: 0,
-                          }}
-                        >
-                          القاعة
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontFamily: "Tajawal",
-                            color: "#0b1b34",
-                            fontWeight: 700,
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          {session.classroomName}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-
                   {/* عدد الطلاب */}
                   <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
                     <Box
@@ -635,51 +591,7 @@ function TrainingSessionDetailsContent() {
                             fontSize: "0.9rem",
                           }}
                         >
-                          {session.minSeats} طلاب
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  {/* الأدوات */}
-                  <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        px: 2,
-                        py: 1,
-                        direction: "rtl",
-                        justifyContent: "flex-start",
-                      }}
-                    >
-                      <Box sx={{ flexShrink: 0 }}>
-                        <BuildOutlinedIcon
-                          sx={{ fontSize: "1.3rem", color: "#3C8DBC" }}
-                        />
-                      </Box>
-                      <Box sx={{ minWidth: 0, textAlign: "right" }}>
-                        <Typography
-                          sx={{
-                            fontFamily: "Tajawal",
-                            color: "#7b8794",
-                            fontSize: "0.8rem",
-                            mb: 0,
-                          }}
-                        >
-                          الأدوات
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontFamily: "Tajawal",
-                            color: "#0b1b34",
-                            fontWeight: 700,
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          {session.requiredEquipment}
+                          {session.enrolledStudentsCount ?? 0} طلاب
                         </Typography>
                       </Box>
                     </Box>
@@ -1024,7 +936,7 @@ function TrainingSessionDetailsContent() {
                             mb: 0.5,
                           }}
                         >
-                          {ratingItem.username}
+                          {ratingItem.username || ratingItem.name}
                         </Typography>
                       </Box>
                       <Avatar
@@ -1035,7 +947,7 @@ function TrainingSessionDetailsContent() {
                           fontWeight: 700,
                         }}
                       >
-                        {ratingItem.username.charAt(0).toUpperCase()}
+                        {(ratingItem.username || ratingItem.name || "U").charAt(0).toUpperCase()}
                       </Avatar>
                     </Stack>
                     <Rating
@@ -1055,7 +967,7 @@ function TrainingSessionDetailsContent() {
                       lineHeight: 1.8,
                     }}
                   >
-                    {ratingItem.review}
+                    {ratingItem.review || ratingItem.text}
                   </Typography>
                 </Card>
               </Grid>

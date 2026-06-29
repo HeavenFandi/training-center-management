@@ -14,6 +14,7 @@ export interface TFilters {
 
 interface TTrainingSessionResponse {
   id: number;
+  courseId?: number;
   price: number;
   availableSeats: number;
   minSeats: number;
@@ -25,6 +26,7 @@ interface TTrainingSessionResponse {
   courseDescription: string;
   classroomName?: string;
   teacherName: string;
+  teacherId?: number;
   instituteName?: string;
   tenantName?: string;
   location?: string;
@@ -53,8 +55,10 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
 
       const mappedSessions: TTrainingSessionListItem[] = response.data.map((item: TTrainingSessionResponse) => ({
         id: item.id,
+        courseId: item.courseId,
         title: item.courseName,
         teacherName: item.teacherName,
+        teacherId: item.teacherId,
         duration: item.duration,
         price: item.price,
         availableSeats: item.availableSeats,
@@ -63,6 +67,7 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
         institute: item.instituteName || item.tenantName || "",
         location: item.location || item.classroomName || "",
         image: item.image || "",
+        description: item.courseDescription || "",
       }));
 
       return mappedSessions;

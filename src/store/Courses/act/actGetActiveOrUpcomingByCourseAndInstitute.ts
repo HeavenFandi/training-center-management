@@ -5,6 +5,7 @@ import { TTrainingSessionListItem } from "../../../types/cardType";
 
 interface TTrainingSessionResponse {
   id: number;
+  courseId?: number;
   price: number;
   availableSeats: number;
   minSeats: number;
@@ -16,6 +17,7 @@ interface TTrainingSessionResponse {
   courseDescription: string;
   classroomName?: string;
   teacherName: string;
+  teacherId?: number;
   instituteName?: string;
   tenantName?: string;
   location?: string;
@@ -57,8 +59,10 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
 
       const mappedSessions: TTrainingSessionListItem[] = rawData.map((item: TTrainingSessionResponse) => ({
         id: item.id,
+        courseId: item.courseId,
         title: item.courseName,
         teacherName: item.teacherName,
+        teacherId: item.teacherId,
         duration: item.duration,
         price: item.price,
         availableSeats: item.availableSeats,
@@ -67,6 +71,7 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
         institute: item.instituteName || item.tenantName || "",
         location: item.location || item.classroomName || "",
         image: item.image || "",
+        description: item.courseDescription || "",
         startDate: item.startDate,
         startTime: item.startTime,
         endTime: item.endTime,
