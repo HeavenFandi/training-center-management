@@ -13,9 +13,17 @@ import { TCourse, TSession } from "../../../../types/cardType";
 interface SessionBasicInfoProps {
   session: TSession;
   course: TCourse;
+  lecturesCount: number;
 }
 
-const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) => {
+const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course, lecturesCount }) => {
+  // Helper function to extract days from duration string (e.g., "70 days for 20 lectures" → "70")
+  const extractDays = (duration: string | undefined) => {
+    if (!duration) return "0";
+    const numbers = duration.match(/\d+/g);
+    return numbers && numbers.length > 0 ? numbers[0] : duration;
+  };
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "نشطة":
@@ -129,9 +137,9 @@ const SessionBasicInfo: React.FC<SessionBasicInfoProps> = ({ session, course }) 
             direction: "rtl",
           }}
         >
-          <span>{formatValue(session.duration)} يوماً</span>
+          <span>{formatValue(extractDays(session.duration))} يوماً</span>
           <span style={{ color: "#64748b", fontWeight: 400 }}>
-            ({formatValue(session.sessionsCount)} محاضرة)
+            ({formatValue(lecturesCount)} محاضرة)
           </span>
         </Typography>
       </Box>
