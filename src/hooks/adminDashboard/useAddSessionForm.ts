@@ -4,8 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createSessionSchema, SessionFormData } from "../../validation/SessionSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TSession } from "../../types/cardType";
-import { useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
+import actGetLecturesBySessionId from "../../store/Courses/act/actGetLecturesBySessionId";
+import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 
 // Map Arabic day names to English for API
 const dayMap: Record<string, string> = {
@@ -14,6 +16,33 @@ const dayMap: Record<string, string> = {
   "الأربعاء": "WEDNESDAY",
   "الخميس": "THURSDAY",
   "الأحد": "SUNDAY"
+};
+
+// Reverse map from English day names to Arabic for display
+const reverseDayMap: Record<string, string> = {
+  "MONDAY": "الاثنين",
+  "TUESDAY": "الثلاثاء",
+  "WEDNESDAY": "الأربعاء",
+  "THURSDAY": "الخميس",
+  "FRIDAY": "الجمعة",
+  "SATURDAY": "السبت",
+  "SUNDAY": "الأحد"
+};
+
+// Function to get English day name from a date string (YYYY-MM-DD)
+const getDayNameFromDate = (dateStr: string): string | null => {
+  const date = new Date(dateStr);
+  const day = date.getUTCDay();
+  const days = [
+    "SUNDAY",
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY"
+  ];
+  return days[day] || null;
 };
 
 // Map Arabic status to English for form/API
@@ -65,10 +94,13 @@ const parseTimeToFormState = (time: any): string => {
 };
 
 export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }: UseAddSessionFormProps) => {
+  const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
   // selectedDays will hold Arabic day names for display
-  const [selectedDays, setSelectedDays] = useState<string[]>(initialSession?.days || []);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const classrooms = useAppSelector((state) => state.classrooms.list);
+  const sessionLectures = useAppSelector((state) => state.trainingSessions.sessionLectures);
+  const selectedTrainingSession = useAppSelector((state) => state.trainingSessions.selectedTrainingSession);
 
   // Create schema with classrooms context using useMemo to prevent recreation
   const sessionSchema = useMemo(() => createSessionSchema(classrooms), [classrooms]);
@@ -91,7 +123,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
       price: initialSession?.price || 0,
       availableSeats: initialSession?.availableSeats || 0,
       minSeats: initialSession?.minCapacity || 0,
-      numberOfLectures: initialSession?.sessionsCount || 0,
+      numberOfLectures: 0,
       duration: initialSession?.duration || "",
       status: initialSession?.status ? arabicToEnglishStatus[initialSession.status] : "UPCOMING",
       requiredEquipment: initialSession?.requiredEquipment || "",
@@ -101,6 +133,65 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
       daysOfWeek: [],
     },
   });
+
+  // When initialSession is provided, fetch the latest training session details and lectures
+  useEffect(() => {
+    if (initialSession?.id) {
+      // Fetch the latest training session details
+      dispatch(actGetTrainingSessionDetails(initialSession.id));
+      // Fetch lectures if we don't have them in the store
+      if (!sessionLectures[initialSession.id]) {
+        dispatch(actGetLecturesBySessionId(initialSession.id));
+      }
+    } else {
+      // If no initialSession, reset to defaults
+      setSelectedDays([]);
+      setValue("numberOfLectures", 0, { shouldValidate: true });
+      setValue("daysOfWeek", [], { shouldValidate: true });
+      setValue("duration", "", { shouldValidate: true });
+    }
+  }, [initialSession?.id, dispatch, setValue]);
+
+  // When selectedTrainingSession updates from fetch, update the form duration
+  useEffect(() => {
+    if (selectedTrainingSession && selectedTrainingSession.id === initialSession?.id) {
+      // Update duration from the fetched selectedTrainingSession
+      setValue("duration", selectedTrainingSession.duration, { shouldValidate: true });
+      // Also update other fields from selectedTrainingSession if needed
+      setValue("price", selectedTrainingSession.price, { shouldValidate: true });
+      setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: true });
+      setValue("minSeats", selectedTrainingSession.minSeats, { shouldValidate: true });
+      setValue("requiredEquipment", selectedTrainingSession.requiredEquipment, { shouldValidate: true });
+    }
+  }, [selectedTrainingSession, initialSession?.id, setValue]);
+
+  // When sessionLectures updates for the initialSession.id, refresh the form
+  useEffect(() => {
+    if (initialSession?.id && sessionLectures[initialSession.id]) {
+      const lectures = sessionLectures[initialSession.id];
+      const freshNumberOfLectures = lectures.length;
+      setValue("numberOfLectures", freshNumberOfLectures, { shouldValidate: true });
+
+      // Extract unique days from lecture dates
+      const uniqueEnglishDays = new Set<string>();
+      lectures.forEach(lecture => {
+        const englishDay = getDayNameFromDate(lecture.lectureDate);
+        if (englishDay) {
+          uniqueEnglishDays.add(englishDay);
+        }
+      });
+
+      // Convert to Arabic days for display
+      const arabicDays = Array.from(uniqueEnglishDays)
+        .map(day => reverseDayMap[day])
+        .filter(day => !!day); // Only keep days we have in our map
+
+      // Update selectedDays state and form daysOfWeek
+      setSelectedDays(arabicDays);
+      const englishDaysForApi = arabicDays.map(day => dayMap[day]) as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
+      setValue("daysOfWeek", englishDaysForApi, { shouldValidate: true });
+    }
+  }, [initialSession?.id, sessionLectures, setValue]);
 
   // When classrooms are available, set classroomId to first available if it's still 0
   useEffect(() => {

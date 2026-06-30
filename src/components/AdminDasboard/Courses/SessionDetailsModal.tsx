@@ -438,7 +438,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
         maxHeight: "80vh",
         overflowY: "auto"
       }}>
-        <SessionBasicInfo session={session} course={course} />
+        <SessionBasicInfo session={session} course={course} lecturesCount={lectures.length} />
         <Divider sx={{ my: 3 }} />
         <LecturesList
           lectures={lectures}
