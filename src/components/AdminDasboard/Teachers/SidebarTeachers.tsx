@@ -19,6 +19,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import QuizIcon from "@mui/icons-material/Quiz";
 import CoPresentIcon from "@mui/icons-material/CoPresent";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import { useAppSelector } from "../../../store/hooks";
 const data = [
   { text: "لوحة التحكم", icon: <DashboardIcon />, path: "/teacher-dashboard" },
   {
@@ -52,6 +53,13 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { selectedTeacher } = useAppSelector((state) => state.teachers);
+
+  const teacherFullName = `${selectedTeacher?.firstName || ""} ${
+    selectedTeacher?.lastName || ""
+  }`.trim();
+
+  const teacherImage = selectedTeacher?.image || "";
   return (
     <Box
       sx={{
@@ -72,9 +80,12 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           gap: 2,
           flexDirection: "row",
         }}>
-        <Avatar src="https://i.pravatar.cc/100?img=12" />
+        <Avatar src={teacherImage}>
+          {selectedTeacher?.firstName?.charAt(0) || "م"}
+        </Avatar>
+
         <Typography variant="h6" fontWeight="bold">
-          محمد أحمد
+          {teacherFullName || "المعلم"}
         </Typography>
       </Box>
 
@@ -143,5 +154,3 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
 };
 
 export default memo(Sidebar);
-
-

@@ -22,7 +22,9 @@ import actDeleteTrainingSession from "./act/actDeleteTrainingSession";
 import actCreateLecture from "./act/actCreateLecture";
 import actGetAllLectures from "./act/actGetAllLectures";
 import { RootState } from "..";
-
+import actGetActiveTrainingSessions, {
+  TrainingSession,
+} from "../TrainingSessions/actGetActiveTrainingSessions";
 interface AppliedFilters {
   institute: string;
   category: string;
@@ -33,6 +35,10 @@ interface AppliedFilters {
 
 interface ITrainingSessionsState {
   trainingSessions: TTrainingSessionListItem[];
+
+  activeSessions: TrainingSession[];
+  activeSessionsLoading: "idle" | "pending" | "succeeded" | "failed";
+  activeSessionsError: string | null;
 
   selectedTrainingSession: TTrainingSessionDetails | null;
   loading: "idle" | "pending" | "succeeded" | "failed";
@@ -86,6 +92,9 @@ interface ITrainingSessionsState {
 
 const initialState: ITrainingSessionsState = {
   trainingSessions: [],
+  activeSessions: [],
+  activeSessionsLoading: "idle",
+  activeSessionsError: null,
   selectedTrainingSession: null,
   loading: "idle",
   error: null,
@@ -195,22 +204,31 @@ const trainingSessionsSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.pending, (state, action) => {
-      const courseId = action.meta.arg.courseId;
-      state.courseSessionsLoading[courseId] = true;
-      state.courseSessionsError[courseId] = null;
-    });
-    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.fulfilled, (state, action) => {
-      const courseId = action.meta.arg.courseId;
-      state.courseSessionsLoading[courseId] = false;
-      state.courseSessions[courseId] = action.payload;
-    });
-    builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.rejected, (state, action) => {
-      const courseId = action.meta.arg.courseId;
-      state.courseSessionsLoading[courseId] = false;
-      if (action.payload && typeof action.payload == "string")
-        state.courseSessionsError[courseId] = action.payload;
-    });
+    builder.addCase(
+      actGetActiveOrUpcomingByCourseAndInstitute.pending,
+      (state, action) => {
+        const courseId = action.meta.arg.courseId;
+        state.courseSessionsLoading[courseId] = true;
+        state.courseSessionsError[courseId] = null;
+      },
+    );
+    builder.addCase(
+      actGetActiveOrUpcomingByCourseAndInstitute.fulfilled,
+      (state, action) => {
+        const courseId = action.meta.arg.courseId;
+        state.courseSessionsLoading[courseId] = false;
+        state.courseSessions[courseId] = action.payload;
+      },
+    );
+    builder.addCase(
+      actGetActiveOrUpcomingByCourseAndInstitute.rejected,
+      (state, action) => {
+        const courseId = action.meta.arg.courseId;
+        state.courseSessionsLoading[courseId] = false;
+        if (action.payload && typeof action.payload == "string")
+          state.courseSessionsError[courseId] = action.payload;
+      },
+    );
     builder.addCase(actGetCategories.pending, (state) => {
       state.categoriesLoading = "pending";
       state.categoriesError = null;
@@ -388,7 +406,7 @@ const trainingSessionsSlice = createSlice({
           ? action.payload
           : null;
     });
-    
+
     // actGetLecturesBySessionId
     builder.addCase(actGetLecturesBySessionId.pending, (state, action) => {
       const sessionId = action.meta.arg;
@@ -441,7 +459,10 @@ const trainingSessionsSlice = createSlice({
       const newLecture = action.payload;
       const sessionId = newLecture.sessionId;
       if (sessionId && state.sessionLectures[sessionId]) {
-        state.sessionLectures[sessionId] = [...state.sessionLectures[sessionId], newLecture];
+        state.sessionLectures[sessionId] = [
+          ...state.sessionLectures[sessionId],
+          newLecture,
+        ];
       }
       // Also add to allLectures
       state.allLectures = [...state.allLectures, newLecture];
@@ -475,13 +496,14 @@ const trainingSessionsSlice = createSlice({
       const updatedLecture = action.payload;
       const sessionId = updatedLecture.sessionId;
       if (sessionId && state.sessionLectures[sessionId]) {
-        state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(lecture => 
-          lecture.id === updatedLecture.id ? updatedLecture : lecture
+        state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(
+          (lecture) =>
+            lecture.id === updatedLecture.id ? updatedLecture : lecture,
         );
       }
       // Also update in allLectures
-      state.allLectures = state.allLectures.map(lecture => 
-        lecture.id === updatedLecture.id ? updatedLecture : lecture
+      state.allLectures = state.allLectures.map((lecture) =>
+        lecture.id === updatedLecture.id ? updatedLecture : lecture,
       );
     });
 
@@ -493,13 +515,21 @@ const trainingSessionsSlice = createSlice({
       const deletedLectureId = action.meta.arg;
       // We need to find which session this lecture belonged to
       for (const sessionId in state.sessionLectures) {
-        if (state.sessionLectures[sessionId].some(lecture => lecture.id === deletedLectureId)) {
-          state.sessionLectures[sessionId] = state.sessionLectures[sessionId].filter(lecture => lecture.id !== deletedLectureId);
+        if (
+          state.sessionLectures[sessionId].some(
+            (lecture) => lecture.id === deletedLectureId,
+          )
+        ) {
+          state.sessionLectures[sessionId] = state.sessionLectures[
+            sessionId
+          ].filter((lecture) => lecture.id !== deletedLectureId);
           break;
         }
       }
       // Also remove from allLectures
-      state.allLectures = state.allLectures.filter(lecture => lecture.id !== deletedLectureId);
+      state.allLectures = state.allLectures.filter(
+        (lecture) => lecture.id !== deletedLectureId,
+      );
     });
 
     // actDeleteTrainingSession
@@ -512,14 +542,14 @@ const trainingSessionsSlice = createSlice({
       state.sessionDeleteError = null;
       // Remove the deleted session from trainingSessions
       state.trainingSessions = state.trainingSessions.filter(
-        (session) => session.id !== action.payload
+        (session) => session.id !== action.payload,
       );
       // Also remove from courseSessions if exists
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
-          state.courseSessions[courseId] = state.courseSessions[courseId].filter(
-            (session) => session.id !== action.payload
-          );
+          state.courseSessions[courseId] = state.courseSessions[
+            courseId
+          ].filter((session) => session.id !== action.payload);
         }
       }
     });
@@ -527,6 +557,24 @@ const trainingSessionsSlice = createSlice({
       // Keep deletingSessionId as is until user closes modal
       if (action.payload && typeof action.payload == "string")
         state.sessionDeleteError = action.payload;
+    });
+    // actGetActiveTrainingSessions
+    builder.addCase(actGetActiveTrainingSessions.pending, (state) => {
+      state.activeSessionsLoading = "pending";
+      state.activeSessionsError = null;
+    });
+
+    builder.addCase(actGetActiveTrainingSessions.fulfilled, (state, action) => {
+      state.activeSessionsLoading = "succeeded";
+      state.activeSessions = action.payload;
+    });
+
+    builder.addCase(actGetActiveTrainingSessions.rejected, (state, action) => {
+      state.activeSessionsLoading = "failed";
+      state.activeSessionsError =
+        action.payload && typeof action.payload === "string"
+          ? action.payload
+          : "حدث خطأ";
     });
   },
 });

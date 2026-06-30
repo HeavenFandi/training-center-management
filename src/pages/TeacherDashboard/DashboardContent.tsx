@@ -203,8 +203,8 @@ const TeacherDashboard: React.FC = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (user?.id) {
-      dispatch(actGetTeacherById(12));
-      dispatch(actGetTeacherCourseProgress(12));
+      dispatch(actGetTeacherById(user.teacherId));
+      dispatch(actGetTeacherCourseProgress(user.teacherId));
     }
   }, [dispatch]);
   const handleLogout = () => {
