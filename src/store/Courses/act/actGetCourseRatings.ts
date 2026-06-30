@@ -11,6 +11,8 @@ export interface CourseRating {
   username: string;
   rating: number;
   review: string;
+  name?: string;
+  text?: string;
 }
 
 // Let's update the thunk to accept either courseId or trainingSessionId

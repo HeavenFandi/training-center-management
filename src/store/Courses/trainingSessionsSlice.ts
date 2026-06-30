@@ -322,9 +322,11 @@ const trainingSessionsSlice = createSlice({
         // إذا كان التقييم لنفس الدورة المختارة، نقوم بإضافته للمراجعات
         const newReview = {
           id: action.payload.id,
+          username: action.payload.username,
           name: action.payload.username,
           role: "طالب",
           text: action.payload.review,
+          review: action.payload.review,
           rating: action.payload.rating,
           image: "https://via.placeholder.com/150", // افتراضي
         };
@@ -616,6 +618,7 @@ export const selectSessions = createSelector(
 
     return trainingSessions.map((session: TTrainingSessionListItem) => ({
       id: session.id,
+      courseId: session.courseId,
       title: session.title,
       institute: session.institute || "",
       price: session.price,
@@ -623,9 +626,11 @@ export const selectSessions = createSelector(
       location: session.location || "",
       image: session.image || "",
       teacherName: session.teacherName,
+      teacherId: session.teacherId,
       duration: session.duration,
       availableSeats: session.availableSeats,
       status: session.status,
+      description: session.description || "",
     }));
   },
 );
