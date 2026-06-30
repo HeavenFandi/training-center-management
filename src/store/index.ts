@@ -8,18 +8,21 @@ import institutesReducer from "./Institutes/institutesSlice";
 import studentsReducer from "./Students/studentsSlice";
 import teachersReducer from "./teachers/teachersSlice";
 import classroomsReducer from "./Classrooms/classroomsSlice";
-
+import quizzesReducer from "./Quizzez/quizzesSlice";
+import gradesReducer from "./Grades/gradesSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     trainingSessions: trainingSessionsReducer,
     courses: coursesReducer,
+    quizzes: quizzesReducer,
     studentProfile: studentProfileReducer,
     otp: otpReducer,
     institutes: institutesReducer,
     students: studentsReducer,
     teachers: teachersReducer,
     classrooms: classroomsReducer,
+    grades: gradesReducer,
   },
 });
 

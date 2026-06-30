@@ -11,24 +11,51 @@ import {
   IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useForm, type Resolver, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { examSchema, type ExamFormData } from "../../validation/ExamSchema";
 import { useNavigate } from "react-router-dom";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import actGetActiveTrainingSessions from "../../store/TrainingSessions/actGetActiveTrainingSessions";
+import actGetQuizzes, { Quiz } from "../../store/Quizzez/act/actGetQuizzes";
+import actCreateQuiz from "../../store/Quizzez/act/actCreateQuiz";
+import actUpdateQuiz from "../../store/Quizzez/act/actUpdateQuiz";
+import actDeleteQuiz from "../../store/Quizzez/act/actDeleteQuiz";
 type Exam = ExamFormData & { id: number };
 
-const courses = ["رياضيات", "فيزياء", "كيمياء", "لغة إنجليزية"];
 export default function ExamsManagement() {
   const navigate = useNavigate();
-  const nextId = useRef(1);
+  const dispatch = useAppDispatch();
+  const [editingQuizId, setEditingQuizId] = useState<number | null>(null);
+  const { activeSessions } = useAppSelector((state) => state.trainingSessions);
+  const { quizzes } = useAppSelector((state) => state.quizzes);
+  useEffect(() => {
+    dispatch(actGetActiveTrainingSessions());
+  }, [dispatch]);
+  // Handle Edit
+  const handleEdit = (exam: Quiz) => {
+    setEditingQuizId(exam.id);
+
+    reset({
+      text: exam.name,
+      total: exam.maxScore,
+      passMark: exam.passingScore,
+      course: String(exam.trainingSessionId),
+      date: "",
+    });
+  };
+  // const nextId = useRef(1);
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<ExamFormData>({
     resolver: zodResolver(examSchema) as Resolver<ExamFormData>,
     defaultValues: {
@@ -39,19 +66,40 @@ export default function ExamsManagement() {
       date: "",
     },
   });
+  const selectedSessionId = watch("course");
 
-  const [examsList, setExamsList] = useState<Exam[]>([]);
+  useEffect(() => {
+    if (selectedSessionId) {
+      dispatch(actGetQuizzes(Number(selectedSessionId)));
+    }
+  }, [dispatch, selectedSessionId]);
 
-  const handleCreate: SubmitHandler<ExamFormData> = (data) => {
-    const newExam: Exam = {
-      id: nextId.current++,
-      ...data,
-    };
+  const handleCreate: SubmitHandler<ExamFormData> = async (data) => {
+    if (editingQuizId) {
+      await dispatch(
+        actUpdateQuiz({
+          id: editingQuizId,
+          name: data.text,
+          maxScore: data.total,
+          passingScore: data.passMark,
+          trainingSessionId: Number(data.course),
+        }),
+      ).unwrap();
 
-    setExamsList((prev) => [newExam, ...prev]);
+      setEditingQuizId(null);
+    } else {
+      await dispatch(
+        actCreateQuiz({
+          name: data.text,
+          maxScore: data.total,
+          passingScore: data.passMark,
+          trainingSessionId: Number(data.course),
+        }),
+      ).unwrap();
+    }
+
     reset({ text: "", total: 0, passMark: 0, course: "", date: "" });
   };
-
   return (
     <Box dir="rtl" sx={{ p: { xs: 2, md: 4 } }}>
       <Stack
@@ -91,6 +139,7 @@ export default function ExamsManagement() {
           <Typography fontWeight={600} fontSize={18}>
             إنشاء اختبار جديد
           </Typography>
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
@@ -100,9 +149,6 @@ export default function ExamsManagement() {
                 error={!!errors.text}
                 helperText={errors.text?.message}
                 sx={inputStyle}
-                InputLabelProps={{
-                  sx: { right: 14, left: "auto" },
-                }}
               />
             </Grid>
 
@@ -110,16 +156,17 @@ export default function ExamsManagement() {
               <TextField
                 select
                 label="الدورة"
+                fullWidth
                 {...register("course")}
                 error={!!errors.course}
                 helperText={errors.course?.message}
                 sx={{
                   ...inputStyle,
-                  width: "170px",
+                  width: "100%",
                 }}>
-                {courses.map((course) => (
-                  <MenuItem key={course} value={course}>
-                    {course}
+                {activeSessions.map((session) => (
+                  <MenuItem key={session.id} value={String(session.id)}>
+                    {session.courseName}
                   </MenuItem>
                 ))}
               </TextField>
@@ -177,13 +224,13 @@ export default function ExamsManagement() {
                 background: "#0A1931",
                 boxShadow: "0 6px 20px rgba(37,99,235,0.3)",
               }}>
-              إنشاء الاختبار
+              {editingQuizId ? "حفظ التعديل" : "إنشاء الاختبار"}
             </Button>
           </Stack>
         </Stack>
       </Card>
 
-      {examsList.length === 0 ? (
+      {quizzes.length === 0 ? (
         <Box
           sx={{
             textAlign: "center",
@@ -198,8 +245,8 @@ export default function ExamsManagement() {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {examsList.map((item) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }} key={item.id}>
+          {quizzes.map((exam) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }} key={exam.id}>
               <Card
                 sx={{
                   p: 3,
@@ -213,11 +260,71 @@ export default function ExamsManagement() {
                   },
                 }}>
                 <Stack spacing={2}>
-                  <Typography fontWeight={700} fontSize={18}>
-                    {item.text}
-                  </Typography>
+                  <Stack direction="row-reverse" spacing={1} gap={1}>
+                    {/* Edit */}
+                    <Box
+                      onClick={() => handleEdit(exam)}
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: "#E8F5E9",
+                        color: "#22C55E",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: ".2s",
+                        "&:hover": {
+                          bgcolor: "#D1FAE5",
+                          transform: "scale(1.05)",
+                        },
+                      }}>
+                      <EditOutlinedIcon fontSize="small" />
+                    </Box>
+
+                    {/* Delete */}
+                    <Box
+                      onClick={() => dispatch(actDeleteQuiz(exam.id))}
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        bgcolor: "#FEECEC",
+                        color: "#EF4444",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: ".2s",
+                        "&:hover": {
+                          bgcolor: "#FECACA",
+                          transform: "scale(1.05)",
+                        },
+                      }}>
+                      <DeleteOutlineRoundedIcon fontSize="small" />
+                    </Box>
+                  </Stack>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}>
+                      {exam.name}
+                    </Typography>
+                  </Stack>
                   <Typography fontWeight={700} fontSize={14}>
-                    {item.date}
+                    {new Date(exam.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "numeric",
+                      year: "numeric",
+                    })}
                   </Typography>
 
                   <Stack
@@ -227,7 +334,7 @@ export default function ExamsManagement() {
                     spacing={2}
                     mt={1}>
                     <Chip
-                      label={`العلامة : ${item.total}`}
+                      label={`العلامة : ${exam.maxScore}`}
                       sx={{
                         background: "#e0f2fe",
                         fontWeight: 600,
@@ -235,7 +342,7 @@ export default function ExamsManagement() {
                     />
 
                     <Chip
-                      label={`النجاح: ${item.passMark}`}
+                      label={`النجاح: ${exam.passingScore}`}
                       sx={{
                         background: "#dcfce7",
                         fontWeight: 600,
@@ -244,7 +351,14 @@ export default function ExamsManagement() {
                   </Stack>
 
                   <Button
-                    onClick={() => navigate("/teacher-dashboard/result")}
+                    onClick={() =>
+                      navigate("/teacher-dashboard/result", {
+                        state: {
+                          quizId: exam.id,
+                          quizName: exam.name,
+                        },
+                      })
+                    }
                     variant="outlined"
                     sx={{
                       color: "#fff",
