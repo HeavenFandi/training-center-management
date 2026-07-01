@@ -13,10 +13,11 @@ import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingS
 import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
 import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse, clearDeleteCourseState } from "../../store/Courses/courseSlice";
 import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
-import { clearDeleteSessionState, clearDeleteLectureState } from "../../store/Courses/trainingSessionsSlice";
+import { clearDeleteSessionState, clearDeleteLectureState, actUpdateTrainingSession } from "../../store/Courses/trainingSessionsSlice";
+import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
-import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
+import { CreateTrainingSessionRequest, updateTrainingSessionImage } from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
@@ -52,6 +53,7 @@ export const useCourseManagement = () => {
   const [originalFormData, setOriginalFormData] = useState<CreateTrainingSessionRequest | null>(null);
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [updatingSession, setUpdatingSession] = useState(false);
 
   const courses = reduxCourses;
 
@@ -352,15 +354,47 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleUpdateSession = useCallback((updatedSession: TSession) => {
-    dispatch(updateSessionInCourse({ courseId: updatedSession.courseId, session: updatedSession }));
-    if (selectedCourse?.id === updatedSession.courseId) {
-      setSelectedCourse(prev => prev ? {
-        ...prev,
-        sessions: prev.sessions?.map(s => s.id === updatedSession.id ? updatedSession : s)
-      } : null);
+  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number) => {
+    setUpdatingSession(true);
+    try {
+      // First update the session details
+      const resultAction = await dispatch(
+        actUpdateTrainingSession({ id: sessionId, data })
+      );
+      
+      if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
+        // If there's an image file, update that too
+        if (imageFile) {
+          await updateTrainingSessionImage(sessionId, imageFile);
+          // Refresh training session details to get the new image
+          await dispatch(actGetTrainingSessionDetails(sessionId));
+        }
+        
+        // Refresh the sessions list for this course
+        if (currentInstitute?.id) {
+          dispatch(
+            actGetActiveOrUpcomingByCourseAndInstitute({
+              courseId,
+              instituteId: currentInstitute.id,
+            })
+          );
+        }
+        
+        showSnackbar("تم تحديث الدورة بنجاح", "success");
+        return true;
+      } else {
+        const errorMsg = (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
+        showSnackbar(errorMsg, "error");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error updating session:", error);
+      showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
+      return false;
+    } finally {
+      setUpdatingSession(false);
     }
-  }, [dispatch, selectedCourse]);
+  }, [dispatch, showSnackbar, currentInstitute]);
 
   const handleDeleteSession = useCallback(async (courseId: number, sessionId: number) => {
     try {
@@ -432,11 +466,13 @@ export const useCourseManagement = () => {
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    updatingSession,
     deletingCourseId,
     deletingSessionId,
     deleteError,
     sessionDeleteError,
     handleClearDeleteSessionState,
     handleClearDeleteLectureState,
+    currentInstitute,
   };
 };

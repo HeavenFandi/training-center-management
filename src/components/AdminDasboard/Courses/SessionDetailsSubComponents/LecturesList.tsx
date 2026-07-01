@@ -152,4 +152,4 @@ const LecturesList: React.FC<LecturesListProps> = ({
   );
 };
 
-export default React.memo(LecturesList);
+export default LecturesList;

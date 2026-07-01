@@ -29,6 +29,13 @@ interface TTrainingSessionResponse {
   instituteName: string;
   image: string;
   enrolledStudentsCount?: number;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  daysOfWeek?: string[];
+  days?: string[];
+  classroomId?: number;
+  hallId?: number;
 
   // مهم: ضفنا هدول لأن الباك ممكن يرجع id المعلم بأحد هالأسماء
   teacherId?: number;
@@ -133,6 +140,14 @@ const actGetTrainingSessionDetails = createAsyncThunk(
       console.log("EXTRACTING COURSE ID - item.courseDetails?.courseId:", item.courseDetails?.courseId);
       console.log("FINAL EXTRACTED COURSE ID:", extractedCourseId);
 
+      // Get classroomId from all possible places
+      const classroomId =
+        item.classroomId ??
+        item.hallId;
+
+      // Get days from all possible places
+      const daysOfWeek = item.daysOfWeek ?? item.days;
+
       const mappedSession: TTrainingSessionDetails = {
         id: item.id,
         courseId: extractedCourseId,
@@ -150,6 +165,12 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         instituteName: item.instituteName,
         image: item.image,
         enrolledStudentsCount: item.enrolledStudentsCount ?? (item as any).enrolledCount ?? (item as any).registeredStudentsCount ?? (item as any).studentsCount,
+        startDate: item.startDate,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        daysOfWeek: daysOfWeek,
+        classroomId: classroomId,
+        teacherId: instructorId,
 
         instructor: {
           ...(instructorId !== undefined ? { id: instructorId } : {}),

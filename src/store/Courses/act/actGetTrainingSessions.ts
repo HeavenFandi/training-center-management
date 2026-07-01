@@ -10,7 +10,7 @@ interface TTrainingSessionResponse {
   courseName: string;
   courseDescription?: string;
   teacherName: string;
-  teacherId?: number;
+  teacherId: number;
   duration: string;
   price: number;
   availableSeats: number;
@@ -20,6 +20,7 @@ interface TTrainingSessionResponse {
   location?: string;
   instituteName?: string;
   classroomName?: string;
+  classroomId: number;
   image?: string;
   enrolledStudentsCount?: number;
 }
@@ -58,6 +59,7 @@ const actGetTrainingSessions = createAsyncThunk(
           location: item.location || item.classroomName || "",
           image: item.image || "",
           description: item.courseDescription || "",
+          classroomId: item.classroomId,
           enrolledStudentsCount: item.enrolledStudentsCount ?? (item as any).enrolledCount ?? (item as any).registeredStudentsCount ?? (item as any).studentsCount,
         };
         console.log("Mapped session:", mapped);

@@ -7,13 +7,38 @@ export type TimeObject = {
   nano?: number;
 };
 
+export const convertTimeStringToTimeObject = (timeStr: string): { hour: number; minute: number; second: number; nano: 0 } => {
+  // Accepts "HH:mm" or "HH:mm:ss"
+  const parts = timeStr.split(":").map(Number);
+  const hour = parts[0] || 0;
+  const minute = parts[1] || 0;
+  const second = parts[2] || 0;
+  return { hour, minute, second, nano: 0 };
+};
+
+export const convertTimeObjectToString = (timeObj: TimeObject | string): string => {
+  // If it's already a string, just ensure it's in "HH:mm:ss" format
+  if (typeof timeObj === "string") {
+    const parts = timeObj.split(":");
+    const hour = parts[0]?.padStart(2, "0") || "00";
+    const minute = parts[1]?.padStart(2, "0") || "00";
+    const second = parts[2]?.padStart(2, "0") || "00";
+    return `${hour}:${minute}:${second}`;
+  }
+  // Convert TimeObject to "HH:mm:ss"
+  const hour = timeObj.hour.toString().padStart(2, "0");
+  const minute = timeObj.minute.toString().padStart(2, "0");
+  const second = (timeObj.second || 0).toString().padStart(2, "0");
+  return `${hour}:${minute}:${second}`;
+};
+
 export type CreateLectureRequest = {
-  sessionName: string;
   lectureDate: string;
-  startTime: string; // LocalTime format "HH:mm:ss"
-  endTime: string; // LocalTime format "HH:mm:ss"
+  startTime: string;
+  endTime: string;
   classroomId: number;
   teacherId: number;
+  sessionId: number;
 };
 
 export type CreateTrainingSessionRequest = {
@@ -28,10 +53,22 @@ export type CreateTrainingSessionRequest = {
   classroomId: number;
   teacherId: number;
   startDate: string;
-  startTime: string; // LocalTime format "HH:mm:ss"
-  endTime: string; // LocalTime format "HH:mm:ss"
+  startTime: {
+    hour: number;
+    minute: number;
+    second: number;
+    nano: 0;
+  };
+  endTime: {
+    hour: number;
+    minute: number;
+    second: number;
+    nano: 0;
+  };
   daysOfWeek: Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
 };
+
+export type UpdateTrainingSessionRequest = Partial<CreateTrainingSessionRequest>;
 
 export type TrainingSessionResponse = {
   id: number;
@@ -46,11 +83,16 @@ export type TrainingSessionResponse = {
   courseName: string;
   courseDescription: string;
   classroomName: string;
+  classroomId: number;
   teacherName: string;
   teacherId: number;
   instituteName: string;
   instituteId: number;
   image: string;
+  startDate?: string;
+  startTime?: TimeObject;
+  endTime?: TimeObject;
+  daysOfWeek?: string[];
 };
 
 export type LectureResponse = {
@@ -69,35 +111,94 @@ export type LectureResponse = {
 export type UpdateLectureRequest = {
   sessionName?: string;
   lectureDate?: string;
-  startTime?: string; // LocalTime format "HH:mm:ss"
-  endTime?: string; // LocalTime format "HH:mm:ss"
+  startTime?: string;
+  endTime?: string;
   classroomId?: number;
   teacherId?: number;
-  sessionId: number;
+  sessionId?: number;
 };
 
 export const createTrainingSession = async (
   data: CreateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
+  console.log("[DEBUG createTrainingSession] Final payload being sent:", data);
   const response = await axiosClient.post<TrainingSessionResponse>(
     "/training-sessions",
     data,
   );
+  console.log("[DEBUG createTrainingSession] Backend response:", response);
   return response.data;
+};
+
+export const updateTrainingSession = async (
+  id: number,
+  data: UpdateTrainingSessionRequest,
+): Promise<TrainingSessionResponse> => {
+  console.log("[DEBUG updateTrainingSession] id:", id);
+  console.log("[DEBUG updateTrainingSession] Final payload being sent:", data);
+  const response = await axiosClient.put<TrainingSessionResponse>(
+    `/training-sessions/${id}`,
+    data,
+  );
+  console.log("[DEBUG updateTrainingSession] Backend response:", response);
+  return response.data;
+};
+
+export const updateTrainingSessionImage = async (
+  id: number,
+  imageFile: File,
+): Promise<TrainingSessionResponse> => {
+  const formData = new FormData();
+  formData.append("file", imageFile);
+  const response = await axiosClient.put<TrainingSessionResponse>(
+    `/training-sessions/${id}/image`,
+    formData,
+  );
+  return response.data;
+};
+
+// Helper to convert response time fields to TimeObject
+const convertLectureResponseTimeFields = (lecture: any): LectureResponse => {
+  const converted = { ...lecture };
+  
+  if (typeof converted.startTime === 'string') {
+    converted.startTime = convertTimeStringToTimeObject(converted.startTime);
+  }
+  
+  if (typeof converted.endTime === 'string') {
+    converted.endTime = convertTimeStringToTimeObject(converted.endTime);
+  }
+  
+  return converted;
 };
 
 export const createLecture = async (
   sessionId: number,
-  data: CreateLectureRequest,
+  data: any,
 ): Promise<LectureResponse> => {
   console.log("sessionId:", sessionId);
-  console.log("URL:", `/api/lectures/session/${sessionId}`);
-  console.log("Payload:", data);
+  console.log("URL:", `/lectures/session/${sessionId}`);
+  
+  // Convert time fields to "HH:mm:ss" strings
+  const payload = { ...data };
+  if (payload.startTime) {
+    payload.startTime = convertTimeObjectToString(payload.startTime);
+  }
+  if (payload.endTime) {
+    payload.endTime = convertTimeObjectToString(payload.endTime);
+  }
+  
+  console.log("Payload:", payload);
   const response = await axiosClient.post<LectureResponse>(
     `/lectures/session/${sessionId}`,
-    data,
+    payload,
   );
-  return response.data;
+  const converted = convertLectureResponseTimeFields(response.data);
+  // Ensure sessionId is present in the response
+  if (!converted.sessionId) {
+    converted.sessionId = sessionId;
+  }
+  return converted;
 };
 
 export const getLecturesBySessionId = async (
@@ -106,22 +207,36 @@ export const getLecturesBySessionId = async (
   const response = await axiosClient.get<LectureResponse[]>(
     `/lectures/session/${sessionId}`,
   );
-  return response.data;
+  return response.data.map(convertLectureResponseTimeFields);
 };
 
 export const updateLecture = async (
   id: number,
-  data: UpdateLectureRequest,
+  data: any,
 ): Promise<LectureResponse> => {
   console.log("[DEBUG updateLecture] Data received from frontend:", data);
   
-  console.log("[DEBUG updateLecture] Payload being sent to API:", data);
+  // Convert time fields to "HH:mm:ss" strings
+  const payload = { ...data };
+  if (payload.startTime) {
+    payload.startTime = convertTimeObjectToString(payload.startTime);
+  }
+  if (payload.endTime) {
+    payload.endTime = convertTimeObjectToString(payload.endTime);
+  }
+  
+  console.log("[DEBUG updateLecture] Payload being sent to API:", payload);
   
   const response = await axiosClient.put<LectureResponse>(
     `/lectures/${id}`,
-    data,
+    payload,
   );
-  return response.data;
+  const converted = convertLectureResponseTimeFields(response.data);
+  // Ensure sessionId is present in the response, use payload's sessionId as fallback
+  if (!converted.sessionId && payload.sessionId) {
+    converted.sessionId = payload.sessionId;
+  }
+  return converted;
 };
 
 export const deleteLecture = async (
@@ -138,5 +253,5 @@ export const deleteTrainingSession = async (
 
 export const getAllLectures = async (): Promise<LectureResponse[]> => {
   const response = await axiosClient.get<LectureResponse[]>("/lectures");
-  return response.data;
+  return response.data.map(convertLectureResponseTimeFields);
 };

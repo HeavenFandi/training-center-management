@@ -51,11 +51,13 @@ const CourseManagement = () => {
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    updatingSession,
     deletingCourseId,
     deletingSessionId,
     deleteError,
     sessionDeleteError,
     handleClearDeleteSessionState,
+    currentInstitute,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -94,6 +96,11 @@ const CourseManagement = () => {
   };
 
   const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] handleSessionClick called!`);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session received:`, session);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session keys:`, Object.keys(session));
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.teacherId:`, session.teacherId);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.classroomId:`, session.classroomId);
     setSessionTargetCourse(course);
     setSelectedSession(session);
     setIsSessionDetailsOpen(true);
@@ -150,29 +157,23 @@ const CourseManagement = () => {
           open={isAddSessionOpen}
           onClose={handleCloseAddSession}
           course={sessionTargetCourse}
-          onSave={(data) => {
+          onSave={async (data, imageFile) => {
             if (editingSession) {
-              // Map status to Arabic for TSession
-              const statusMap: Record<string, any> = {
-                "UPCOMING": "قيد الانتظار",
-                "ACTIVE": "نشطة",
-                "COMPLETED": "مكتملة"
-              };
-              handleUpdateSession({
-                ...editingSession,
-                ...data,
-                status: statusMap[data.status as string],
-                minCapacity: data.minSeats,
-                sessionsCount: data.numberOfLectures,
-                hall: "", // We don't have hall from form data, keep existing or empty
-              } as TSession);
-              handleCloseAddSession();
+              const success = await handleUpdateSession(
+                editingSession.id,
+                data,
+                imageFile,
+                sessionTargetCourse?.id || 0
+              );
+              if (success) {
+                handleCloseAddSession();
+              }
             } else {
               handleAddSession(data, handleCloseAddSession);
             }
           }}
           initialSession={editingSession}
-          isLoading={creatingSession}
+          isLoading={creatingSession || updatingSession}
         />
       )}
 

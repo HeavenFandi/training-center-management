@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createSessionSchema, SessionFormData } from "../../validation/SessionSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TSession } from "../../types/cardType";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
+import { CreateTrainingSessionRequest, convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 import actGetLecturesBySessionId from "../../store/Courses/act/actGetLecturesBySessionId";
 import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 
@@ -59,11 +59,14 @@ const englishToArabicStatus: Record<string, string> = {
   "COMPLETED": "مكتملة"
 };
 
+import { TeacherApiResponse } from "../../api/teacherApi";
+
 interface UseAddSessionFormProps {
   onClose: () => void;
-  onSave: (sessionData: CreateTrainingSessionRequest) => void;
+  onSave: (sessionData: CreateTrainingSessionRequest, imageFile: File | null) => void;
   initialSession?: TSession | null;
   courseId?: number;
+  teachers: TeacherApiResponse[];
 }
 
 // Convert "HH:mm" to "HH:mm:ss" for LocalTime
@@ -93,14 +96,20 @@ const parseTimeToFormState = (time: any): string => {
   return "09:00";
 };
 
-export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }: UseAddSessionFormProps) => {
+export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, teachers }: UseAddSessionFormProps) => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
   // selectedDays will hold Arabic day names for display
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const classrooms = useAppSelector((state) => state.classrooms.list);
   const sessionLectures = useAppSelector((state) => state.trainingSessions.sessionLectures);
   const selectedTrainingSession = useAppSelector((state) => state.trainingSessions.selectedTrainingSession);
+  const trainingSessionsList = useAppSelector((state) => state.trainingSessions.trainingSessions);
+  const isLoadingSessionDetails = useAppSelector((state) => state.trainingSessions.loading === "pending");
 
   // Create schema with classrooms context using useMemo to prevent recreation
   const sessionSchema = useMemo(() => createSessionSchema(classrooms), [classrooms]);
@@ -122,15 +131,15 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
       classroomId: 0,
       price: initialSession?.price || 0,
       availableSeats: initialSession?.availableSeats || 0,
-      minSeats: initialSession?.minCapacity || 0,
+      minSeats: initialSession?.minCapacity || initialSession?.minSeats || 0,
       numberOfLectures: 0,
       duration: initialSession?.duration || "",
-      status: initialSession?.status ? arabicToEnglishStatus[initialSession.status] : "UPCOMING",
+      status: initialSession?.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
       requiredEquipment: initialSession?.requiredEquipment || "",
       startDate: initialSession?.startDate || "",
       startTime: parseTimeToFormState(initialSession?.startTime),
-      endTime: "10:00",
-      daysOfWeek: [],
+      endTime: parseTimeToFormState(initialSession?.endTime),
+      daysOfWeek: initialSession?.daysOfWeek || [],
     },
   });
 
@@ -152,18 +161,58 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     }
   }, [initialSession?.id, dispatch, setValue]);
 
-  // When selectedTrainingSession updates from fetch, update the form duration
+  // When selectedTrainingSession updates from fetch, update all form fields
   useEffect(() => {
-    if (selectedTrainingSession && selectedTrainingSession.id === initialSession?.id) {
-      // Update duration from the fetched selectedTrainingSession
+    if (selectedTrainingSession && selectedTrainingSession.id === initialSession?.id && teachers.length > 0 && classrooms.length > 0) {
+      // First get the full session from trainingSessionsList to get teacherId and classroomId
+      const fullSession = trainingSessionsList.find(s => s.id === selectedTrainingSession.id);
+      
+      // Get teacherId - either from selectedTrainingSession, fullSession, initialSession, or first available teacher
+      let teacherId = selectedTrainingSession.teacherId ?? fullSession?.teacherId ?? initialSession?.teacherId;
+      if (!teacherId || !teachers.some(t => t.id === teacherId)) {
+        teacherId = teachers[0]?.id ?? 0;
+      }
+      
+      // Get classroomId - either from selectedTrainingSession, fullSession, initialSession, or first available classroom
+      let classroomId = selectedTrainingSession.classroomId ?? fullSession?.classroomId ?? initialSession?.classroomId;
+      if (!classroomId || !classrooms.some(c => c.id === classroomId)) {
+        classroomId = classrooms[0]?.id ?? 0;
+      }
+      
+      // Get status
+      let status = "UPCOMING";
+      const sessionStatus = selectedTrainingSession.status;
+      if (sessionStatus) {
+        // Check if the status is already in English
+        if (["UPCOMING", "ACTIVE", "COMPLETED"].includes(sessionStatus)) {
+          status = sessionStatus as "UPCOMING" | "ACTIVE" | "COMPLETED";
+        } else {
+          // Try to convert from Arabic
+          status = arabicToEnglishStatus[sessionStatus] || "UPCOMING";
+        }
+      }
+      
+      // Update form fields
+      setValue("teacherId", teacherId, { shouldValidate: true });
+      setValue("classroomId", classroomId, { shouldValidate: true });
+      setValue("status", status, { shouldValidate: true });
       setValue("duration", selectedTrainingSession.duration, { shouldValidate: true });
-      // Also update other fields from selectedTrainingSession if needed
       setValue("price", selectedTrainingSession.price, { shouldValidate: true });
       setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: true });
       setValue("minSeats", selectedTrainingSession.minSeats, { shouldValidate: true });
       setValue("requiredEquipment", selectedTrainingSession.requiredEquipment, { shouldValidate: true });
+      setValue("startDate", selectedTrainingSession.startDate ?? "", { shouldValidate: true });
+      setValue("startTime", parseTimeToFormState(selectedTrainingSession.startTime), { shouldValidate: true });
+      setValue("endTime", parseTimeToFormState(selectedTrainingSession.endTime), { shouldValidate: true });
+      
+      // Also set days from selectedTrainingSession if available
+      if (selectedTrainingSession.daysOfWeek) {
+        const arabicDays = selectedTrainingSession.daysOfWeek.map((day: string) => reverseDayMap[day]).filter(Boolean);
+        setSelectedDays(arabicDays);
+        setValue("daysOfWeek", selectedTrainingSession.daysOfWeek, { shouldValidate: true });
+      }
     }
-  }, [selectedTrainingSession, initialSession?.id, setValue]);
+  }, [selectedTrainingSession, initialSession?.id, teachers, classrooms, trainingSessionsList, setValue]);
 
   // When sessionLectures updates for the initialSession.id, refresh the form
   useEffect(() => {
@@ -193,12 +242,17 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     }
   }, [initialSession?.id, sessionLectures, setValue]);
 
-  // When classrooms are available, set classroomId to first available if it's still 0
+  // For new sessions (not editing), set default values for teacherId and classroomId when options are loaded
   useEffect(() => {
-    if (classrooms.length > 0 && watch("classroomId") === 0) {
-      setValue("classroomId", classrooms[0].id, { shouldValidate: true });
+    if (!initialSession) {
+      if (classrooms.length > 0 && watch("classroomId") === 0) {
+        setValue("classroomId", classrooms[0].id, { shouldValidate: true });
+      }
+      if (teachers.length > 0 && watch("teacherId") === 0) {
+        setValue("teacherId", teachers[0].id, { shouldValidate: true });
+      }
     }
-  }, [classrooms, watch, setValue]);
+  }, [classrooms, teachers, initialSession, watch, setValue]);
 
   useEffect(() => {
     if (courseId) {
@@ -221,18 +275,44 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     });
   }, [setValue]);
 
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setImageError("يرجى اختيار ملف صورة صالح");
+        return;
+      }
+      setImageError(null);
+      setSelectedImageFile(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  }, []);
+
+  const clearImage = useCallback(() => {
+    setSelectedImageFile(null);
+    setImagePreview(null);
+    setImageError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
   const onSubmit = useCallback((data: SessionFormData) => {
-    // Convert times to LocalTime format "HH:mm:ss"
+    // Convert times to LocalTime objects
     const apiData: CreateTrainingSessionRequest = {
       ...data,
-      startTime: formatTimeForApi(data.startTime),
-      endTime: formatTimeForApi(data.endTime),
+      status: !initialSession ? "UPCOMING" : data.status, // Hardcode to UPCOMING when adding new
+      startTime: convertTimeStringToTimeObject(data.startTime),
+      endTime: convertTimeStringToTimeObject(data.endTime),
       requiredEquipment: data.requiredEquipment || "",
     };
     console.log("Submitting session data to API:", apiData);
-    onSave(apiData);
+    onSave(apiData, selectedImageFile);
     // Don't close the modal automatically - let the parent decide based on success/conflict
-  }, [onSave]);
+  }, [onSave, initialSession, selectedImageFile]);
 
   const handleTimeChange = (field: "startTime" | "endTime", timeStr: string) => {
     setValue(field, timeStr, { shouldValidate: true });
@@ -240,7 +320,9 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
 
   // Override the reset to also reset selectedDays
   const resetSelectedDays = useCallback(() => {
-    setSelectedDays(initialSession?.days || []);
+    const days = initialSession?.daysOfWeek || initialSession?.days || [];
+    const arabicDays = days.map((day: string) => reverseDayMap[day] || day).filter(Boolean);
+    setSelectedDays(arabicDays);
   }, [initialSession]);
 
   const resetWithDays = useCallback((values?: Partial<SessionFormData>) => {
@@ -261,5 +343,13 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId }:
     classrooms,
     reset: resetWithDays,
     getValues,
+    selectedImageFile,
+    imagePreview,
+    imageError,
+    fileInputRef,
+    handleFileChange,
+    clearImage,
+    isLoadingSessionDetails,
+    selectedTrainingSession,
   };
 };
