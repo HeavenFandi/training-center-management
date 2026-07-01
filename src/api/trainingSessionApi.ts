@@ -53,8 +53,8 @@ export type CreateTrainingSessionRequest = {
   classroomId: number;
   teacherId: number;
   startDate: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | TimeObject;
+  endTime: string | TimeObject;
   daysOfWeek: Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
 };
 

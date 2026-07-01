@@ -3,7 +3,7 @@ import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import {
   updateLecture,
   UpdateLectureRequest,
-  LectureResponse,
+ 
 } from "../../../api/trainingSessionApi";
 
 interface UpdateLecturePayload {

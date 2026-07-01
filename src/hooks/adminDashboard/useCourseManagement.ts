@@ -17,7 +17,7 @@ import { clearDeleteSessionState, clearDeleteLectureState, actUpdateTrainingSess
 import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
-import { CreateTrainingSessionRequest, updateTrainingSessionImage } from "../../api/trainingSessionApi";
+import { CreateTrainingSessionRequest, updateTrainingSessionImage, convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
@@ -261,14 +261,7 @@ export const useCourseManagement = () => {
       return "00:00:00";
     };
 
-    // Helper to convert string time to TimeObject
-    const stringToTimeObject = (timeStr: string): { hour: number; minute: number; second: number; nano: 0 } => {
-      const parts = timeStr.split(":").map(Number);
-      const hour = parts[0] || 0;
-      const minute = parts[1] || 0;
-      const second = parts[2] || 0;
-      return { hour, minute, second, nano: 0 as const };
-    };
+
 
     // 1. استخراج معرف القاعة بشكل صحيح
     const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
@@ -279,12 +272,12 @@ export const useCourseManagement = () => {
     // 2. تحديث التوقيت الزمني
     if (suggestion.startTime) {
       const newStartTimeStr = timeToString(suggestion.startTime);
-      updatedData.startTime = stringToTimeObject(newStartTimeStr);
+      updatedData.startTime = convertTimeStringToTimeObject(newStartTimeStr);
     }
     
     if (suggestion.endTime) {
       const newEndTimeStr = timeToString(suggestion.endTime);
-      updatedData.endTime = stringToTimeObject(newEndTimeStr);
+      updatedData.endTime = convertTimeStringToTimeObject(newEndTimeStr);
     } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
       // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
       const origStartStr = timeToString(originalFormData.startTime);
@@ -301,7 +294,7 @@ export const useCourseManagement = () => {
       const newEndH = Math.floor(totalEndMinutes / 60) % 24;
       const newEndM = totalEndMinutes % 60;
       const newEndStr = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
-      updatedData.endTime = stringToTimeObject(newEndStr);
+      updatedData.endTime = convertTimeStringToTimeObject(newEndStr);
     }
 
     // 3. تحديث تاريخ البدء المقترح
@@ -389,7 +382,7 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number) => {
+  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number): Promise<{ success: true; sessionId: number; imageFile: File | null; courseId: number } | { success: false }> => {
     setUpdatingSession(true);
     try {
       // First update the session details
