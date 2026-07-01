@@ -197,7 +197,7 @@ const coursesSlice = createSlice({
           console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem.teacherId:`, session.teacherId);
           console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem.classroomId:`, session.classroomId);
           
-          const mapped = {
+          const mapped: TSession = {
             id: session.id,
             title: session.title,
             courseId: courseId,
@@ -211,7 +211,7 @@ const coursesSlice = createSlice({
             status: "نشطة", // Default to active
             requiredEquipment: session.requiredEquipment || "", // Map from session
             startDate: session.startDate || "", // Map from session
-            startTime: session.startTime || "", // Map from session
+            startTime: typeof session.startTime === "string" ? session.startTime : "", // Map from session
             endDate: "", // Default to empty
             days: session.days || [], // Map from session
             hall: session.location || session.classroomName || "", // Use location or classroomName as hall
@@ -219,7 +219,7 @@ const coursesSlice = createSlice({
             lectures: [], // Default to empty
             teacherName: session.teacherName,
             teacherId: session.teacherId, // Map from session
-            classroomId: session.classroomId, // Map from session
+            classroomId: session.classroomId || 0, // Map from session
           };
           
           console.log(`[DEBUG][STAGE 9: MAPPED TSession ${index}] Mapped TSession keys:`, Object.keys(mapped));

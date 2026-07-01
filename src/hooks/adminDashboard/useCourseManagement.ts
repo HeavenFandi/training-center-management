@@ -244,6 +244,32 @@ export const useCourseManagement = () => {
 
     let updatedData = { ...originalFormData };
 
+    // Helper to convert any time (string or object) to string "HH:mm:ss"
+    const timeToString = (time: any): string => {
+      if (!time) return "00:00:00";
+      if (typeof time === "string") {
+        const parts = time.split(":");
+        const hour = parts[0]?.padStart(2, "0") || "00";
+        const minute = parts[1]?.padStart(2, "0") || "00";
+        return `${hour}:${minute}:00`;
+      }
+      if (typeof time === "object" && time !== null && "hour" in time && "minute" in time) {
+        const hour = String(time.hour).padStart(2, "0");
+        const minute = String(time.minute).padStart(2, "0");
+        return `${hour}:${minute}:00`;
+      }
+      return "00:00:00";
+    };
+
+    // Helper to convert string time to TimeObject
+    const stringToTimeObject = (timeStr: string): { hour: number; minute: number; second: number; nano: 0 } => {
+      const parts = timeStr.split(":").map(Number);
+      const hour = parts[0] || 0;
+      const minute = parts[1] || 0;
+      const second = parts[2] || 0;
+      return { hour, minute, second, nano: 0 as const };
+    };
+
     // 1. استخراج معرف القاعة بشكل صحيح
     const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
     if (newClassroomId !== undefined && newClassroomId !== null) {
@@ -251,22 +277,31 @@ export const useCourseManagement = () => {
     }
 
     // 2. تحديث التوقيت الزمني
-    if (suggestion.startTime) updatedData.startTime = formatTimeForApi(suggestion.startTime);
+    if (suggestion.startTime) {
+      const newStartTimeStr = timeToString(suggestion.startTime);
+      updatedData.startTime = stringToTimeObject(newStartTimeStr);
+    }
     
     if (suggestion.endTime) {
-      updatedData.endTime = formatTimeForApi(suggestion.endTime);
+      const newEndTimeStr = timeToString(suggestion.endTime);
+      updatedData.endTime = stringToTimeObject(newEndTimeStr);
     } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
       // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
-      const [origStartH, origStartM] = originalFormData.startTime.split(':').map(Number);
-      const [origEndH, origEndM] = originalFormData.endTime.split(':').map(Number);
+      const origStartStr = timeToString(originalFormData.startTime);
+      const origEndStr = timeToString(originalFormData.endTime);
+      
+      const [origStartH, origStartM] = origStartStr.split(':').map(Number);
+      const [origEndH, origEndM] = origEndStr.split(':').map(Number);
       const durationInMinutes = (origEndH * 60 + origEndM) - (origStartH * 60 + origStartM);
 
-      const [newStartH, newStartM] = updatedData.startTime.split(':').map(Number);
+      const newStartStr = timeToString(updatedData.startTime);
+      const [newStartH, newStartM] = newStartStr.split(':').map(Number);
       const totalEndMinutes = (newStartH * 60 + newStartM) + durationInMinutes;
       
       const newEndH = Math.floor(totalEndMinutes / 60) % 24;
       const newEndM = totalEndMinutes % 60;
-      updatedData.endTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
+      const newEndStr = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
+      updatedData.endTime = stringToTimeObject(newEndStr);
     }
 
     // 3. تحديث تاريخ البدء المقترح

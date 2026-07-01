@@ -131,15 +131,15 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       classroomId: 0,
       price: initialSession?.price || 0,
       availableSeats: initialSession?.availableSeats || 0,
-      minSeats: initialSession?.minCapacity || initialSession?.minSeats || 0,
+      minSeats: initialSession?.minCapacity || 0,
       numberOfLectures: 0,
       duration: initialSession?.duration || "",
-      status: initialSession?.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
+      status: initialSession?.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status as "UPCOMING" | "ACTIVE" | "COMPLETED" : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
       requiredEquipment: initialSession?.requiredEquipment || "",
       startDate: initialSession?.startDate || "",
       startTime: parseTimeToFormState(initialSession?.startTime),
       endTime: parseTimeToFormState(initialSession?.endTime),
-      daysOfWeek: initialSession?.daysOfWeek || [],
+      daysOfWeek: (initialSession?.days || []).map(day => reverseDayMap[day] || undefined).filter(Boolean) as ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[] || [],
     },
   });
 
@@ -195,7 +195,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       // Update form fields
       setValue("teacherId", teacherId, { shouldValidate: true });
       setValue("classroomId", classroomId, { shouldValidate: true });
-      setValue("status", status, { shouldValidate: true });
+      setValue("status", status as "UPCOMING" | "ACTIVE" | "COMPLETED", { shouldValidate: true });
       setValue("duration", selectedTrainingSession.duration, { shouldValidate: true });
       setValue("price", selectedTrainingSession.price, { shouldValidate: true });
       setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: true });
@@ -209,7 +209,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       if (selectedTrainingSession.daysOfWeek) {
         const arabicDays = selectedTrainingSession.daysOfWeek.map((day: string) => reverseDayMap[day]).filter(Boolean);
         setSelectedDays(arabicDays);
-        setValue("daysOfWeek", selectedTrainingSession.daysOfWeek, { shouldValidate: true });
+        setValue("daysOfWeek", selectedTrainingSession.daysOfWeek as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">, { shouldValidate: true });
       }
     }
   }, [selectedTrainingSession, initialSession?.id, teachers, classrooms, trainingSessionsList, setValue]);
@@ -320,7 +320,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
 
   // Override the reset to also reset selectedDays
   const resetSelectedDays = useCallback(() => {
-    const days = initialSession?.daysOfWeek || initialSession?.days || [];
+    const days = initialSession?.days || [];
     const arabicDays = days.map((day: string) => reverseDayMap[day] || day).filter(Boolean);
     setSelectedDays(arabicDays);
   }, [initialSession]);

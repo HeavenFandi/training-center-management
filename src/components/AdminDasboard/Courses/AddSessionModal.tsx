@@ -26,7 +26,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   course: TCourse | null;
-  onSave: (sessionData: CreateTrainingSessionRequest) => void;
+  onSave: (sessionData: CreateTrainingSessionRequest, imageFile: File | null) => void;
   initialSession?: TSession | null;
   isLoading?: boolean;
 }

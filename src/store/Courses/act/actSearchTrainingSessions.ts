@@ -38,7 +38,7 @@ const actSearchTrainingSessions = createAsyncThunk(
         courseId: item.courseId,
         title: item.courseName,
         teacherName: item.teacherName,
-        teacherId: item.teacherId,
+        teacherId: item.teacherId || 0,
         duration: item.duration,
         price: item.price,
         availableSeats: item.availableSeats,
@@ -48,6 +48,7 @@ const actSearchTrainingSessions = createAsyncThunk(
         location: item.location || item.classroomName || "",
         image: item.image || "",
         description: item.courseDescription || "",
+        classroomId: (item as any).classroomId,
       }));
 
       return mappedSessions;

@@ -72,6 +72,8 @@ export const coursesData: TCourse[] = [
         days: ["الأحد", "الثلاثاء"],
         hall: "قاعة 1",
         lectures: [],
+        teacherId: 1,
+        classroomId: 1,
       }
     ]
   },
