@@ -21,6 +21,7 @@ import actDeleteLecture from "./act/actDeleteLecture";
 import actDeleteTrainingSession from "./act/actDeleteTrainingSession";
 import actCreateLecture from "./act/actCreateLecture";
 import actGetAllLectures from "./act/actGetAllLectures";
+import actUpdateTrainingSession from "./act/actUpdateTrainingSession";
 import { RootState } from "..";
 import actGetActiveTrainingSessions, {
   TrainingSession,
@@ -459,7 +460,11 @@ const trainingSessionsSlice = createSlice({
       state.lectureCreateLoading = false;
       state.lectureCreateError = null;
       const newLecture = action.payload;
-      const sessionId = newLecture.sessionId;
+      let sessionId = newLecture.sessionId;
+      // Fallback to sessionId from action's argument if newLecture doesn't have it
+      if (!sessionId) {
+        sessionId = action.meta.arg.sessionId;
+      }
       if (sessionId && state.sessionLectures[sessionId]) {
         state.sessionLectures[sessionId] = [
           ...state.sessionLectures[sessionId],
@@ -496,7 +501,11 @@ const trainingSessionsSlice = createSlice({
       state.lectureUpdateError = null;
       // Update the lecture in sessionLectures
       const updatedLecture = action.payload;
-      const sessionId = updatedLecture.sessionId;
+      let sessionId = updatedLecture.sessionId;
+      // Fallback to sessionId from action.meta.arg.data if not present in updatedLecture
+      if (!sessionId && action.meta.arg?.data?.sessionId) {
+        sessionId = action.meta.arg.data.sessionId;
+      }
       if (sessionId && state.sessionLectures[sessionId]) {
         state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(
           (lecture) =>
@@ -534,6 +543,35 @@ const trainingSessionsSlice = createSlice({
       );
     });
 
+    // actUpdateTrainingSession
+    builder.addCase(actUpdateTrainingSession.pending, (state) => {
+      state.loading = "pending";
+      state.error = null;
+    });
+    builder.addCase(actUpdateTrainingSession.fulfilled, (state, action) => {
+      state.loading = "succeeded";
+      state.error = null;
+      // Update selectedTrainingSession
+      state.selectedTrainingSession = action.payload;
+      // Update trainingSessions list
+      state.trainingSessions = state.trainingSessions.map((session) =>
+        session.id === action.payload.id ? action.payload : session
+      );
+      // Update courseSessions
+      for (const courseId in state.courseSessions) {
+        if (state.courseSessions[courseId]) {
+          state.courseSessions[courseId] = state.courseSessions[courseId].map(
+            (session) =>
+              session.id === action.payload.id ? action.payload : session
+          );
+        }
+      }
+    });
+    builder.addCase(actUpdateTrainingSession.rejected, (state, action) => {
+      state.loading = "failed";
+      if (action.payload && typeof action.payload === "string")
+        state.error = action.payload;
+    });
     // actDeleteTrainingSession
     builder.addCase(actDeleteTrainingSession.pending, (state, action) => {
       state.deletingSessionId = action.meta.arg;
@@ -711,5 +749,6 @@ export {
   actDeleteLecture,
   actCreateLecture,
   actGetAllLectures,
+  actUpdateTrainingSession,
 };
 export default trainingSessionsSlice.reducer;

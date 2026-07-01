@@ -84,7 +84,13 @@ const SessionsListModal: React.FC<SessionsListModalProps> = ({
                       backgroundColor: "rgba(19, 62, 101, 0.05)",
                     }
                   }}
-                  onClick={() => onSessionClick(session, course)}
+                  onClick={() => {
+                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] Session clicked:`, session);
+                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] Session keys:`, Object.keys(session));
+                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] session.teacherId:`, session.teacherId);
+                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] session.classroomId:`, session.classroomId);
+                    onSessionClick(session, course);
+                  }}
                 >
                   <ListItemIcon sx={{ minWidth: "auto", m: 0 }}>
                     <EventNoteIcon color="primary" />

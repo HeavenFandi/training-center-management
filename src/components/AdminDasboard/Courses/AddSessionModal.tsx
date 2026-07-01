@@ -33,6 +33,7 @@ interface Props {
 
 const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initialSession, isLoading }) => {
   const [teachers, setTeachers] = React.useState<TeacherApiResponse[]>([]);
+  const [isLoadingTeachers, setIsLoadingTeachers] = React.useState(true);
   const {
     register,
     handleSubmit,
@@ -45,7 +46,15 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
     handleTimeChange,
     classrooms,
     reset,
-  } = useAddSessionForm({ onClose, onSave, initialSession, courseId: course?.id });
+    selectedImageFile,
+    imagePreview,
+    imageError,
+    fileInputRef,
+    handleFileChange,
+    clearImage,
+    isLoadingSessionDetails,
+    selectedTrainingSession,
+  } = useAddSessionForm({ onClose, onSave, initialSession, courseId: course?.id, teachers });
 
   // Reset form when modal closes
   React.useEffect(() => {
@@ -57,21 +66,19 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
+        setIsLoadingTeachers(true);
         const data = await getTeachers();
         setTeachers(data);
       } catch (e) {
         console.error("Failed to fetch teachers:", e);
+      } finally {
+        setIsLoadingTeachers(false);
       }
     };
     fetchTeachers();
   }, []);
 
-  // When teachers are available, set teacherId to first available if it's still 0
-  useEffect(() => {
-    if (teachers.length > 0 && watch("teacherId") === 0) {
-      setValue("teacherId", teachers[0].id);
-    }
-  }, [teachers, watch, setValue]);
+
 
   const handleFormSubmit = (data: any) => {
     onSubmit(data);
@@ -94,6 +101,14 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
     
     return "00:00";
   };
+
+  // Determine if we need to show loading
+  const shouldShowLoading = 
+    isLoadingTeachers || 
+    (initialSession && isLoadingSessionDetails) ||
+    (initialSession && !selectedTrainingSession) ||
+    teachers.length === 0 ||
+    classrooms.length === 0;
 
   return (
     <Dialog
@@ -129,7 +144,12 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
       </Box>
 
       <DialogContent sx={{ fontFamily: "Tajawal", p: 3, pt: 0, bgcolor: "#F8FAFC" }}>
-        <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+        {shouldShowLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
           <input type="hidden" {...register("courseId", { valueAsNumber: true })} />
           <Typography variant="subtitle2" fontWeight="bold" mb={1} color="#133E65">معلومات الدورة الأساسية</Typography>
           <Grid container spacing={1.5}>
@@ -221,20 +241,22 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
                 compact
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <AuthInput
-                label="الحالة *"
-                select
-                {...register("status")}
-                error={!!errors.status}
-                helperText={errors.status?.message}
-                compact
-              >
-                <MenuItem value="UPCOMING">قيد الانتظار</MenuItem>
-                <MenuItem value="ACTIVE">نشطة</MenuItem>
-                <MenuItem value="COMPLETED">مكتملة</MenuItem>
-              </AuthInput>
-            </Grid>
+            {initialSession && (
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <AuthInput
+                  label="الحالة *"
+                  select
+                  {...register("status")}
+                  error={!!errors.status}
+                  helperText={errors.status?.message}
+                  compact
+                >
+                  <MenuItem value="UPCOMING">قيد الانتظار</MenuItem>
+                  <MenuItem value="ACTIVE">نشطة</MenuItem>
+                  <MenuItem value="COMPLETED">مكتملة</MenuItem>
+                </AuthInput>
+              </Grid>
+            )}
             <Grid size={{ xs: 12, sm: 4 }}>
                 <AuthInput
                   label="المتطلبات"
@@ -245,6 +267,68 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
                   compact
                 />
               </Grid>
+            {initialSession && (
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" fontWeight="bold" mt={1.5} mb={1} color="#133E65">
+                  صورة الدورة
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {(imagePreview || initialSession.image) && (
+                    <Box
+                      sx={{
+                        width: 200,
+                        height: 150,
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        border: "2px dashed #ccc",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <img
+                        src={imagePreview || initialSession.image}
+                        alt="Session Preview"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+                  )}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    hidden
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{ width: "fit-content" }}
+                  >
+                    {selectedImageFile ? "تغيير الصورة" : "تحميل صورة"}
+                  </Button>
+                  {selectedImageFile && (
+                    <Button
+                      variant="text"
+                      color="error"
+                      onClick={clearImage}
+                      sx={{ width: "fit-content" }}
+                    >
+                      إزالة الصورة
+                    </Button>
+                  )}
+                  {imageError && (
+                    <Typography color="error" variant="caption">
+                      {imageError}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+            )}
           </Grid>
 
           <Typography variant="subtitle2" fontWeight="bold" mt={1.5} mb={1} color="#133E65">جدول المحاضرات</Typography>
@@ -386,6 +470,7 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
             </Box>
           </Box>
         </Box>
+        )}
       </DialogContent>
     </Dialog>
   );

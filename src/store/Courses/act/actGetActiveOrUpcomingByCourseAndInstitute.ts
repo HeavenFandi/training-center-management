@@ -16,8 +16,9 @@ interface TTrainingSessionResponse {
   courseName: string;
   courseDescription: string;
   classroomName?: string;
+  classroomId: number;
   teacherName: string;
-  teacherId?: number;
+  teacherId: number;
   instituteName?: string;
   tenantName?: string;
   location?: string;
@@ -39,12 +40,13 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
   async ({ courseId, instituteId }: ActGetActiveOrUpcomingArgs, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log(`[DEBUG] Fetching active/upcoming sessions for course ${courseId}, institute ${instituteId}`);
+      console.log(`[DEBUG][STAGE 1: API REQUEST] Fetching active/upcoming sessions for course ${courseId}, institute ${instituteId}`);
       const response = await axiosClient.get(
         `/training-sessions/course/${courseId}/institute/${instituteId}/active-upcoming`
       );
-      console.log("[DEBUG] Active/upcoming response full:", response);
-      console.log("[DEBUG] Active/upcoming response data:", response.data);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Full response:`, response);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data field:`, response.data);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data keys:`, Object.keys(response.data));
 
       
       let rawData: TTrainingSessionResponse[] = [];
@@ -55,35 +57,52 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
           rawData = response.data.data;
         }
       }
-      console.log("[DEBUG] Raw sessions data to map:", rawData);
+      console.log(`[DEBUG][STAGE 3: RAW DATA PREPARED] Raw sessions to map:`, rawData);
 
-      const mappedSessions: TTrainingSessionListItem[] = rawData.map((item: TTrainingSessionResponse) => ({
-        id: item.id,
-        courseId: item.courseId,
-        title: item.courseName,
-        teacherName: item.teacherName,
-        teacherId: item.teacherId,
-        duration: item.duration,
-        price: item.price,
-        availableSeats: item.availableSeats,
-        status: item.status,
-        category: item.categoryName || "", 
-        institute: item.instituteName || item.tenantName || "",
-        location: item.location || item.classroomName || "",
-        image: item.image || "",
-        description: item.courseDescription || "",
-        startDate: item.startDate,
-        startTime: item.startTime,
-        endTime: item.endTime,
-        days: item.days,
-        minSeats: item.minSeats,
-        numberOfLectures: item.numberOfLectures,
-        requiredEquipment: item.requiredEquipment,
-        classroomName: item.classroomName,
-      }));
+      const mappedSessions: TTrainingSessionListItem[] = rawData.map((item: TTrainingSessionResponse, index: number) => {
+        console.log(`[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item keys:`, Object.keys(item));
+        console.log(`[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item:`, item);
+        console.log(`[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item.teacherId:`, item.teacherId);
+        console.log(`[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item.classroomId:`, item.classroomId);
+        
+        const mappedItem = {
+          id: item.id,
+          courseId: item.courseId,
+          title: item.courseName,
+          teacherName: item.teacherName,
+          teacherId: item.teacherId,
+          duration: item.duration,
+          price: item.price,
+          availableSeats: item.availableSeats,
+          status: item.status,
+          category: item.categoryName || "", 
+          institute: item.instituteName || item.tenantName || "",
+          location: item.location || item.classroomName || "",
+          image: item.image || "",
+          description: item.courseDescription || "",
+          startDate: item.startDate,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          days: item.days,
+          minSeats: item.minSeats,
+          numberOfLectures: item.numberOfLectures,
+          requiredEquipment: item.requiredEquipment,
+          classroomName: item.classroomName,
+          classroomId: item.classroomId,
+        };
 
+        console.log(`[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item:`, mappedItem);
+        console.log(`[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item.teacherId:`, mappedItem.teacherId);
+        console.log(`[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item.classroomId:`, mappedItem.classroomId);
+        
+        return mappedItem;
+      });
+
+      console.log(`[DEBUG][STAGE 6: FINAL MAPPED SESSIONS] All mapped sessions:`, mappedSessions);
+      
       return mappedSessions;
     } catch (error) {
+      console.error(`[DEBUG][STAGE ERROR] Error fetching sessions:`, error);
       return rejectWithValue(axiosErrorHandler(error));
     }
   }
