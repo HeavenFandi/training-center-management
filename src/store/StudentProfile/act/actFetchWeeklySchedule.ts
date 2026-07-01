@@ -2,25 +2,27 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import axiosClient from "../../../api/axiosClient";
 import { WeeklyScheduleItem } from "../../../types/studentDashboard";
-import { RootState } from "../../index";
+
+
+interface FetchWeeklyScheduleArgs {
+  studentId: number;
+  referenceDate?: string; 
+}
 
 const actFetchWeeklySchedule = createAsyncThunk<
   WeeklyScheduleItem[],
-  number,
+  FetchWeeklyScheduleArgs,
   { rejectValue: string }
->("studentProfile/actFetchWeeklySchedule", async (studentId, thunkAPI) => {
-  const { getState } = thunkAPI;
-  const state = getState() as RootState;
-  
-  // If we already have weekly schedule data and fetch completed (loading is false), don't fetch again
-  if (state.studentProfile.weeklySchedule.length > 0 && !state.studentProfile.scheduleLoading) {
-    return state.studentProfile.weeklySchedule;
-  }
+>("studentProfile/actFetchWeeklySchedule", async (args, thunkAPI) => {
+  const { studentId, referenceDate } = args;
   
   try {
-    console.log("[DEBUG actFetchWeeklySchedule] Fetching weekly schedule for student id:", studentId);
-    const response = await axiosClient.get(`/students/${studentId}/weekly-schedule`);
-    console.log("[DEBUG actFetchWeeklySchedule] Full API response:", response);
+
+    let url = `/students/${studentId}/weekly-schedule`;
+    if (referenceDate) {
+      url += `?date=${encodeURIComponent(referenceDate)}`;
+    }
+    const response = await axiosClient.get(url);
     
     let weeklySchedule: WeeklyScheduleItem[] = [];
     if (Array.isArray(response.data)) {

@@ -9,7 +9,6 @@ import {
   Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import PersonIcon from "@mui/icons-material/Person";
 import * as styles from "../../styles/headerStyle";
 
@@ -18,7 +17,6 @@ interface MobileMenuProps {
   onOpen: (event: React.MouseEvent<HTMLElement>) => void;
   onClose: () => void;
   onNavClick: (path: string) => void;
-  onNotificationsClick: (event: React.MouseEvent<HTMLElement>) => void;
   isActiveLink: (path: string) => boolean;
   pages: Array<{ name: string; path: string; icon: React.ReactNode }>;
   showIcons: boolean;
@@ -31,7 +29,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   onOpen,
   onClose,
   onNavClick,
-  onNotificationsClick,
   isActiveLink,
   pages,
   showIcons,
@@ -70,74 +67,35 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       >
         {showIcons && (
           <Box sx={{ px: 2, py: 1.5 }}>
-            <Stack
-              direction="row-reverse"
-              justifyContent="space-between"
-              spacing={2}
+            <Box
+              onClick={() => onNavClick("/main/student-dashboard")}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.5,
+                p: 1.5,
+                borderRadius: "16px",
+                bgcolor: isActiveLink("/main/student-dashboard")
+                  ? "rgba(99, 102, 241, 0.1)"
+                  : "rgba(5, 22, 48, 0.03)",
+                color: isActiveLink("/main/student-dashboard") ? "#6366F1" : "#051630",
+                cursor: "pointer",
+                transition: "0.3s",
+                "&:active": { transform: "scale(0.95)" },
+              }}
             >
-              <Box
-                onClick={() => onNavClick("/main/student-dashboard")}
+              <PersonIcon />
+              <Typography
                 sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 0.5,
-                  p: 1.5,
-                  borderRadius: "16px",
-                  bgcolor: isActiveLink("/main/student-dashboard")
-                    ? "rgba(99, 102, 241, 0.1)"
-                    : "rgba(5, 22, 48, 0.03)",
-                  color: isActiveLink("/main/student-dashboard") ? "#6366F1" : "#051630",
-                  cursor: "pointer",
-                  transition: "0.3s",
-                  "&:active": { transform: "scale(0.95)" },
+                  fontFamily: "Tajawal",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
                 }}
               >
-                <PersonIcon />
-                <Typography
-                  sx={{
-                    fontFamily: "Tajawal",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  الملف الشخصي
-                </Typography>
-              </Box>
-
-              <Box
-                onClick={(e) => {
-                  onClose();
-                  onNotificationsClick(e);
-                }}
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 0.5,
-                  p: 1.5,
-                  borderRadius: "16px",
-                  bgcolor: "rgba(5, 22, 48, 0.03)",
-                  color: "#051630",
-                  cursor: "pointer",
-                  transition: "0.3s",
-                  "&:active": { transform: "scale(0.95)" },
-                }}
-              >
-                <NotificationsIcon />
-                <Typography
-                  sx={{
-                    fontFamily: "Tajawal",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  الإشعارات
-                </Typography>
-              </Box>
-            </Stack>
+                الملف الشخصي
+              </Typography>
+            </Box>
             <Divider sx={{ my: 2, opacity: 0.5 }} />
           </Box>
         )}

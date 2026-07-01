@@ -55,6 +55,7 @@ export interface TTrainingSessionListItem {
   classroomName?: string;
   classroomId?: number;
   enrolledStudentsCount?: number;
+  studentEnrollmentCount?: number;
 }
 
 export interface TTrainingSessionDetails {
@@ -76,6 +77,7 @@ export interface TTrainingSessionDetails {
   instructor?: TInstructor;
   reviews?: TReview[];
   enrolledStudentsCount?: number;
+  studentEnrollmentCount?: number;
   startDate?: string;
   startTime?: string;
   endTime?: string;

@@ -9,9 +9,7 @@ import {
   Button,
   Stack,
   Tooltip,
-  Badge
 } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import PersonIcon from "@mui/icons-material/Person";
 import HomeIcon from "@mui/icons-material/Home";
 import SchoolIcon from "@mui/icons-material/School";
@@ -20,9 +18,6 @@ import Logo from "../../assets/vectors/logo.png";
 import { useHeader } from "../../hooks/common/useHeader";
 import * as styles from "../../styles/headerStyle";
 import MobileMenu from "../Heading/MobileMenu";
-import NotificationsPopover from "./NotificationsPopover";
-import { useState } from "react";
-import { useNotifications } from "../../Context/NotificationsContext";
 
 const pages = [
   { name: "تواصل معنا", path: "#contact-us", icon: <ContactSupportIcon /> },
@@ -44,18 +39,6 @@ function Header({
     isActiveLink,
     isLoggedIn,
   } = useHeader();
-
-  const { unreadCount } = useNotifications();
-  const [notificationsAnchor, setNotificationsAnchor] =
-    useState<HTMLElement | null>(null);
-
-  const handleNotificationsOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setNotificationsAnchor(event.currentTarget);
-  };
-
-  const handleNotificationsClose = () => {
-    setNotificationsAnchor(null);
-  };
 
   return (
     <AppBar position="fixed" sx={styles.appBarStyle}>
@@ -118,28 +101,6 @@ function Header({
           >
             {showIcons && (
               <Stack direction="row-reverse" spacing={1}>
-                <Tooltip title="الإشعارات">
-                  <IconButton
-                    onClick={handleNotificationsOpen}
-                    sx={{
-                      color: Boolean(notificationsAnchor)
-                        ? "#6366F1"
-                        : "rgba(5, 22, 48, 0.6)",
-                      bgcolor: "rgba(5, 22, 48, 0.04)",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        color: "#6366F1",
-                        bgcolor: "rgba(99, 102, 241, 0.1)",
-                      },
-                      transition: "all 0.3s ease",
-                    }}
-                  >
-                    <Badge badgeContent={unreadCount} color="error">
-                      <NotificationsIcon />
-                    </Badge>
-                  </IconButton>
-                </Tooltip>
-
                 <Tooltip title="الملف الشخصي">
                   <IconButton
                     onClick={() => handleNavClick("/main/student-dashboard")}
@@ -170,17 +131,11 @@ function Header({
             </Button>
           </Stack>
 
-          <NotificationsPopover
-            anchorEl={notificationsAnchor}
-            onClose={handleNotificationsClose}
-          />
-
           <MobileMenu
             anchorEl={anchorElNav}
             onOpen={handleOpenNavMenu}
             onClose={handleCloseNavMenu}
             onNavClick={handleNavClick}
-            onNotificationsClick={handleNotificationsOpen}
             isActiveLink={isActiveLink}
             pages={pages}
             showIcons={showIcons}
