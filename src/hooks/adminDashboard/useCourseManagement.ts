@@ -17,7 +17,7 @@ import { clearDeleteSessionState, clearDeleteLectureState, actUpdateTrainingSess
 import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
-import { CreateTrainingSessionRequest, updateTrainingSessionImage } from "../../api/trainingSessionApi";
+import { CreateTrainingSessionRequest, updateTrainingSessionImage, convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
@@ -261,14 +261,7 @@ export const useCourseManagement = () => {
       return "00:00:00";
     };
 
-    // Helper to convert string time to TimeObject
-    const stringToTimeObject = (timeStr: string): { hour: number; minute: number; second: number; nano: 0 } => {
-      const parts = timeStr.split(":").map(Number);
-      const hour = parts[0] || 0;
-      const minute = parts[1] || 0;
-      const second = parts[2] || 0;
-      return { hour, minute, second, nano: 0 as const };
-    };
+
 
     // 1. استخراج معرف القاعة بشكل صحيح
     const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
@@ -279,12 +272,12 @@ export const useCourseManagement = () => {
     // 2. تحديث التوقيت الزمني
     if (suggestion.startTime) {
       const newStartTimeStr = timeToString(suggestion.startTime);
-      updatedData.startTime = stringToTimeObject(newStartTimeStr);
+      updatedData.startTime = convertTimeStringToTimeObject(newStartTimeStr);
     }
     
     if (suggestion.endTime) {
       const newEndTimeStr = timeToString(suggestion.endTime);
-      updatedData.endTime = stringToTimeObject(newEndTimeStr);
+      updatedData.endTime = convertTimeStringToTimeObject(newEndTimeStr);
     } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
       // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
       const origStartStr = timeToString(originalFormData.startTime);
@@ -301,7 +294,7 @@ export const useCourseManagement = () => {
       const newEndH = Math.floor(totalEndMinutes / 60) % 24;
       const newEndM = totalEndMinutes % 60;
       const newEndStr = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
-      updatedData.endTime = stringToTimeObject(newEndStr);
+      updatedData.endTime = convertTimeStringToTimeObject(newEndStr);
     }
 
     // 3. تحديث تاريخ البدء المقترح
@@ -389,7 +382,7 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number) => {
+  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number): Promise<{ success: true; sessionId: number; imageFile: File | null; courseId: number } | { success: false }> => {
     setUpdatingSession(true);
     try {
       // First update the session details
@@ -398,36 +391,48 @@ export const useCourseManagement = () => {
       );
       
       if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
-        // If there's an image file, update that too
+        // If there's an image file, update that too (but don't refetch yet)
         if (imageFile) {
           await updateTrainingSessionImage(sessionId, imageFile);
-          // Refresh training session details to get the new image
-          await dispatch(actGetTrainingSessionDetails(sessionId));
         }
         
-        // Refresh the sessions list for this course
-        if (currentInstitute?.id) {
-          dispatch(
-            actGetActiveOrUpcomingByCourseAndInstitute({
-              courseId,
-              instituteId: currentInstitute.id,
-            })
-          );
-        }
-        
-        showSnackbar("تم تحديث الدورة بنجاح", "success");
-        return true;
+        // Return true so parent can handle closing modal first, then refetch and snackbar
+        return { success: true, sessionId, imageFile, courseId };
       } else {
         const errorMsg = (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
         showSnackbar(errorMsg, "error");
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error("Error updating session:", error);
       showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
-      return false;
+      return { success: false };
     } finally {
       setUpdatingSession(false);
+    }
+  }, [dispatch, showSnackbar]);
+
+  const handlePostUpdateSession = useCallback(async (sessionId: number, imageFile: File | null, courseId: number) => {
+    try {
+      // Show snackbar first
+      showSnackbar("تم تحديث الدورة بنجاح", "success");
+      
+      // Refresh training session details if image was updated
+      if (imageFile) {
+        await dispatch(actGetTrainingSessionDetails(sessionId));
+      }
+      
+      // Refresh the sessions list for this course
+      if (currentInstitute?.id) {
+        dispatch(
+          actGetActiveOrUpcomingByCourseAndInstitute({
+            courseId,
+            instituteId: currentInstitute.id,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error in post update session:", error);
     }
   }, [dispatch, showSnackbar, currentInstitute]);
 
@@ -495,6 +500,7 @@ export const useCourseManagement = () => {
     handleSaveAdd,
     handleAddSession,
     handleUpdateSession,
+    handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,

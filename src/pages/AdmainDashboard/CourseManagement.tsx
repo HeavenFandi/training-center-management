@@ -46,6 +46,7 @@ const CourseManagement = () => {
     handleSaveAdd,
     handleAddSession,
     handleUpdateSession,
+    handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,
@@ -177,15 +178,18 @@ const CourseManagement = () => {
           course={sessionTargetCourse}
           onSave={async (data: any, imageFile: File | null) => {
             if (editingSession) {
-              const success = await handleUpdateSession(
-                editingSession.id,
-                data,
-                imageFile,
-                sessionTargetCourse?.id || 0
-              );
-              if (success) {
-                handleCloseAddSession();
-              }
+              const result = await handleUpdateSession(
+              editingSession.id,
+              data,
+              imageFile,
+              sessionTargetCourse?.id || 0
+            );
+            if (result.success) {
+              // FIRST CLOSE MODAL IMMEDIATELY!
+              handleCloseAddSession();
+              // THEN handle post-update steps (snackbar, refetch, etc.)
+              handlePostUpdateSession(result.sessionId, result.imageFile, result.courseId);
+            }
             } else {
               handleAddSession(data, handleCloseAddSession);
             }

@@ -11,7 +11,7 @@ const WORK_START_MIN = 9 * 60; // 09:00 in minutes
 const WORK_END_MIN = 17 * 60; // 17:00 in minutes
 
 // Factory function to create schema with classrooms context
-export const createSessionSchema = (classrooms: Classroom[]) => {
+export const createSessionSchema = (classrooms: Classroom[], isEditMode: boolean = false) => {
   return z.object({
     courseId: z.number().int().min(1, "الكورس مطلوب"),
     teacherId: z.number().int().min(1, "المدرس مطلوب"),
@@ -24,6 +24,9 @@ export const createSessionSchema = (classrooms: Classroom[]) => {
     status: z.enum(["UPCOMING", "ACTIVE", "COMPLETED"]),
     requiredEquipment: z.string().optional(),
     startDate: z.string().min(1, "تاريخ البداية مطلوب").refine((dateStr) => {
+      // If we're in edit mode, skip future date validation
+      if (isEditMode) return true;
+      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const selectedDate = new Date(dateStr);
