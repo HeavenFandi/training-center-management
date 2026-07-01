@@ -33,11 +33,36 @@ export const studentInitialData: Student = {
 };
 
 export const dashboardDays: Day[] = [
-  { name: "الأحد", date: 22 },
-  { name: "الاثنين", date: 23 },
-  { name: "الثلاثاء", date: 24 },
-  { name: "الأربعاء", date: 25 },
-  { name: "الخميس", date: 26 },
+  {
+    name: "الأحد",
+    date: 22,
+    dateString: "2026-07-05",
+    fullDate: new Date("2026-07-05"),
+  },
+  {
+    name: "الاثنين",
+    date: 23,
+    dateString: "2026-07-06",
+    fullDate: new Date("2026-07-06"),
+  },
+  {
+    name: "الثلاثاء",
+    date: 24,
+    dateString: "2026-07-07",
+    fullDate: new Date("2026-07-07"),
+  },
+  {
+    name: "الأربعاء",
+    date: 25,
+    dateString: "2026-07-08",
+    fullDate: new Date("2026-07-08"),
+  },
+  {
+    name: "الخميس",
+    date: 26,
+    dateString: "2026-07-09",
+    fullDate: new Date("2026-07-09"),
+  },
 ];
 
 export const studentLecturesData: Record<string, Lecture[]> = {
@@ -97,20 +122,26 @@ export const studentLecturesData: Record<string, Lecture[]> = {
 
 export const activeCoursesData: ActiveCourse[] = [
   {
-    id: 1,
-    title: "تصميم واجهات المستخدم ui/ux",
-    lessons: "32 درس",
-    hoursLeft: "4 ساعات",
-    progress: 65,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
+    studentId: 1,
+    trainingSessionId: 101,
+    courseName: "تصميم واجهات المستخدم ui/ux",
+    totalLectures: 32,
+    lecturesAttended: 21,
+    image:
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
+    startDate: "2026-01-01",
+    attendancePercentage: 65,
   },
   {
-    id: 2,
-    title: "الأمن السيبراني",
-    lessons: "100 درس",
-    hoursLeft: "50 ساعة",
-    progress: 50,
-    image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=1200&auto=format&fit=crop",
+    studentId: 1,
+    trainingSessionId: 102,
+    courseName: "الأمن السيبراني",
+    totalLectures: 100,
+    lecturesAttended: 50,
+    image:
+      "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=1200&auto=format&fit=crop",
+    startDate: "2026-02-01",
+    attendancePercentage: 50,
   },
 ];
 
@@ -164,5 +195,3 @@ export const studentsData: Student[] = [
     image: "https://via.placeholder.com/40",
   },
 ];
-
-
