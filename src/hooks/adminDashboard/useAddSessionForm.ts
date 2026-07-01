@@ -69,6 +69,43 @@ interface UseAddSessionFormProps {
   teachers: TeacherApiResponse[];
 }
 
+// Helper function to format any date to YYYY-MM-DD
+const formatDateToYYYYMMDD = (date: any): string => {
+  let dateObj: Date;
+  if (!date) {
+    dateObj = new Date();
+  } else if (date instanceof Date) {
+    dateObj = date;
+  } else if (typeof date === "string") {
+    dateObj = new Date(date);
+    // Handle cases where date might be in a different format
+    if (isNaN(dateObj.getTime())) {
+      dateObj = new Date();
+    }
+  } else {
+    dateObj = new Date();
+  }
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Helper function to extract ID from a nested object (e.g., teacher.id, classroom.id)
+const extractId = (data: any): number => {
+  if (!data) return 0;
+  if (typeof data === "number") return data;
+  if (typeof data === "object") {
+    // Check for common ID properties
+    if (data.id) return data.id;
+    if (data.teacherId) return data.teacherId;
+    if (data.classroomId) return data.classroomId;
+    if (data.hallId) return data.hallId;
+    if (data.instructorId) return data.instructorId;
+  }
+  return 0;
+};
+
 // Convert "HH:mm" to "HH:mm:ss" for LocalTime
 const formatTimeForApi = (timeStr: string) => {
   if (!timeStr) return "00:00:00";
@@ -96,6 +133,13 @@ const parseTimeToFormState = (time: any): string => {
   return "09:00";
 };
 
+// Helper to add hours to a time string (HH:mm)
+const addHoursToTime = (timeStr: string, hours: number): string => {
+  const [hour, minute] = timeStr.split(":").map(Number);
+  const newHour = (hour + hours) % 24;
+  return `${String(newHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+};
+
 export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, teachers }: UseAddSessionFormProps) => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
@@ -109,10 +153,11 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
   const sessionLectures = useAppSelector((state) => state.trainingSessions.sessionLectures);
   const selectedTrainingSession = useAppSelector((state) => state.trainingSessions.selectedTrainingSession);
   const trainingSessionsList = useAppSelector((state) => state.trainingSessions.trainingSessions);
-  const isLoadingSessionDetails = useAppSelector((state) => state.trainingSessions.loading === "pending");
+  const isLoadingSessionDetails = useAppSelector((state) => state.trainingSessions.sessionDetailsLoading === "pending");
+  const isEditMode = !!initialSession;
 
   // Create schema with classrooms context using useMemo to prevent recreation
-  const sessionSchema = useMemo(() => createSessionSchema(classrooms), [classrooms]);
+  const sessionSchema = useMemo(() => createSessionSchema(classrooms, isEditMode), [classrooms, isEditMode]);
 
   const {
     register,
@@ -122,6 +167,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
     reset,
     watch,
     getValues,
+    control,
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
@@ -136,9 +182,11 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       duration: initialSession?.duration || "",
       status: initialSession?.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status as "UPCOMING" | "ACTIVE" | "COMPLETED" : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
       requiredEquipment: initialSession?.requiredEquipment || "",
-      startDate: initialSession?.startDate || "",
+      startDate: formatDateToYYYYMMDD(initialSession?.startDate),
       startTime: parseTimeToFormState(initialSession?.startTime),
-      endTime: parseTimeToFormState(initialSession?.endTime),
+      endTime: parseTimeToFormState(initialSession?.endTime) === parseTimeToFormState(initialSession?.startTime) 
+        ? addHoursToTime(parseTimeToFormState(initialSession?.startTime), 2) 
+        : parseTimeToFormState(initialSession?.endTime),
       daysOfWeek: (initialSession?.days || []).map(day => reverseDayMap[day] || undefined).filter(Boolean) as ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[] || [],
     },
   });
@@ -167,14 +215,24 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       // First get the full session from trainingSessionsList to get teacherId and classroomId
       const fullSession = trainingSessionsList.find(s => s.id === selectedTrainingSession.id);
       
-      // Get teacherId - either from selectedTrainingSession, fullSession, initialSession, or first available teacher
-      let teacherId = selectedTrainingSession.teacherId ?? fullSession?.teacherId ?? initialSession?.teacherId;
+      // Get teacherId - extract from nested objects if needed
+      let teacherId = extractId(selectedTrainingSession.teacherId) ?? 
+                     extractId(fullSession?.teacherId) ?? 
+                     extractId(initialSession?.teacherId) ?? 
+                     extractId((selectedTrainingSession as any).teacher) ?? 
+                     extractId((fullSession as any)?.teacher) ?? 
+                     extractId((initialSession as any)?.teacher);
       if (!teacherId || !teachers.some(t => t.id === teacherId)) {
         teacherId = teachers[0]?.id ?? 0;
       }
       
-      // Get classroomId - either from selectedTrainingSession, fullSession, initialSession, or first available classroom
-      let classroomId = selectedTrainingSession.classroomId ?? fullSession?.classroomId ?? initialSession?.classroomId;
+      // Get classroomId - extract from nested objects if needed
+      let classroomId = extractId(selectedTrainingSession.classroomId) ?? 
+                       extractId(fullSession?.classroomId) ?? 
+                       extractId(initialSession?.classroomId) ?? 
+                       extractId((selectedTrainingSession as any).classroom) ?? 
+                       extractId((fullSession as any)?.classroom) ?? 
+                       extractId((initialSession as any)?.hall);
       if (!classroomId || !classrooms.some(c => c.id === classroomId)) {
         classroomId = classrooms[0]?.id ?? 0;
       }
@@ -192,6 +250,18 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
         }
       }
       
+      // Format start date
+      const formattedStartDate = formatDateToYYYYMMDD(selectedTrainingSession.startDate);
+      
+      // Get and fix times
+      const parsedStartTime = parseTimeToFormState(selectedTrainingSession.startTime ?? initialSession?.startTime);
+      let parsedEndTime = parseTimeToFormState(selectedTrainingSession.endTime ?? initialSession?.endTime);
+      
+      // If end time is same as start time, add 2 hours
+      if (parsedStartTime === parsedEndTime) {
+        parsedEndTime = addHoursToTime(parsedStartTime, 2);
+      }
+      
       // Update form fields
       setValue("teacherId", teacherId, { shouldValidate: true });
       setValue("classroomId", classroomId, { shouldValidate: true });
@@ -201,9 +271,9 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: true });
       setValue("minSeats", selectedTrainingSession.minSeats, { shouldValidate: true });
       setValue("requiredEquipment", selectedTrainingSession.requiredEquipment, { shouldValidate: true });
-      setValue("startDate", selectedTrainingSession.startDate ?? "", { shouldValidate: true });
-      setValue("startTime", parseTimeToFormState(selectedTrainingSession.startTime), { shouldValidate: true });
-      setValue("endTime", parseTimeToFormState(selectedTrainingSession.endTime), { shouldValidate: true });
+      setValue("startDate", formattedStartDate, { shouldValidate: true });
+      setValue("startTime", parsedStartTime, { shouldValidate: true });
+      setValue("endTime", parsedEndTime, { shouldValidate: true });
       
       // Also set days from selectedTrainingSession if available
       if (selectedTrainingSession.daysOfWeek) {
@@ -301,12 +371,12 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
   }, []);
 
   const onSubmit = useCallback((data: SessionFormData) => {
-    // Convert times to LocalTime objects
+    // Convert times to "HH:mm:ss" strings
     const apiData: CreateTrainingSessionRequest = {
       ...data,
       status: !initialSession ? "UPCOMING" : data.status, // Hardcode to UPCOMING when adding new
-      startTime: convertTimeStringToTimeObject(data.startTime),
-      endTime: convertTimeStringToTimeObject(data.endTime),
+      startTime: formatTimeForApi(data.startTime),
+      endTime: formatTimeForApi(data.endTime),
       requiredEquipment: data.requiredEquipment || "",
     };
     console.log("Submitting session data to API:", apiData);
@@ -335,6 +405,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
     handleSubmit,
     errors,
     setValue,
+    control,
     selectedDays,
     toggleDay,
     onSubmit,

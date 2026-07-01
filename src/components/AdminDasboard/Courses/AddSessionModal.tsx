@@ -13,6 +13,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { Controller } from "react-hook-form";
 
 import AuthInput from "../../Auth/AuthInput";
 import { TCourse, TSession } from "../../../types/cardType";
@@ -39,6 +40,7 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
     handleSubmit,
     errors,
     setValue,
+    control,
     selectedDays,
     toggleDay,
     onSubmit,
@@ -154,36 +156,50 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
           <Typography variant="subtitle2" fontWeight="bold" mb={1} color="#133E65">معلومات الدورة الأساسية</Typography>
           <Grid container spacing={1.5}>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <AuthInput
-                label="المدرس "
-                select
-                {...register("teacherId", { valueAsNumber: true })}
-                error={!!errors.teacherId}
-                helperText={errors.teacherId?.message}
-                compact
-              >
-                {teachers.map(inst => (
-                  <MenuItem key={inst.id} value={inst.id}>
-                    {inst.firstName} {inst.lastName}
-                  </MenuItem>
-                ))}
-              </AuthInput>
+              <Controller
+                name="teacherId"
+                control={control}
+                render={({ field }) => (
+                  <AuthInput
+                    label="المدرس "
+                    select
+                    value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    error={!!errors.teacherId}
+                    helperText={errors.teacherId?.message}
+                    compact
+                  >
+                    {teachers.map(inst => (
+                      <MenuItem key={inst.id} value={inst.id}>
+                        {inst.firstName} {inst.lastName}
+                      </MenuItem>
+                    ))}
+                  </AuthInput>
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <AuthInput
-                label="القاعة "
-                select
-                {...register("classroomId", { valueAsNumber: true })}
-                error={!!errors.classroomId}
-                helperText={errors.classroomId?.message}
-                compact
-              >
-                {classrooms.map(classroom => (
-                  <MenuItem key={classroom.id} value={classroom.id}>
-                    {classroom.number}
-                  </MenuItem>
-                ))}
-              </AuthInput>
+              <Controller
+                name="classroomId"
+                control={control}
+                render={({ field }) => (
+                  <AuthInput
+                    label="القاعة "
+                    select
+                    value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    error={!!errors.classroomId}
+                    helperText={errors.classroomId?.message}
+                    compact
+                  >
+                    {classrooms.map(classroom => (
+                      <MenuItem key={classroom.id} value={classroom.id}>
+                        {classroom.number}
+                      </MenuItem>
+                    ))}
+                  </AuthInput>
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <AuthInput
@@ -243,18 +259,25 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
             </Grid>
             {initialSession && (
               <Grid size={{ xs: 12, sm: 4 }}>
-                <AuthInput
-                  label="الحالة *"
-                  select
-                  {...register("status")}
-                  error={!!errors.status}
-                  helperText={errors.status?.message}
-                  compact
-                >
-                  <MenuItem value="UPCOMING">قيد الانتظار</MenuItem>
-                  <MenuItem value="ACTIVE">نشطة</MenuItem>
-                  <MenuItem value="COMPLETED">مكتملة</MenuItem>
-                </AuthInput>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <AuthInput
+                      label="الحالة *"
+                      select
+                      value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      error={!!errors.status}
+                      helperText={errors.status?.message}
+                      compact
+                    >
+                      <MenuItem value="UPCOMING">قيد الانتظار</MenuItem>
+                      <MenuItem value="ACTIVE">نشطة</MenuItem>
+                      <MenuItem value="COMPLETED">مكتملة</MenuItem>
+                    </AuthInput>
+                  )}
+                />
               </Grid>
             )}
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -449,22 +472,62 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
                   "&:hover": { bgcolor: "#1e5a91" }, 
                   "&:disabled": { bgcolor: "#94a3b8" },
                   borderRadius: "10px", 
-                  px: 4,
+                  px: 3,
                   height: "44px",
                   fontSize: "0.95rem",
                   fontFamily: "Tajawal",
                   fontWeight: "bold",
                   boxShadow: "0 4px 12px rgba(19, 62, 101, 0.2)",
-                  minWidth: { xs: "calc(50% - 8px)", sm: "120px" },
+                  minWidth: { xs: "calc(50% - 8px)", sm: "160px" },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
-                {isLoading ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    minHeight: "44px",
+                    whiteSpace: "nowrap",
+                    opacity: isLoading ? 0 : 1,
+                    transition: "opacity 0.2s ease-in-out",
+                  }}
+                >
+                  {initialSession ? "حفظ التعديلات" : "إنشاء الدورة"}
+                </Box>
+                {isLoading && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                      bgcolor: "inherit",
+                    }}
+                  >
                     <CircularProgress size={20} sx={{ color: "#fff" }} />
-                    جاري الحفظ...
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#fff",
+                        fontFamily: "Tajawal",
+                        fontWeight: "bold",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      جاري الحفظ...
+                    </Typography>
                   </Box>
-                ) : (
-                  initialSession ? "حفظ التعديلات" : "إنشاء الدورة"
                 )}
               </Button>
             </Box>

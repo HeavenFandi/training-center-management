@@ -398,36 +398,48 @@ export const useCourseManagement = () => {
       );
       
       if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
-        // If there's an image file, update that too
+        // If there's an image file, update that too (but don't refetch yet)
         if (imageFile) {
           await updateTrainingSessionImage(sessionId, imageFile);
-          // Refresh training session details to get the new image
-          await dispatch(actGetTrainingSessionDetails(sessionId));
         }
         
-        // Refresh the sessions list for this course
-        if (currentInstitute?.id) {
-          dispatch(
-            actGetActiveOrUpcomingByCourseAndInstitute({
-              courseId,
-              instituteId: currentInstitute.id,
-            })
-          );
-        }
-        
-        showSnackbar("تم تحديث الدورة بنجاح", "success");
-        return true;
+        // Return true so parent can handle closing modal first, then refetch and snackbar
+        return { success: true, sessionId, imageFile, courseId };
       } else {
         const errorMsg = (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
         showSnackbar(errorMsg, "error");
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error("Error updating session:", error);
       showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
-      return false;
+      return { success: false };
     } finally {
       setUpdatingSession(false);
+    }
+  }, [dispatch, showSnackbar]);
+
+  const handlePostUpdateSession = useCallback(async (sessionId: number, imageFile: File | null, courseId: number) => {
+    try {
+      // Show snackbar first
+      showSnackbar("تم تحديث الدورة بنجاح", "success");
+      
+      // Refresh training session details if image was updated
+      if (imageFile) {
+        await dispatch(actGetTrainingSessionDetails(sessionId));
+      }
+      
+      // Refresh the sessions list for this course
+      if (currentInstitute?.id) {
+        dispatch(
+          actGetActiveOrUpcomingByCourseAndInstitute({
+            courseId,
+            instituteId: currentInstitute.id,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error in post update session:", error);
     }
   }, [dispatch, showSnackbar, currentInstitute]);
 
@@ -495,6 +507,7 @@ export const useCourseManagement = () => {
     handleSaveAdd,
     handleAddSession,
     handleUpdateSession,
+    handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,

@@ -43,6 +43,7 @@ interface ITrainingSessionsState {
 
   selectedTrainingSession: TTrainingSessionDetails | null;
   loading: "idle" | "pending" | "succeeded" | "failed";
+  sessionDetailsLoading: "idle" | "pending" | "succeeded" | "failed";
   error: string | null;
   addRatingLoading: boolean;
   addRatingError: string | null;
@@ -98,6 +99,7 @@ const initialState: ITrainingSessionsState = {
   activeSessionsError: null,
   selectedTrainingSession: null,
   loading: "idle",
+  sessionDetailsLoading: "idle",
   error: null,
   addRatingLoading: false,
   addRatingError: null,
@@ -274,16 +276,16 @@ const trainingSessionsSlice = createSlice({
     });
 
     builder.addCase(actGetTrainingSessionDetails.pending, (state) => {
-      state.loading = "pending";
+      state.sessionDetailsLoading = "pending";
       state.error = null;
       state.selectedTrainingSession = null;
     });
     builder.addCase(actGetTrainingSessionDetails.fulfilled, (state, action) => {
-      state.loading = "succeeded";
+      state.sessionDetailsLoading = "succeeded";
       state.selectedTrainingSession = action.payload;
     });
     builder.addCase(actGetTrainingSessionDetails.rejected, (state, action) => {
-      state.loading = "failed";
+      state.sessionDetailsLoading = "failed";
       if (action.payload && typeof action.payload == "string")
         state.error = action.payload;
     });
