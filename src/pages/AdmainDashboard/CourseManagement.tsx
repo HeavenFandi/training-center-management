@@ -13,6 +13,7 @@ import SessionDetailsModal from "../../components/AdminDasboard/Courses/SessionD
 import SessionsListModal from "../../components/AdminDasboard/Courses/SessionsListModal";
 import SchedulingConflictDialog from "../../components/AdminDasboard/Courses/SchedulingConflictDialog";
 import { TCourse, TSession } from "../../types/cardType";
+import { convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 
 const CourseManagement = () => {
   const {
@@ -107,7 +108,24 @@ const CourseManagement = () => {
   }, []);
 
   const handleLocalUpdateSession = useCallback((updatedSession: TSession) => {
-    handleUpdateSession(updatedSession);
+    // We need to convert TSession to the data format handleUpdateSession expects
+    const data = {
+      price: updatedSession.price,
+      availableSeats: updatedSession.availableSeats,
+      minSeats: updatedSession.minCapacity,
+      numberOfLectures: 0,
+      requiredEquipment: updatedSession.requiredEquipment || "",
+      duration: updatedSession.duration,
+      status: "UPCOMING" as const,
+      courseId: updatedSession.courseId,
+      classroomId: updatedSession.classroomId,
+      teacherId: updatedSession.teacherId,
+      startDate: updatedSession.startDate,
+      startTime: convertTimeStringToTimeObject(updatedSession.startTime),
+      endTime: convertTimeStringToTimeObject("00:00:00"),
+      daysOfWeek: [],
+    };
+    handleUpdateSession(updatedSession.id, data, null, updatedSession.courseId);
     setSelectedSession(updatedSession);
   }, [handleUpdateSession]);
 
@@ -157,7 +175,7 @@ const CourseManagement = () => {
           open={isAddSessionOpen}
           onClose={handleCloseAddSession}
           course={sessionTargetCourse}
-          onSave={async (data, imageFile) => {
+          onSave={async (data: any, imageFile: File | null) => {
             if (editingSession) {
               const success = await handleUpdateSession(
                 editingSession.id,

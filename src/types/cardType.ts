@@ -53,7 +53,7 @@ export interface TTrainingSessionListItem {
   numberOfLectures?: number;
   requiredEquipment?: string;
   classroomName?: string;
-  classroomId: number;
+  classroomId?: number;
   enrolledStudentsCount?: number;
 }
 
@@ -136,6 +136,7 @@ export interface TSession {
   startDate: string;
   startTime: string;
   endDate: string;
+  endTime?: string;
   days: string[];
   hall: string;
   image?: string;

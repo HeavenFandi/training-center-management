@@ -551,18 +551,33 @@ const trainingSessionsSlice = createSlice({
     builder.addCase(actUpdateTrainingSession.fulfilled, (state, action) => {
       state.loading = "succeeded";
       state.error = null;
-      // Update selectedTrainingSession
-      state.selectedTrainingSession = action.payload;
+      // Update selectedTrainingSession, convert TimeObject to string if needed
+      const payload = action.payload as any;
+      state.selectedTrainingSession = {
+        ...payload,
+        startTime: typeof payload.startTime === "object" 
+          ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00` 
+          : payload.startTime,
+        endTime: typeof payload.endTime === "object" 
+          ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00` 
+          : payload.endTime,
+      } as any;
       // Update trainingSessions list
       state.trainingSessions = state.trainingSessions.map((session) =>
-        session.id === action.payload.id ? action.payload : session
+        session.id === action.payload.id ? {
+          ...session,
+          ...(action.payload as any),
+        } as any : session
       );
       // Update courseSessions
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
           state.courseSessions[courseId] = state.courseSessions[courseId].map(
             (session) =>
-              session.id === action.payload.id ? action.payload : session
+              session.id === action.payload.id ? {
+                ...session,
+                ...(action.payload as any),
+              } as any : session
           );
         }
       }
@@ -654,22 +669,7 @@ export const selectSessions = createSelector(
     const { trainingSessions } = state;
     if (!Array.isArray(trainingSessions)) return [];
 
-    return trainingSessions.map((session: TTrainingSessionListItem) => ({
-      id: session.id,
-      courseId: session.courseId,
-      title: session.title,
-      institute: session.institute || "",
-      price: session.price,
-      category: session.category || "",
-      location: session.location || "",
-      image: session.image || "",
-      teacherName: session.teacherName,
-      teacherId: session.teacherId,
-      duration: session.duration,
-      availableSeats: session.availableSeats,
-      status: session.status,
-      description: session.description || "",
-    }));
+    return trainingSessions;
   },
 );
 
