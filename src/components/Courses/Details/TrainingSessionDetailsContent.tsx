@@ -186,6 +186,16 @@ function TrainingSessionDetailsContent() {
     );
   }
 
+  if (!session) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
+        <Typography sx={{ fontFamily: "Tajawal" }}>
+          لم يتم العثور على الدورة التدريبية
+        </Typography>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 3, flex: 1 }}>
       <Grid container spacing={4} alignItems="flex-start">

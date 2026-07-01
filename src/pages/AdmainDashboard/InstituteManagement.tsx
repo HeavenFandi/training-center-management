@@ -337,7 +337,7 @@ const InstituteManagement: React.FC = () => {
     dispatch(actUpdateInstitute({ id: currentInstitute.id, data: payload }));
   };
 
-  if (missingTenantId) {
+  if (!currentInstitute?.tenantId) {
     return (
       <Box dir="rtl" sx={{ p: { xs: 1, sm: 3 } }}>
         <Typography variant="h6" color="error.main">
