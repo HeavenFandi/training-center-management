@@ -134,11 +134,14 @@ const LoginForm = memo(
             fontWeight: "bold",
             fontSize: "1.1rem",
             boxShadow: loading
-              ? "0 10px 20px rgba(46, 125, 50, 0.2)"
-              : "0 10px 20px rgba(5, 22, 48, 0.2)",
+              ? "0 10px 20px rgba(19, 62, 101, 0.2)"
+              : "0 10px 20px rgba(19, 62, 101, 0.2)",
             textTransform: "none",
-            bgcolor: loading ? "#E8F5E9" : undefined,
-            color: loading ? "#2E7D32" : undefined,
+            bgcolor: loading ? "#E8F5E9" : "#133E65",
+            color: loading ? "#2E7D32" : "#fff",
+            "&:hover": {
+              bgcolor: loading ? "#E8F5E9" : "#1e5a91",
+            },
             "&.Mui-disabled": {
               bgcolor: "#8EB69B",
               color: "#2E7D32",

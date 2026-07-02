@@ -430,9 +430,13 @@ const RegisterForm = memo(() => {
             borderRadius: "10px",
             fontWeight: "bold",
             fontSize: { xs: "0.85rem", md: "0.95rem" },
-            boxShadow: "0 8px 16px rgba(5, 22, 48, 0.15)",
+            boxShadow: "0 8px 16px rgba(19, 62, 101, 0.15)",
             textTransform: "none",
             mt: { xs: 0.2, md: 0.5 },
+            bgcolor: "#133E65",
+            "&:hover": {
+              bgcolor: "#1e5a91",
+            },
           }}
         >
           {loading ? <CircularProgress size={20} color="inherit" /> : "إنشاء حساب"}

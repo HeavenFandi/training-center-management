@@ -187,6 +187,7 @@ export const useStudentManagement = () => {
     const mergedData = {
       ...selectedStudent,
       ...formData,
+      bio: formData.bio ?? selectedStudent.bio ?? "",
     };
     console.log("[DEBUG useStudentManagement] Merged data:", mergedData);
 
@@ -198,7 +199,7 @@ export const useStudentManagement = () => {
       gender: mergedData.gender,
       birthDate: mergedData.birthDate,
       address: mergedData.address,
-      bio: mergedData.bio,
+      bio: mergedData.bio ?? "",
       interest: mergedData.interest,
       profilePicture: pendingImageFile ?? undefined,
     };
