@@ -35,7 +35,7 @@ export const useTrainingSessionDetails = () => {
 
   const {
     selectedTrainingSession: session,
-    loading,
+    sessionDetailsLoading: loading,
     error,
   } = useAppSelector((state) => state.trainingSessions);
   const { user } = useAppSelector((state) => state.auth);
@@ -104,12 +104,20 @@ export const useTrainingSessionDetails = () => {
         sessionId: Number(trainingSessionId),
         studentId: Number(studentId),
       });
-      return dispatch(
+
+      const paymentUrl = await dispatch(
         actInitiatePayment({
           sessionId: Number(trainingSessionId),
           studentId: Number(studentId),
         }),
       ).unwrap();
+
+      // IMMEDIATELY RE-FETCH FRESH DATA FROM THE SERVER AFTER SUCCESSFUL REGISTRATION INITIATION
+      await dispatch(
+        actGetTrainingSessionDetails(Number(trainingSessionId)),
+      ).unwrap();
+
+      return paymentUrl;
     }
     return Promise.reject(
       "بيانات الطالب أو الجلسة غير مكتملة، يرجى التأكد من تسجيل الدخول.",

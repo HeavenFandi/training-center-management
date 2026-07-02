@@ -6,7 +6,12 @@ import actFetchTrainingHours from "./act/actFetchTrainingHours";
 import actFetchCompletionPercentage from "./act/actFetchCompletionPercentage";
 import actFetchWeeklySchedule from "./act/actFetchWeeklySchedule";
 import actFetchActiveStudentCourses from "./act/actFetchActiveStudentCourses";
-import { Student, WeeklyScheduleItem, ActiveCourse } from "../../types/studentDashboard";
+import {
+  Student,
+  WeeklyScheduleItem,
+  ActiveCourse,
+  CompletionPercentageItem,
+} from "../../types/studentDashboard";
 
 interface StudentProfileState {
   profile: Student | null;
@@ -23,6 +28,7 @@ interface StudentProfileState {
   completionPercentage: number;
   completionPercentageLoading: boolean;
   completionPercentageError: string | null;
+  completionPercentageItems: CompletionPercentageItem[];
   weeklySchedule: WeeklyScheduleItem[];
   scheduleLoading: boolean;
   scheduleError: string | null;
@@ -46,6 +52,7 @@ const initialState: StudentProfileState = {
   completionPercentage: 0,
   completionPercentageLoading: false,
   completionPercentageError: null,
+  completionPercentageItems: [],
   weeklySchedule: [],
   scheduleLoading: false,
   scheduleError: null,
@@ -163,7 +170,19 @@ const studentProfileSlice = createSlice({
       })
       .addCase(actFetchCompletionPercentage.fulfilled, (state, action) => {
         state.completionPercentageLoading = false;
-        state.completionPercentage = action.payload;
+        state.completionPercentageItems = action.payload;
+        state.completionPercentage = action.payload.length
+          ? Math.round(
+              action.payload.reduce((sum, item) => {
+                const normalizedValue =
+                  typeof item.attendancePercentage === "number" &&
+                  item.attendancePercentage > 1
+                    ? item.attendancePercentage
+                    : (item.attendancePercentage ?? 0) * 100;
+                return sum + normalizedValue;
+              }, 0) / action.payload.length,
+            )
+          : 0;
         state.completionPercentageError = null;
       })
       .addCase(actFetchCompletionPercentage.rejected, (state, action) => {
@@ -203,6 +222,14 @@ const studentProfileSlice = createSlice({
   },
 });
 
-export { actFetchProfile, actUpdateProfile, actUpdateProfileImage, actFetchTrainingHours, actFetchCompletionPercentage, actFetchWeeklySchedule, actFetchActiveStudentCourses };
+export {
+  actFetchProfile,
+  actUpdateProfile,
+  actUpdateProfileImage,
+  actFetchTrainingHours,
+  actFetchCompletionPercentage,
+  actFetchWeeklySchedule,
+  actFetchActiveStudentCourses,
+};
 export const { resetProfileState } = studentProfileSlice.actions;
 export default studentProfileSlice.reducer;

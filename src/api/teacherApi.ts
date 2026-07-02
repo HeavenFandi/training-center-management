@@ -49,6 +49,23 @@ export interface TeacherApiResponse {
   numberOfStudents?: number;
 }
 
+export interface TeacherSearchResult {
+  id: number;
+  firstName: string;
+  lastName: string;
+  specialization: string;
+  certificates: string;
+  address: string;
+  cv: string;
+  experienceYears: number;
+  userId: number;
+  username: string;
+  email: string;
+  contactInfo: string;
+  image: string;
+  numberOfStudents: number;
+}
+
 export const createTeacher = async (
   data: CreateTeacherRequest
 ): Promise<TeacherApiResponse> => {
@@ -104,6 +121,13 @@ export const updateTeacherProfileImage = async (
     headers: {
       "Content-Type": "multipart/form-data",
     },
+  });
+  return response.data;
+};
+
+export const searchTeachers = async (query: string): Promise<TeacherSearchResult[]> => {
+  const response = await axiosClient.get<TeacherSearchResult[]>("/teachers/search", {
+    params: { q: query },
   });
   return response.data;
 };

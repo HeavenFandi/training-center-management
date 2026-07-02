@@ -4,21 +4,24 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actGetStudents from "../../store/Students/act/actGetStudents";
 import actUpdateStudent from "../../store/Students/act/actUpdateStudent";
 import actDeleteStudent from "../../store/Students/act/actDeleteStudent";
+import actSearchStudents from "../../store/Students/act/actSearchStudents";
 import { selectStudentsState, resetStudentsError } from "../../store/Students/studentsSlice";
-import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetStudentsCount, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 
 export const useStudentManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
-  const { students, loading, error } = useAppSelector(selectStudentsState);
+  const { students, searchResults, loading, searchLoading, error } = useAppSelector(selectStudentsState);
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute } = useAppSelector((state) => state.institutes);
+  const { currentInstitute, studentsCount, studentsCountLoading, studentsCountError } = useAppSelector((state) => state.institutes);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<CreateStudentResponse | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<CreateStudentResponse | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -43,6 +46,24 @@ export const useStudentManagement = () => {
       dispatch(actGetStudents(currentInstitute.tenantId));
     }
   }, [dispatch, students.length, currentInstitute?.tenantId]);
+
+  // Fetch students count from backend
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    if (tenantId) {
+      dispatch(actGetStudentsCount(tenantId));
+    }
+  }, [dispatch, currentInstitute?.tenantId]);
+
+  // Debounce search term and dispatch search
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const timer = setTimeout(() => {
+        dispatch(actSearchStudents(searchTerm.trim()));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [dispatch, searchTerm]);
 
   // Check active courses for each student when students list changes
   useEffect(() => {
@@ -74,40 +95,52 @@ export const useStudentManagement = () => {
     }
   }, [error, showSnackbar, dispatch]);
 
-  // Sort students first, then filter
+  // Reset page to 1 when search term changes
+  const handleSearchTermChange = useCallback((newTerm: string) => {
+    setSearchTerm(newTerm);
+    setPage(1);
+  }, []);
+
+  // Get filtered students (use searchResults if searchTerm exists, else all students sorted newest first)
   const filteredStudents = useMemo(() => {
-    // Sort students descending by enrollmentDate
-    const sortedStudents = [...students].sort((a, b) => {
+    if (searchTerm.trim()) {
+      return searchResults;
+    }
+    // Sort students descending by enrollmentDate when no search
+    return [...students].sort((a, b) => {
       const dateA = a.enrollmentDate ? new Date(a.enrollmentDate).getTime() : 0;
       const dateB = b.enrollmentDate ? new Date(b.enrollmentDate).getTime() : 0;
       return dateB - dateA;
     });
+  }, [searchTerm, students, searchResults]);
 
-    // Filter the sorted students
-    if (!searchTerm.trim()) return sortedStudents;
-    
-    const term = searchTerm.toLowerCase();
-    return sortedStudents.filter((student) => {
-      const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
-      const enrollmentDate = (student.enrollmentDate || "").toLowerCase();
-      const email = (student.email || "").toLowerCase();
-      const username = (student.username || "").toLowerCase();
-      const contactInfo = (student.contactInfo || "").toLowerCase();
-      return (
-        fullName.includes(term) || 
-        enrollmentDate.includes(term) || 
-        email.includes(term) ||
-        username.includes(term) ||
-        contactInfo.includes(term)
-      );
-    });
-  }, [students, searchTerm]);
+  // Calculate total pages
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
+  }, [filteredStudents.length, ITEMS_PER_PAGE]);
+
+  // Get paginated students
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredStudents.slice(startIndex, endIndex);
+  }, [filteredStudents, page, ITEMS_PER_PAGE]);
 
   const handleAddStudent = useCallback(
     (data: CreateStudentResponse) => {
       setIsAddOpen(false);
+      // Refetch all counts and list on success
+      const tenantId = currentInstitute?.tenantId;
+      const instituteId = currentInstitute?.id;
+      if (tenantId) {
+        dispatch(actGetStudents(tenantId));
+        dispatch(actGetStudentsCount(tenantId));
+      }
+      if (instituteId) {
+        dispatch(actGetInstituteUsersCount(instituteId));
+      }
     },
-    [],
+    [dispatch, currentInstitute],
   );
 
   const handleViewClick = useCallback((student: CreateStudentResponse) => {
@@ -219,8 +252,14 @@ export const useStudentManagement = () => {
         setStudentToDelete(null);
         setDeleteErrorMessage(null);
         showSnackbar("تم حذف الطالب بنجاح", "success");
-        if (currentInstitute?.tenantId) {
-          dispatch(actGetStudents(currentInstitute.tenantId));
+        const tenantId = currentInstitute?.tenantId;
+        const instituteId = currentInstitute?.id;
+        if (tenantId) {
+          dispatch(actGetStudents(tenantId));
+          dispatch(actGetStudentsCount(tenantId));
+        }
+        if (instituteId) {
+          dispatch(actGetInstituteUsersCount(instituteId));
         }
       } else {
         const errorMessage =
@@ -233,7 +272,7 @@ export const useStudentManagement = () => {
       console.error("[DEBUG useStudentManagement] handleConfirmDelete error:", error);
       showSnackbar("حدث خطأ أثناء حذف الطالب", "error");
     }
-  }, [dispatch, studentToDelete, showSnackbar, studentsWithActiveCourses]);
+  }, [dispatch, studentToDelete, showSnackbar, studentsWithActiveCourses, currentInstitute]);
 
   const handleOpenAdd = useCallback(() => {
     setIsAddOpen(true);
@@ -246,8 +285,9 @@ export const useStudentManagement = () => {
   return {
     students,
     filteredStudents,
+    paginatedStudents,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: handleSearchTermChange,
     selectedStudent,
     studentToDelete,
     isAddOpen,
@@ -255,6 +295,7 @@ export const useStudentManagement = () => {
     isDeleteOpen,
     isViewOpen,
     loading,
+    searchLoading,
     error,
     isUpdating,
     pendingImageFile,
@@ -272,5 +313,12 @@ export const useStudentManagement = () => {
     handleCloseAdd,
     studentsWithActiveCourses,
     deleteErrorMessage,
+    page,
+    setPage,
+    totalPages,
+    rowsPerPage: ITEMS_PER_PAGE,
+    studentsCount,
+    studentsCountLoading,
+    studentsCountError,
   };
 };

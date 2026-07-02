@@ -22,7 +22,12 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import EditInstituteModal from "../../components/AdminDasboard/EditInstituteModal";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { actGetInstituteByUserId, actUpdateInstitute, resetInstituteState, actGetStudentsCount } from "../../store/Institutes/institutesSlice";
+import {
+  actGetInstituteByUserId,
+  actUpdateInstitute,
+  resetInstituteState,
+  actGetStudentsCount,
+} from "../../store/Institutes/institutesSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import actGetTeachers from "../../store/teachers/act/actGetTeachers";
 import { useDelayedLoading } from "../../hooks/useDelayedLoading";
@@ -52,7 +57,17 @@ const glassCardStyle = {
   border: "1px solid #f0f4f8",
 };
 
-const StatCard = ({ icon, title, value, color }: { icon: React.ReactNode; title: string; value: string; color: string }) => (
+const StatCard = ({
+  icon,
+  title,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  color: string;
+}) => (
   <Paper
     elevation={0}
     sx={{
@@ -62,17 +77,30 @@ const StatCard = ({ icon, title, value, color }: { icon: React.ReactNode; title:
       alignItems: "center",
       gap: 2,
       transition: "transform 0.2s ease, box-shadow 0.2s ease",
-      "&:hover": { 
+      "&:hover": {
         transform: "translateY(-2px)",
-        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)"
-      }
+        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)",
+      },
     }}
   >
-    <Avatar sx={{ bgcolor: `${color}15`, color: color, width: 48, height: 48, borderRadius: "12px" }}>
+    <Avatar
+      sx={{
+        bgcolor: `${color}15`,
+        color: color,
+        width: 48,
+        height: 48,
+        borderRadius: "12px",
+      }}
+    >
       {icon}
     </Avatar>
     <Box>
-      <Typography variant="caption" color="text.secondary" fontWeight="500" sx={{ fontSize: "0.75rem" }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontWeight="500"
+        sx={{ fontSize: "0.75rem" }}
+      >
         {title}
       </Typography>
       <Typography variant="h5" fontWeight="700" color="#0f172a">
@@ -95,13 +123,13 @@ const workingDaysMap: Record<string, string> = {
 const mapWorkingDay = (day: string) => workingDaysMap[day.toUpperCase()] || day;
 
 const arabicToEnglishDay: Record<string, string> = {
-  "الأحد": "SUNDAY",
-  "الاثنين": "MONDAY",
-  "الثلاثاء": "TUESDAY",
-  "الأربعاء": "WEDNESDAY",
-  "الخميس": "THURSDAY",
-  "الجمعة": "FRIDAY",
-  "السبت": "SATURDAY",
+  الأحد: "SUNDAY",
+  الاثنين: "MONDAY",
+  الثلاثاء: "TUESDAY",
+  الأربعاء: "WEDNESDAY",
+  الخميس: "THURSDAY",
+  الجمعة: "FRIDAY",
+  السبت: "SATURDAY",
 };
 
 const formatTime = (value: any) => {
@@ -110,7 +138,13 @@ const formatTime = (value: any) => {
   if (typeof value === "object") {
     const hour = value.hour ?? value.hours ?? value.Hours ?? value.HH ?? "";
     const minute = value.minute ?? value.minutes ?? value.MM ?? "";
-    const period = value.period ?? value.ampm ?? value.AMPM ?? value.amPm ?? value.AMPM ?? "";
+    const period =
+      value.period ??
+      value.ampm ??
+      value.AMPM ??
+      value.amPm ??
+      value.AMPM ??
+      "";
     const hh = hour !== "" ? String(hour).padStart(2, "0") : "";
     const mm = minute !== "" ? String(minute).padStart(2, "0") : "";
     if (hh || mm) {
@@ -124,32 +158,38 @@ const InstituteManagement: React.FC = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
   const { user } = useAppSelector((state) => state.auth);
-  const { 
-    currentInstitute, 
-    currentInstituteLoading, 
-    currentInstituteError, 
-    updateLoading, 
-    updateError, 
+  const {
+    currentInstitute,
+    currentInstituteLoading,
+    currentInstituteError,
+    updateLoading,
+    updateError,
     updateSuccess,
     studentsCount,
     studentsCountLoading,
-    studentsCountError
-  } = useAppSelector(
-    (state) => state.institutes,
-  );
-  const { courses, loading: coursesLoading, error: coursesError } = useAppSelector((state) => state.courses);
-  const { teachers, loading: teachersLoading, error: teachersError } = useAppSelector((state) => state.teachers);
+    studentsCountError,
+  } = useAppSelector((state) => state.institutes);
+  const {
+    courses,
+    loading: coursesLoading,
+    error: coursesError,
+  } = useAppSelector((state) => state.courses);
+  const {
+    teachers,
+    loading: teachersLoading,
+    error: teachersError,
+  } = useAppSelector((state) => state.teachers);
   const showLoading = useDelayedLoading(currentInstituteLoading);
   const showStudentsCountLoading = useDelayedLoading(studentsCountLoading);
-  const [instituteInfo, setInstituteInfo] = useState<InstituteInfo | null>(null);
+  const [instituteInfo, setInstituteInfo] = useState<InstituteInfo | null>(
+    null,
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [missingTenantId, setMissingTenantId] = useState(false);
 
   useEffect(() => {
     const userId = user?.id;
 
     if (!userId) {
-      setMissingTenantId(true);
       return;
     }
 
@@ -160,7 +200,9 @@ const InstituteManagement: React.FC = () => {
     if (currentInstitute) {
       const timeRange = `${formatTime(currentInstitute.startTime)} - ${formatTime(currentInstitute.endTime)}`;
       const forbiddenDays = ["الجمعة", "السبت", "FRIDAY", "SATURDAY"];
-      const mappedDays = (currentInstitute.workingDays ?? []).map((day: string) => mapWorkingDay(day)).filter((day: string) => !forbiddenDays.includes(day));
+      const mappedDays = (currentInstitute.workingDays ?? [])
+        .map((day: string) => mapWorkingDay(day))
+        .filter((day: string) => !forbiddenDays.includes(day));
       setInstituteInfo({
         name: currentInstitute.name ?? "",
         description: currentInstitute.description ?? "",
@@ -171,20 +213,16 @@ const InstituteManagement: React.FC = () => {
           phone: currentInstitute.phoneNumber ?? "",
           email: currentInstitute.email ?? "",
         },
-        workingHours: [{
-          days: mappedDays.join(" - "),
-          time: timeRange,
-          status: currentInstitute.status ?? "INACTIVE",
-        }],
+        workingHours: [
+          {
+            days: mappedDays.join(" - "),
+            time: timeRange,
+            status: currentInstitute.status ?? "INACTIVE",
+          },
+        ],
       });
     }
   }, [currentInstitute]);
-
-  useEffect(() => {
-    if (missingTenantId) {
-      showSnackbar("لم يتم العثور على معرف المؤسسة", "error");
-    }
-  }, [missingTenantId, showSnackbar]);
 
   useEffect(() => {
     if (currentInstituteError) {
@@ -205,14 +243,28 @@ const InstituteManagement: React.FC = () => {
   }, [updateSuccess, updateError, showSnackbar, dispatch]);
 
   useEffect(() => {
-    console.log("InstituteManagement: coursesLoading:", coursesLoading, "courses:", courses, "error:", coursesError);
+    console.log(
+      "InstituteManagement: coursesLoading:",
+      coursesLoading,
+      "courses:",
+      courses,
+      "error:",
+      coursesError,
+    );
     if (coursesError) {
       showSnackbar(coursesError, "error");
     }
   }, [coursesLoading, courses, coursesError, showSnackbar]);
 
   useEffect(() => {
-    console.log("InstituteManagement: teachersLoading:", teachersLoading, "teachers:", teachers, "error:", teachersError);
+    console.log(
+      "InstituteManagement: teachersLoading:",
+      teachersLoading,
+      "teachers:",
+      teachers,
+      "error:",
+      teachersError,
+    );
     if (teachersError) {
       showSnackbar(teachersError, "error");
     }
@@ -237,7 +289,10 @@ const InstituteManagement: React.FC = () => {
 
     // Check if tenantId is available
     if (!currentInstitute.tenantId) {
-      showSnackbar("تعذر تعديل بيانات المعهد لأن معرف المؤسسة غير موجود", "error");
+      showSnackbar(
+        "تعذر تعديل بيانات المعهد لأن معرف المؤسسة غير موجود",
+        "error",
+      );
       return;
     }
 
@@ -254,7 +309,7 @@ const InstituteManagement: React.FC = () => {
       formData.status,
     ];
 
-    if (requiredFields.some(field => !field)) {
+    if (requiredFields.some((field) => !field)) {
       showSnackbar("الرجاء ملء جميع الحقول المطلوبة", "error");
       return;
     }
@@ -269,8 +324,12 @@ const InstituteManagement: React.FC = () => {
       email: formData.email,
       startTime: formData.startTime,
       endTime: formData.endTime,
-      workingDays: formData.workingDays.map((day: string) => arabicToEnglishDay[day]),
-      status: (formData.status === "متاح" ? "ACTIVE" : "INACTIVE") as "ACTIVE" | "INACTIVE",
+      workingDays: formData.workingDays.map(
+        (day: string) => arabicToEnglishDay[day],
+      ),
+      status: (formData.status === "متاح" ? "ACTIVE" : "INACTIVE") as
+        | "ACTIVE"
+        | "INACTIVE",
     };
 
     console.log("Update institute payload:", payload);
@@ -278,7 +337,7 @@ const InstituteManagement: React.FC = () => {
     dispatch(actUpdateInstitute({ id: currentInstitute.id, data: payload }));
   };
 
-  if (missingTenantId) {
+  if (!currentInstitute?.tenantId) {
     return (
       <Box dir="rtl" sx={{ p: { xs: 1, sm: 3 } }}>
         <Typography variant="h6" color="error.main">
@@ -321,7 +380,6 @@ const InstituteManagement: React.FC = () => {
 
   return (
     <Box dir="rtl">
- 
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -340,10 +398,22 @@ const InstituteManagement: React.FC = () => {
               {instituteInfo.name}
             </Typography>
           </Box>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1rem" }}>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ fontSize: "1rem" }}
+          >
             {instituteInfo.description}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mt: 1.5,
+              flexWrap: "wrap",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <LocationOnIcon fontSize="small" sx={{ color: "#0ea5e9" }} />
               <Typography variant="body2" color="text.secondary">
@@ -352,18 +422,33 @@ const InstituteManagement: React.FC = () => {
             </Box>
             {instituteInfo.ownerName && (
               <>
-                <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "#cbd5e1" }} />
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    bgcolor: "#cbd5e1",
+                  }}
+                />
                 <Typography variant="body2" color="text.secondary">
                   مالك المعهد: {instituteInfo.ownerName}
                 </Typography>
               </>
             )}
-            <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "#cbd5e1" }} />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: instituteInfo.status === "ACTIVE" ? "#059669" : "#dc2626",
-                fontWeight: 600
+            <Box
+              sx={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                bgcolor: "#cbd5e1",
+              }}
+            />
+            <Typography
+              variant="body2"
+              sx={{
+                color:
+                  instituteInfo.status === "ACTIVE" ? "#059669" : "#dc2626",
+                fontWeight: 600,
               }}
             >
               الحالة: {instituteInfo.status === "ACTIVE" ? "متاح" : "مغلق"}
@@ -386,14 +471,14 @@ const InstituteManagement: React.FC = () => {
             fontSize: "0.95rem",
             whiteSpace: "nowrap",
             boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
-            "&:hover": { 
+            "&:hover": {
               backgroundColor: "#1e293b",
-              boxShadow: "0 6px 16px rgba(15, 23, 42, 0.2)"
+              boxShadow: "0 6px 16px rgba(15, 23, 42, 0.2)",
             },
             "&:disabled": {
               backgroundColor: "#94a3b8",
             },
-            textTransform: "none"
+            textTransform: "none",
           }}
         >
           تعديل المعلومات
@@ -402,27 +487,37 @@ const InstituteManagement: React.FC = () => {
 
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard 
-            icon={<SchoolIcon />} 
-            title="إجمالي الكورسات" 
-            value={coursesLoading === "pending" ? "..." : `${courses.length} كورس`} 
-            color="#3b82f6" 
+          <StatCard
+            icon={<SchoolIcon />}
+            title="إجمالي الكورسات"
+            value={
+              coursesLoading === "pending" ? "..." : `${courses.length} كورس`
+            }
+            color="#3b82f6"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard 
-            icon={<AssignmentIndIcon />} 
-            title="المدربين" 
-            value={teachersLoading === "pending" ? "..." : `${teachers.length} مدرب`} 
-            color="#8b5cf6" 
+          <StatCard
+            icon={<AssignmentIndIcon />}
+            title="المدربين"
+            value={
+              teachersLoading === "pending" ? "..." : `${teachers.length} مدرب`
+            }
+            color="#8b5cf6"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard 
-            icon={<PeopleIcon />} 
-            title="الطلاب المسجلين" 
-            value={showStudentsCountLoading ? "..." : (studentsCount !== null ? `${studentsCount} ${getStudentLabel(studentsCount)}` : "---")} 
-            color="#10b981" 
+          <StatCard
+            icon={<PeopleIcon />}
+            title="الطلاب المسجلين"
+            value={
+              showStudentsCountLoading
+                ? "..."
+                : studentsCount !== null
+                  ? `${studentsCount} ${getStudentLabel(studentsCount)}`
+                  : "---"
+            }
+            color="#10b981"
           />
         </Grid>
       </Grid>
@@ -438,30 +533,71 @@ const InstituteManagement: React.FC = () => {
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                mb: 3,
+                color: "#0f172a",
+              }}
             >
               <ForumIcon sx={{ color: "#0f172a" }} /> قنوات التواصل
             </Typography>
             <Stack spacing={2.5}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Avatar sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: "#10b981", width: 44, height: 44, borderRadius: "12px" }}>
+                <Avatar
+                  sx={{
+                    bgcolor: "rgba(16, 185, 129, 0.1)",
+                    color: "#10b981",
+                    width: 44,
+                    height: 44,
+                    borderRadius: "12px",
+                  }}
+                >
                   <PhoneIcon />
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.8rem" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      color: "text.secondary",
+                      fontSize: "0.8rem",
+                    }}
+                  >
                     رقم الهاتف المعتمد
                   </Typography>
-                  <Typography variant="body1" fontWeight="600" color="#0f172a" dir="ltr">
+                  <Typography
+                    variant="body1"
+                    fontWeight="600"
+                    color="#0f172a"
+                    dir="ltr"
+                  >
                     {instituteInfo.contact.phone}
                   </Typography>
                 </Box>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Avatar sx={{ bgcolor: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", width: 44, height: 44, borderRadius: "12px" }}>
+                <Avatar
+                  sx={{
+                    bgcolor: "rgba(59, 130, 246, 0.1)",
+                    color: "#3b82f6",
+                    width: 44,
+                    height: 44,
+                    borderRadius: "12px",
+                  }}
+                >
                   <EmailIcon />
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.8rem" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      color: "text.secondary",
+                      fontSize: "0.8rem",
+                    }}
+                  >
                     البريد الرسمي
                   </Typography>
                   <Typography variant="body1" fontWeight="600" color="#0f172a">
@@ -483,12 +619,20 @@ const InstituteManagement: React.FC = () => {
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 3, color: "#0f172a" }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                mb: 3,
+                color: "#0f172a",
+              }}
             >
               <AccessTimeIcon sx={{ color: "#0f172a" }} /> أوقات الدوام
             </Typography>
             <Stack spacing={1.5}>
-              {instituteInfo.workingHours && instituteInfo.workingHours.length > 0 && instituteInfo.workingHours[0].days ? (
+              {instituteInfo.workingHours &&
+              instituteInfo.workingHours.length > 0 &&
+              instituteInfo.workingHours[0].days ? (
                 <>
                   <Box
                     sx={{
@@ -497,7 +641,11 @@ const InstituteManagement: React.FC = () => {
                       bgcolor: "#f8fafc",
                     }}
                   >
-                    <Typography variant="body2" fontWeight="600" color="#0f172a">
+                    <Typography
+                      variant="body2"
+                      fontWeight="600"
+                      color="#0f172a"
+                    >
                       {instituteInfo.workingHours[0].days}
                     </Typography>
                   </Box>

@@ -29,6 +29,14 @@ interface TTrainingSessionResponse {
   instituteName: string;
   image: string;
   enrolledStudentsCount?: number;
+  studentEnrollmentCount?: number;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  daysOfWeek?: string[];
+  days?: string[];
+  classroomId?: number;
+  hallId?: number;
 
   // مهم: ضفنا هدول لأن الباك ممكن يرجع id المعلم بأحد هالأسماء
   teacherId?: number;
@@ -68,10 +76,20 @@ const actGetTrainingSessionDetails = createAsyncThunk(
 
       const item = response.data;
 
-      console.log("RAW TRAINING SESSION DETAILS (full):", JSON.stringify(item, null, 2));
+      console.log(
+        "RAW TRAINING SESSION DETAILS (full):",
+        JSON.stringify(item, null, 2),
+      );
       console.log("RAW TRAINING SESSION DETAILS (object):", item);
       console.log("All keys in response object:", Object.keys(item));
-      console.log("enrolledStudentsCount from backend:", item.enrolledStudentsCount);
+      console.log(
+        "enrolledStudentsCount from backend:",
+        item.enrolledStudentsCount,
+      );
+      console.log(
+        "studentEnrollmentCount from backend:",
+        item.studentEnrollmentCount,
+      );
 
       // Parse duration to extract numeric part if it's a messy string
       let parsedDuration = item.duration;
@@ -89,7 +107,7 @@ const actGetTrainingSessionDetails = createAsyncThunk(
           parsedLectures = parseInt(numbers[1], 10);
         }
       }
-      
+
       console.log("Parsed Duration:", parsedDuration);
       console.log("Parsed Lectures:", parsedLectures);
 
@@ -107,31 +125,59 @@ const actGetTrainingSessionDetails = createAsyncThunk(
 
       console.log("FINAL MAPPED INSTRUCTOR ID:", instructorId);
 
-      // Extract courseId from all possible places
-      let extractedCourseId: number | undefined = item.courseId;
-      if (!extractedCourseId && item.trainingCourseId) {
-        extractedCourseId = item.trainingCourseId;
-      }
-      if (!extractedCourseId && item.course?.id) {
-        extractedCourseId = item.course.id;
-      }
-      if (!extractedCourseId && item.course?.courseId) {
-        extractedCourseId = item.course.courseId;
-      }
-      if (!extractedCourseId && item.courseDetails?.id) {
-        extractedCourseId = item.courseDetails.id;
-      }
-      if (!extractedCourseId && item.courseDetails?.courseId) {
-        extractedCourseId = item.courseDetails.courseId;
-      }
+      // Extract courseId from all possible places and normalize to a valid positive number
+      const possibleCourseIds = [
+        item.courseId,
+        item.trainingCourseId,
+        item.course?.id,
+        item.course?.courseId,
+        item.courseDetails?.id,
+        item.courseDetails?.courseId,
+      ];
+
+      const extractedCourseId = possibleCourseIds.find(
+        (value) =>
+          typeof value === "number" && Number.isFinite(value) && value > 0,
+      );
 
       console.log("EXTRACTING COURSE ID - item.courseId:", item.courseId);
-      console.log("EXTRACTING COURSE ID - item.trainingCourseId:", item.trainingCourseId);
+      console.log(
+        "EXTRACTING COURSE ID - item.trainingCourseId:",
+        item.trainingCourseId,
+      );
       console.log("EXTRACTING COURSE ID - item.course?.id:", item.course?.id);
-      console.log("EXTRACTING COURSE ID - item.course?.courseId:", item.course?.courseId);
-      console.log("EXTRACTING COURSE ID - item.courseDetails?.id:", item.courseDetails?.id);
-      console.log("EXTRACTING COURSE ID - item.courseDetails?.courseId:", item.courseDetails?.courseId);
+      console.log(
+        "EXTRACTING COURSE ID - item.course?.courseId:",
+        item.course?.courseId,
+      );
+      console.log(
+        "EXTRACTING COURSE ID - item.courseDetails?.id:",
+        item.courseDetails?.id,
+      );
+      console.log(
+        "EXTRACTING COURSE ID - item.courseDetails?.courseId:",
+        item.courseDetails?.courseId,
+      );
       console.log("FINAL EXTRACTED COURSE ID:", extractedCourseId);
+
+      // Get classroomId from all possible places
+      const classroomId = item.classroomId ?? item.hallId;
+
+      // Get days from all possible places
+      const daysOfWeek = item.daysOfWeek ?? item.days;
+
+      const extraResponse = item as TTrainingSessionResponse & {
+        enrolledCount?: number;
+        registeredStudentsCount?: number;
+        studentsCount?: number;
+      };
+
+      const mappedEnrollmentCount =
+        item.studentEnrollmentCount ??
+        item.enrolledStudentsCount ??
+        extraResponse.enrolledCount ??
+        extraResponse.registeredStudentsCount ??
+        extraResponse.studentsCount;
 
       const mappedSession: TTrainingSessionDetails = {
         id: item.id,
@@ -149,7 +195,14 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         teacherName: item.teacherName,
         instituteName: item.instituteName,
         image: item.image,
-        enrolledStudentsCount: item.enrolledStudentsCount ?? (item as any).enrolledCount ?? (item as any).registeredStudentsCount ?? (item as any).studentsCount,
+        enrolledStudentsCount: mappedEnrollmentCount,
+        studentEnrollmentCount: mappedEnrollmentCount,
+        startDate: item.startDate,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        daysOfWeek: daysOfWeek,
+        classroomId: classroomId,
+        teacherId: instructorId,
 
         instructor: {
           ...(instructorId !== undefined ? { id: instructorId } : {}),

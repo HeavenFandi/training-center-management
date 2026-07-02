@@ -64,7 +64,15 @@ const AuthInputComponent = React.forwardRef<HTMLInputElement, IInput>(function A
           "& input": {
             backgroundColor: "transparent",
             py: compact ? { xs: "2px", md: "4px" } : { xs: "8px", md: "12px" },
-            textAlign: "right"
+            textAlign: "right",
+            color: "inherit"
+          },
+
+          "& .MuiSelect-select": {
+            backgroundColor: "transparent",
+            py: compact ? { xs: "2px", md: "4px" } : { xs: "8px", md: "12px" },
+            textAlign: "right",
+            color: "#133E65"
           },
 
           "& textarea": {

@@ -13,6 +13,7 @@ import SessionDetailsModal from "../../components/AdminDasboard/Courses/SessionD
 import SessionsListModal from "../../components/AdminDasboard/Courses/SessionsListModal";
 import SchedulingConflictDialog from "../../components/AdminDasboard/Courses/SchedulingConflictDialog";
 import { TCourse, TSession } from "../../types/cardType";
+import { convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 
 const CourseManagement = () => {
   const {
@@ -45,17 +46,20 @@ const CourseManagement = () => {
     handleSaveAdd,
     handleAddSession,
     handleUpdateSession,
+    handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    updatingSession,
     deletingCourseId,
     deletingSessionId,
     deleteError,
     sessionDeleteError,
     handleClearDeleteSessionState,
+    currentInstitute,
   } = useCourseManagement();
 
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
@@ -94,13 +98,35 @@ const CourseManagement = () => {
   };
 
   const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] handleSessionClick called!`);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session received:`, session);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session keys:`, Object.keys(session));
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.teacherId:`, session.teacherId);
+    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.classroomId:`, session.classroomId);
     setSessionTargetCourse(course);
     setSelectedSession(session);
     setIsSessionDetailsOpen(true);
   }, []);
 
   const handleLocalUpdateSession = useCallback((updatedSession: TSession) => {
-    handleUpdateSession(updatedSession);
+    // We need to convert TSession to the data format handleUpdateSession expects
+    const data = {
+      price: updatedSession.price,
+      availableSeats: updatedSession.availableSeats,
+      minSeats: updatedSession.minCapacity,
+      numberOfLectures: 0,
+      requiredEquipment: updatedSession.requiredEquipment || "",
+      duration: updatedSession.duration,
+      status: "UPCOMING" as const,
+      courseId: updatedSession.courseId,
+      classroomId: updatedSession.classroomId,
+      teacherId: updatedSession.teacherId,
+      startDate: updatedSession.startDate,
+      startTime: convertTimeStringToTimeObject(updatedSession.startTime),
+      endTime: convertTimeStringToTimeObject("00:00:00"),
+      daysOfWeek: [],
+    };
+    handleUpdateSession(updatedSession.id, data, null, updatedSession.courseId);
     setSelectedSession(updatedSession);
   }, [handleUpdateSession]);
 
@@ -150,29 +176,26 @@ const CourseManagement = () => {
           open={isAddSessionOpen}
           onClose={handleCloseAddSession}
           course={sessionTargetCourse}
-          onSave={(data) => {
+          onSave={async (data: any, imageFile: File | null) => {
             if (editingSession) {
-              // Map status to Arabic for TSession
-              const statusMap: Record<string, any> = {
-                "UPCOMING": "قيد الانتظار",
-                "ACTIVE": "نشطة",
-                "COMPLETED": "مكتملة"
-              };
-              handleUpdateSession({
-                ...editingSession,
-                ...data,
-                status: statusMap[data.status as string],
-                minCapacity: data.minSeats,
-                sessionsCount: data.numberOfLectures,
-                hall: "", // We don't have hall from form data, keep existing or empty
-              } as TSession);
+              const result = await handleUpdateSession(
+              editingSession.id,
+              data,
+              imageFile,
+              sessionTargetCourse?.id || 0
+            );
+            if (result.success) {
+              // FIRST CLOSE MODAL IMMEDIATELY!
               handleCloseAddSession();
+              // THEN handle post-update steps (snackbar, refetch, etc.)
+              handlePostUpdateSession(result.sessionId, result.imageFile, result.courseId);
+            }
             } else {
               handleAddSession(data, handleCloseAddSession);
             }
           }}
           initialSession={editingSession}
-          isLoading={creatingSession}
+          isLoading={creatingSession || updatingSession}
         />
       )}
 

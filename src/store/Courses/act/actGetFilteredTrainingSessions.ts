@@ -58,7 +58,7 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
         courseId: item.courseId,
         title: item.courseName,
         teacherName: item.teacherName,
-        teacherId: item.teacherId,
+        teacherId: item.teacherId || 0,
         duration: item.duration,
         price: item.price,
         availableSeats: item.availableSeats,
@@ -68,6 +68,13 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
         location: item.location || item.classroomName || "",
         image: item.image || "",
         description: item.courseDescription || "",
+        classroomId: (item as any).classroomId,
+        minSeats: item.minSeats,
+        numberOfLectures: item.numberOfLectures,
+        requiredEquipment: item.requiredEquipment,
+        startDate: (item as any).startDate,
+        startTime: (item as any).startTime,
+        endTime: (item as any).endTime,
       }));
 
       return mappedSessions;

@@ -21,6 +21,7 @@ import actDeleteLecture from "./act/actDeleteLecture";
 import actDeleteTrainingSession from "./act/actDeleteTrainingSession";
 import actCreateLecture from "./act/actCreateLecture";
 import actGetAllLectures from "./act/actGetAllLectures";
+import actUpdateTrainingSession from "./act/actUpdateTrainingSession";
 import { RootState } from "..";
 import actGetActiveTrainingSessions, {
   TrainingSession,
@@ -42,6 +43,7 @@ interface ITrainingSessionsState {
 
   selectedTrainingSession: TTrainingSessionDetails | null;
   loading: "idle" | "pending" | "succeeded" | "failed";
+  sessionDetailsLoading: "idle" | "pending" | "succeeded" | "failed";
   error: string | null;
   addRatingLoading: boolean;
   addRatingError: string | null;
@@ -97,6 +99,7 @@ const initialState: ITrainingSessionsState = {
   activeSessionsError: null,
   selectedTrainingSession: null,
   loading: "idle",
+  sessionDetailsLoading: "idle",
   error: null,
   addRatingLoading: false,
   addRatingError: null,
@@ -273,16 +276,16 @@ const trainingSessionsSlice = createSlice({
     });
 
     builder.addCase(actGetTrainingSessionDetails.pending, (state) => {
-      state.loading = "pending";
+      state.sessionDetailsLoading = "pending";
       state.error = null;
       state.selectedTrainingSession = null;
     });
     builder.addCase(actGetTrainingSessionDetails.fulfilled, (state, action) => {
-      state.loading = "succeeded";
+      state.sessionDetailsLoading = "succeeded";
       state.selectedTrainingSession = action.payload;
     });
     builder.addCase(actGetTrainingSessionDetails.rejected, (state, action) => {
-      state.loading = "failed";
+      state.sessionDetailsLoading = "failed";
       if (action.payload && typeof action.payload == "string")
         state.error = action.payload;
     });
@@ -459,7 +462,11 @@ const trainingSessionsSlice = createSlice({
       state.lectureCreateLoading = false;
       state.lectureCreateError = null;
       const newLecture = action.payload;
-      const sessionId = newLecture.sessionId;
+      let sessionId = newLecture.sessionId;
+      // Fallback to sessionId from action's argument if newLecture doesn't have it
+      if (!sessionId) {
+        sessionId = action.meta.arg.sessionId;
+      }
       if (sessionId && state.sessionLectures[sessionId]) {
         state.sessionLectures[sessionId] = [
           ...state.sessionLectures[sessionId],
@@ -496,7 +503,11 @@ const trainingSessionsSlice = createSlice({
       state.lectureUpdateError = null;
       // Update the lecture in sessionLectures
       const updatedLecture = action.payload;
-      const sessionId = updatedLecture.sessionId;
+      let sessionId = updatedLecture.sessionId;
+      // Fallback to sessionId from action.meta.arg.data if not present in updatedLecture
+      if (!sessionId && action.meta.arg?.data?.sessionId) {
+        sessionId = action.meta.arg.data.sessionId;
+      }
       if (sessionId && state.sessionLectures[sessionId]) {
         state.sessionLectures[sessionId] = state.sessionLectures[sessionId].map(
           (lecture) =>
@@ -534,6 +545,50 @@ const trainingSessionsSlice = createSlice({
       );
     });
 
+    // actUpdateTrainingSession
+    builder.addCase(actUpdateTrainingSession.pending, (state) => {
+      state.loading = "pending";
+      state.error = null;
+    });
+    builder.addCase(actUpdateTrainingSession.fulfilled, (state, action) => {
+      state.loading = "succeeded";
+      state.error = null;
+      // Update selectedTrainingSession, convert TimeObject to string if needed
+      const payload = action.payload as any;
+      state.selectedTrainingSession = {
+        ...payload,
+        startTime: typeof payload.startTime === "object" 
+          ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00` 
+          : payload.startTime,
+        endTime: typeof payload.endTime === "object" 
+          ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00` 
+          : payload.endTime,
+      } as any;
+      // Update trainingSessions list
+      state.trainingSessions = state.trainingSessions.map((session) =>
+        session.id === action.payload.id ? {
+          ...session,
+          ...(action.payload as any),
+        } as any : session
+      );
+      // Update courseSessions
+      for (const courseId in state.courseSessions) {
+        if (state.courseSessions[courseId]) {
+          state.courseSessions[courseId] = state.courseSessions[courseId].map(
+            (session) =>
+              session.id === action.payload.id ? {
+                ...session,
+                ...(action.payload as any),
+              } as any : session
+          );
+        }
+      }
+    });
+    builder.addCase(actUpdateTrainingSession.rejected, (state, action) => {
+      state.loading = "failed";
+      if (action.payload && typeof action.payload === "string")
+        state.error = action.payload;
+    });
     // actDeleteTrainingSession
     builder.addCase(actDeleteTrainingSession.pending, (state, action) => {
       state.deletingSessionId = action.meta.arg;
@@ -616,22 +671,7 @@ export const selectSessions = createSelector(
     const { trainingSessions } = state;
     if (!Array.isArray(trainingSessions)) return [];
 
-    return trainingSessions.map((session: TTrainingSessionListItem) => ({
-      id: session.id,
-      courseId: session.courseId,
-      title: session.title,
-      institute: session.institute || "",
-      price: session.price,
-      category: session.category || "",
-      location: session.location || "",
-      image: session.image || "",
-      teacherName: session.teacherName,
-      teacherId: session.teacherId,
-      duration: session.duration,
-      availableSeats: session.availableSeats,
-      status: session.status,
-      description: session.description || "",
-    }));
+    return trainingSessions;
   },
 );
 
@@ -711,5 +751,6 @@ export {
   actDeleteLecture,
   actCreateLecture,
   actGetAllLectures,
+  actUpdateTrainingSession,
 };
 export default trainingSessionsSlice.reducer;

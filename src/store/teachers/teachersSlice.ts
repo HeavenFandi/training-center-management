@@ -9,11 +9,15 @@ import actUpdateTeacher from "./act/actUpdateTeacher";
 import actDeleteTeacher from "./act/actDeleteTeacher";
 import actUpdateTeacherProfileImage from "./act/actUpdateTeacherProfileImage";
 import actGetTeacherWeeklySchedule from "./act/actGetTeacherWeeklySchedule";
+
+import actSearchTeachers from "./act/actSearchTeachers";
+
 import { TeacherApiResponse } from "../../api/teacherApi";
 import { RootState } from "../index";
 
 type WeeklyScheduleItem = {
   day: string;
+  lectureDate: string;
   courseName: string;
   startTime: string;
   endTime: string;
@@ -23,7 +27,9 @@ type WeeklyScheduleItem = {
 
 interface ITeachersState {
   teachers: TeacherApiResponse[];
+  searchResults: TeacherApiResponse[];
   loading: "idle" | "pending" | "succeeded" | "failed";
+  searchLoading: "idle" | "pending" | "succeeded" | "failed";
   error: string | null;
   createLoading: "idle" | "pending" | "succeeded" | "failed";
   updateLoading: "idle" | "pending" | "succeeded" | "failed";
@@ -43,7 +49,9 @@ interface ITeachersState {
 
 const initialState: ITeachersState = {
   teachers: [],
+  searchResults: [],
   loading: "idle",
+  searchLoading: "idle",
   error: null,
   createLoading: "idle",
   updateLoading: "idle",
@@ -199,6 +207,7 @@ const teachersSlice = createSlice({
           state.error = action.payload;
         }
       })
+
       .addCase(actGetTeacherWeeklySchedule.pending, (state) => {
         state.weeklyScheduleLoading = "pending";
         state.weeklyScheduleError = null;
@@ -211,6 +220,21 @@ const teachersSlice = createSlice({
         state.weeklyScheduleLoading = "failed";
         if (action.payload && typeof action.payload === "string") {
           state.weeklyScheduleError = action.payload;
+        }
+      })
+      // Search teachers cases
+      .addCase(actSearchTeachers.pending, (state) => {
+        state.searchLoading = "pending";
+        state.error = null;
+      })
+      .addCase(actSearchTeachers.fulfilled, (state, action) => {
+        state.searchLoading = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(actSearchTeachers.rejected, (state, action) => {
+        state.searchLoading = "failed";
+        if (action.payload && typeof action.payload === "string") {
+          state.error = action.payload;
         }
       });
   },

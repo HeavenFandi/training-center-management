@@ -28,15 +28,35 @@ export interface Lecture {
 export interface Day {
   name: string;
   date: number;
+  dateString: string; // ISO date string like '2026-07-01'
+  fullDate: Date;
 }
 
 export interface ActiveCourse {
-  id: number;
-  title: string;
-  lessons: string;
-  hoursLeft: string;
-  progress: number;
+  studentId: number;
+  trainingSessionId: number;
+  courseName: string;
+  totalLectures: number;
+  lecturesAttended: number;
   image: string;
+  startDate: string | null;
+  attendancePercentage: number;
+}
+
+export interface CompletionPercentageItem {
+  studentId: number;
+  trainingSessionId: number;
+  courseName: string;
+  totalLectures: number;
+  lecturesAttended: number;
+  image?: string;
+  startDate?: string;
+  attendancePercentage: number;
+}
+
+export interface StudentTrainingHours {
+  studentId: number;
+  totalHours: number;
 }
 
 export interface TimeObject {
@@ -48,10 +68,10 @@ export interface TimeObject {
 
 export interface WeeklyScheduleItem {
   day: string;
+  lectureDate: string;
   courseName: string;
   startTime: TimeObject;
   endTime: TimeObject;
   teacherName: string;
   room: string;
 }
-

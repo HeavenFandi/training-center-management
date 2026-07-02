@@ -13,10 +13,11 @@ import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingS
 import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
 import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse, clearDeleteCourseState } from "../../store/Courses/courseSlice";
 import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
-import { clearDeleteSessionState, clearDeleteLectureState } from "../../store/Courses/trainingSessionsSlice";
+import { clearDeleteSessionState, clearDeleteLectureState, actUpdateTrainingSession } from "../../store/Courses/trainingSessionsSlice";
+import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
-import { CreateTrainingSessionRequest } from "../../api/trainingSessionApi";
+import { CreateTrainingSessionRequest, updateTrainingSessionImage, convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
@@ -52,6 +53,7 @@ export const useCourseManagement = () => {
   const [originalFormData, setOriginalFormData] = useState<CreateTrainingSessionRequest | null>(null);
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [updatingSession, setUpdatingSession] = useState(false);
 
   const courses = reduxCourses;
 
@@ -242,6 +244,25 @@ export const useCourseManagement = () => {
 
     let updatedData = { ...originalFormData };
 
+    // Helper to convert any time (string or object) to string "HH:mm:ss"
+    const timeToString = (time: any): string => {
+      if (!time) return "00:00:00";
+      if (typeof time === "string") {
+        const parts = time.split(":");
+        const hour = parts[0]?.padStart(2, "0") || "00";
+        const minute = parts[1]?.padStart(2, "0") || "00";
+        return `${hour}:${minute}:00`;
+      }
+      if (typeof time === "object" && time !== null && "hour" in time && "minute" in time) {
+        const hour = String(time.hour).padStart(2, "0");
+        const minute = String(time.minute).padStart(2, "0");
+        return `${hour}:${minute}:00`;
+      }
+      return "00:00:00";
+    };
+
+
+
     // 1. استخراج معرف القاعة بشكل صحيح
     const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
     if (newClassroomId !== undefined && newClassroomId !== null) {
@@ -249,22 +270,31 @@ export const useCourseManagement = () => {
     }
 
     // 2. تحديث التوقيت الزمني
-    if (suggestion.startTime) updatedData.startTime = formatTimeForApi(suggestion.startTime);
+    if (suggestion.startTime) {
+      const newStartTimeStr = timeToString(suggestion.startTime);
+      updatedData.startTime = convertTimeStringToTimeObject(newStartTimeStr);
+    }
     
     if (suggestion.endTime) {
-      updatedData.endTime = formatTimeForApi(suggestion.endTime);
+      const newEndTimeStr = timeToString(suggestion.endTime);
+      updatedData.endTime = convertTimeStringToTimeObject(newEndTimeStr);
     } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
       // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
-      const [origStartH, origStartM] = originalFormData.startTime.split(':').map(Number);
-      const [origEndH, origEndM] = originalFormData.endTime.split(':').map(Number);
+      const origStartStr = timeToString(originalFormData.startTime);
+      const origEndStr = timeToString(originalFormData.endTime);
+      
+      const [origStartH, origStartM] = origStartStr.split(':').map(Number);
+      const [origEndH, origEndM] = origEndStr.split(':').map(Number);
       const durationInMinutes = (origEndH * 60 + origEndM) - (origStartH * 60 + origStartM);
 
-      const [newStartH, newStartM] = updatedData.startTime.split(':').map(Number);
+      const newStartStr = timeToString(updatedData.startTime);
+      const [newStartH, newStartM] = newStartStr.split(':').map(Number);
       const totalEndMinutes = (newStartH * 60 + newStartM) + durationInMinutes;
       
       const newEndH = Math.floor(totalEndMinutes / 60) % 24;
       const newEndM = totalEndMinutes % 60;
-      updatedData.endTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
+      const newEndStr = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
+      updatedData.endTime = convertTimeStringToTimeObject(newEndStr);
     }
 
     // 3. تحديث تاريخ البدء المقترح
@@ -352,15 +382,59 @@ export const useCourseManagement = () => {
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
-  const handleUpdateSession = useCallback((updatedSession: TSession) => {
-    dispatch(updateSessionInCourse({ courseId: updatedSession.courseId, session: updatedSession }));
-    if (selectedCourse?.id === updatedSession.courseId) {
-      setSelectedCourse(prev => prev ? {
-        ...prev,
-        sessions: prev.sessions?.map(s => s.id === updatedSession.id ? updatedSession : s)
-      } : null);
+  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number): Promise<{ success: true; sessionId: number; imageFile: File | null; courseId: number } | { success: false }> => {
+    setUpdatingSession(true);
+    try {
+      // First update the session details
+      const resultAction = await dispatch(
+        actUpdateTrainingSession({ id: sessionId, data })
+      );
+      
+      if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
+        // If there's an image file, update that too (but don't refetch yet)
+        if (imageFile) {
+          await updateTrainingSessionImage(sessionId, imageFile);
+        }
+        
+        // Return true so parent can handle closing modal first, then refetch and snackbar
+        return { success: true, sessionId, imageFile, courseId };
+      } else {
+        const errorMsg = (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
+        showSnackbar(errorMsg, "error");
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Error updating session:", error);
+      showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
+      return { success: false };
+    } finally {
+      setUpdatingSession(false);
     }
-  }, [dispatch, selectedCourse]);
+  }, [dispatch, showSnackbar]);
+
+  const handlePostUpdateSession = useCallback(async (sessionId: number, imageFile: File | null, courseId: number) => {
+    try {
+      // Show snackbar first
+      showSnackbar("تم تحديث الدورة بنجاح", "success");
+      
+      // Refresh training session details if image was updated
+      if (imageFile) {
+        await dispatch(actGetTrainingSessionDetails(sessionId));
+      }
+      
+      // Refresh the sessions list for this course
+      if (currentInstitute?.id) {
+        dispatch(
+          actGetActiveOrUpcomingByCourseAndInstitute({
+            courseId,
+            instituteId: currentInstitute.id,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error in post update session:", error);
+    }
+  }, [dispatch, showSnackbar, currentInstitute]);
 
   const handleDeleteSession = useCallback(async (courseId: number, sessionId: number) => {
     try {
@@ -426,17 +500,20 @@ export const useCourseManagement = () => {
     handleSaveAdd,
     handleAddSession,
     handleUpdateSession,
+    handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,
     creatingSession,
+    updatingSession,
     deletingCourseId,
     deletingSessionId,
     deleteError,
     sessionDeleteError,
     handleClearDeleteSessionState,
     handleClearDeleteLectureState,
+    currentInstitute,
   };
 };

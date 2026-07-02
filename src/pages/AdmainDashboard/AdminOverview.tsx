@@ -5,7 +5,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
-import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
 import { actGetAllLectures } from "../../store/Courses/trainingSessionsSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import { selectCoursesState } from "../../store/Courses/courseSlice";
@@ -14,8 +14,6 @@ import FinancialCard from "../../components/AdminDasboard/MainDashboard/Financia
 import ScheduleCard from "../../components/AdminDasboard/MainDashboard/ScheduleCard";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import { useDelayedLoading } from "../../hooks/useDelayedLoading";
-import { getAllStudents } from "../../api/studentApi";
-import { getTeachers } from "../../api/teacherApi";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 
@@ -39,19 +37,13 @@ const AdminOverview: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError } =
+  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError, usersCount, usersCountLoading, usersCountError } =
     useAppSelector((state) => state.institutes);
   const { allLectures, allLecturesLoading, allLecturesError } =
     useAppSelector((state) => state.trainingSessions);
   const { courses, loading: coursesLoading, error: coursesError } = useAppSelector(selectCoursesState);
     
   const showInstituteLoading = useDelayedLoading(currentInstituteLoading);
-  
-  // State for students and teachers
-  const [students, setStudents] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersError, setUsersError] = useState<string | null>(null);
 
   const getTodayDate = (): string => {
     const today = new Date();
@@ -177,28 +169,13 @@ const AdminOverview: React.FC = () => {
     }
   }, [dispatch, currentInstitute]);
   
-  // Fetch students and teachers
+  // Fetch users count when currentInstitute exists
   useEffect(() => {
-    const fetchUsers = async () => {
-      setUsersLoading(true);
-      setUsersError(null);
-      try {
-        const [studentsData, teachersData] = await Promise.all([
-          getAllStudents(),
-          getTeachers()
-        ]);
-        setStudents(studentsData);
-        setTeachers(teachersData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setUsersError("خطأ في جلب المستخدمين");
-      } finally {
-        setUsersLoading(false);
-      }
-    };
-    
-    fetchUsers();
-  }, []);
+    const instituteId = currentInstitute?.id;
+    if (instituteId) {
+      dispatch(actGetInstituteUsersCount(instituteId));
+    }
+  }, [dispatch, currentInstitute]);
 
   // Log state changes
   useEffect(() => {
@@ -208,11 +185,6 @@ const AdminOverview: React.FC = () => {
   }, [monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError]);
 
   const userId = user?.id;
-
-  // Calculate total registered users
-  const totalUsers = useMemo(() => {
-    return students.length + teachers.length;
-  }, [students, teachers]);
   
   // Calculate active courses
   const activeCoursesCount = useMemo(() => {
@@ -225,7 +197,7 @@ const AdminOverview: React.FC = () => {
   const dynamicStats = useMemo(() => [
     {
       title: "اجمالي المستخدمين",
-      value: usersLoading ? "..." : (usersError ? "خطأ" : totalUsers.toString()),
+      value: usersCountLoading ? "..." : (usersCountError ? "خطأ" : (usersCount?.toString() ?? "0")),
       icon: <PeopleAltIcon />,
       color: "#1a2c4e",
     },
@@ -235,7 +207,7 @@ const AdminOverview: React.FC = () => {
       icon: <MenuBookIcon />,
       color: "#f39c12",
     },
-  ], [totalUsers, activeCoursesCount, usersLoading, usersError, coursesLoading, coursesError]);
+  ], [usersCount, usersCountLoading, usersCountError, activeCoursesCount, coursesLoading, coursesError]);
 
   // Handle missing userId
   if (!userId) {

@@ -25,6 +25,7 @@ import AuthModal from "../../Modal/AuthModal";
 import CloseIcon from "@mui/icons-material/Close";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import EventSeatOutlinedIcon from "@mui/icons-material/EventSeatOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
@@ -84,6 +85,7 @@ function TrainingSessionDetailsContent() {
 
   const displayTitle = session?.courseName?.trim() || "";
   const displayImage = session?.image;
+  const displayStartDate = session?.startDate || "غير محدد";
 
   const handleEnroll = useCallback(async () => {
     if (isAuthenticated) {
@@ -161,7 +163,7 @@ function TrainingSessionDetailsContent() {
   const handleCloseSuccess = () => setOpenSuccess(false);
   const handleCloseReview = () => setOpenReviewModal(false);
 
-  if (loading === "pending") {
+  if (loading === "pending" || (!session && loading === "idle")) {
     return (
       <Container
         maxWidth="lg"
@@ -174,11 +176,21 @@ function TrainingSessionDetailsContent() {
     );
   }
 
-  if (loading === "failed" || !session) {
+  if (loading === "failed") {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
         <Typography sx={{ fontFamily: "Tajawal" }}>
           {error || "لم يتم العثور على الدورة التدريبية"}
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (!session) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
+        <Typography sx={{ fontFamily: "Tajawal" }}>
+          لم يتم العثور على الدورة التدريبية
         </Typography>
       </Container>
     );
@@ -596,6 +608,50 @@ function TrainingSessionDetailsContent() {
                       </Box>
                     </Box>
                   </Grid>
+
+                  {/* تاريخ البداية */}
+                  <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+                    <Box
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        px: 2,
+                        py: 1,
+                        direction: "rtl",
+                        justifyContent: "flex-start",
+                      }}
+                    >
+                      <Box sx={{ flexShrink: 0 }}>
+                        <CalendarTodayOutlinedIcon
+                          sx={{ fontSize: "1.3rem", color: "#3C8DBC" }}
+                        />
+                      </Box>
+                      <Box sx={{ minWidth: 0, textAlign: "right" }}>
+                        <Typography
+                          sx={{
+                            fontFamily: "Tajawal",
+                            color: "#7b8794",
+                            fontSize: "0.8rem",
+                            mb: 0,
+                          }}
+                        >
+                          تاريخ البداية
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: "Tajawal",
+                            color: "#0b1b34",
+                            fontWeight: 700,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          {displayStartDate}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
                 </Grid>
               </Box>
             )}
@@ -947,7 +1003,9 @@ function TrainingSessionDetailsContent() {
                           fontWeight: 700,
                         }}
                       >
-                        {(ratingItem.username || ratingItem.name || "U").charAt(0).toUpperCase()}
+                        {(ratingItem.username || ratingItem.name || "U")
+                          .charAt(0)
+                          .toUpperCase()}
                       </Avatar>
                     </Stack>
                     <Rating

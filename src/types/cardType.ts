@@ -34,7 +34,7 @@ export interface TTrainingSessionListItem {
   courseId?: number;
   title: string;
   teacherName: string;
-  teacherId?: number;
+  teacherId: number;
   duration: string;
   price: number;
   availableSeats: number;
@@ -48,11 +48,14 @@ export interface TTrainingSessionListItem {
   startTime?: string;
   endTime?: string;
   days?: string[];
+  daysOfWeek?: string[];
   minSeats?: number;
   numberOfLectures?: number;
   requiredEquipment?: string;
   classroomName?: string;
+  classroomId?: number;
   enrolledStudentsCount?: number;
+  studentEnrollmentCount?: number;
 }
 
 export interface TTrainingSessionDetails {
@@ -74,6 +77,13 @@ export interface TTrainingSessionDetails {
   instructor?: TInstructor;
   reviews?: TReview[];
   enrolledStudentsCount?: number;
+  studentEnrollmentCount?: number;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  daysOfWeek?: string[];
+  classroomId?: number;
+  teacherId?: number;
 }
 export interface TReview {
   courseName?: string;
@@ -128,6 +138,7 @@ export interface TSession {
   startDate: string;
   startTime: string;
   endDate: string;
+  endTime?: string;
   days: string[];
   hall: string;
   image?: string;
@@ -135,6 +146,8 @@ export interface TSession {
   date?: string;
   time?: string;
   teacherName?: string;
+  teacherId: number;
+  classroomId: number;
 }
 
 export type TSuggestionType = "ROOM_SWAP" | "SERIES_SHIFT" | "PARTIAL";

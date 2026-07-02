@@ -17,6 +17,7 @@ const TeachersManagement: React.FC = () => {
   const {
     teachers,
     filteredTeachers,
+    paginatedTeachers,
     searchTerm,
     setSearchTerm,
     selectedTeacher,
@@ -27,6 +28,7 @@ const TeachersManagement: React.FC = () => {
     isDeleteOpen,
     isViewOpen,
     loading,
+    searchLoading,
     selectedTeacherLoading,
     isUpdating,
     pendingImageFile,
@@ -43,6 +45,10 @@ const TeachersManagement: React.FC = () => {
     handleCloseAdd,
     handleSaveEdit,
     handleImageUpdate,
+    page,
+    setPage,
+    totalPages,
+    rowsPerPage,
   } = useTeacherManagement();
   
   const showLoading = useDelayedLoading(loading);
@@ -131,13 +137,18 @@ const TeachersManagement: React.FC = () => {
       </Box>
 
       <TeachersTable
-        teachersData={filteredTeachers}
+        teachersData={paginatedTeachers}
         onView={handleViewClick}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
         showLoading={showLoading}
         hasData={teachers.length > 0}
+        searchLoading={searchLoading}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
+        rowsPerPage={rowsPerPage}
       />
 
       <AddTeachersModal

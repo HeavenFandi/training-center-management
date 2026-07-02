@@ -186,31 +186,51 @@ const coursesSlice = createSlice({
     });
     builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.fulfilled, (state, action) => {
       const { courseId } = action.meta.arg;
+      console.log(`[DEBUG][STAGE 7: REDUX SLICE] actGetActiveOrUpcomingByCourseAndInstitute.fulfilled for course ${courseId}`);
+      console.log(`[DEBUG][STAGE 7: REDUX SLICE] Action payload:`, action.payload);
       const course = state.courses.find(c => c.id === courseId);
       if (course) {
         // Map TTrainingSessionListItem to TSession
-        course.sessions = action.payload.map((session: TTrainingSessionListItem) => ({
-          id: session.id,
-          title: session.title,
-          courseId: courseId,
-          instructorId: 0, // We don't have this from this endpoint, default to 0
-          semester: "", // Default to empty
-          price: session.price,
-          availableSeats: session.availableSeats,
-          minCapacity: session.minSeats || 0, // Map from session
-          sessionsCount: session.numberOfLectures || 0, // Map from session
-          duration: session.duration,
-          status: "نشطة", // Default to active
-          requiredEquipment: session.requiredEquipment || "", // Map from session
-          startDate: session.startDate || "", // Map from session
-          startTime: session.startTime || "", // Map from session
-          endDate: "", // Default to empty
-          days: session.days || [], // Map from session
-          hall: session.location || session.classroomName || "", // Use location or classroomName as hall
-          image: session.image,
-          lectures: [], // Default to empty
-          teacherName: session.teacherName,
-        }));
+        course.sessions = action.payload.map((session: TTrainingSessionListItem, index: number) => {
+          console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem keys:`, Object.keys(session));
+          console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem:`, session);
+          console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem.teacherId:`, session.teacherId);
+          console.log(`[DEBUG][STAGE 8: MAPPING TSession ${index}] Input TTrainingSessionListItem.classroomId:`, session.classroomId);
+          
+          const mapped: TSession = {
+            id: session.id,
+            title: session.title,
+            courseId: courseId,
+            instructorId: 0, // We don't have this from this endpoint, default to 0
+            semester: "", // Default to empty
+            price: session.price,
+            availableSeats: session.availableSeats,
+            minCapacity: session.minSeats || 0, // Map from session
+            sessionsCount: session.numberOfLectures || 0, // Map from session
+            duration: session.duration,
+            status: "نشطة", // Default to active
+            requiredEquipment: session.requiredEquipment || "", // Map from session
+            startDate: session.startDate || "", // Map from session
+            startTime: typeof session.startTime === "string" ? session.startTime : "", // Map from session
+            endDate: "", // Default to empty
+            days: session.days || [], // Map from session
+            hall: session.location || session.classroomName || "", // Use location or classroomName as hall
+            image: session.image,
+            lectures: [], // Default to empty
+            teacherName: session.teacherName,
+            teacherId: session.teacherId, // Map from session
+            classroomId: session.classroomId || 0, // Map from session
+          };
+          
+          console.log(`[DEBUG][STAGE 9: MAPPED TSession ${index}] Mapped TSession keys:`, Object.keys(mapped));
+          console.log(`[DEBUG][STAGE 9: MAPPED TSession ${index}] Mapped TSession:`, mapped);
+          console.log(`[DEBUG][STAGE 9: MAPPED TSession ${index}] Mapped TSession.teacherId:`, mapped.teacherId);
+          console.log(`[DEBUG][STAGE 9: MAPPED TSession ${index}] Mapped TSession.classroomId:`, mapped.classroomId);
+          
+          return mapped;
+        });
+        
+        console.log(`[DEBUG][STAGE 10: FINAL REDUX STATE] course.sessions after mapping:`, course.sessions);
       }
     });
     builder.addCase(actGetActiveOrUpcomingByCourseAndInstitute.rejected, (state, action) => {
