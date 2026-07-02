@@ -3,14 +3,15 @@ import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 
 export interface TeacherCourseProgress {
-  courseId: number;
+  trainingSessionId: number;
   courseName: string;
-  completedSessions: number;
-  totalSessions: number;
-  progressPercentage: number;
+  image: string;
+  lecturesGiven: number;
   numberOfStudents: number;
+  progressPercentage: number;
+  startDate: string;
+  totalLectures: number;
 }
-
 const actGetTeacherCourseProgress = createAsyncThunk(
   "teachers/actGetTeacherCourseProgress",
   async (teacherId: string | number, thunkAPI) => {

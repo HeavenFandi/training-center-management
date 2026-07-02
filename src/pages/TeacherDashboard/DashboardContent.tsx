@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import {
   Box,
   Card,
@@ -108,7 +108,14 @@ const CourseCard = ({
     <Box sx={{ p: 1.5 }}>
       <Box
         component="img"
-        src={image}
+        src={
+          image ||
+          "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop"
+        }
+        onError={(e) => {
+          e.currentTarget.src =
+            "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop";
+        }}
         sx={{
           width: "100%",
           height: 110,
@@ -196,9 +203,13 @@ const CourseCard = ({
 const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showAllCourses, setShowAllCourses] = useState(false);
   const { selectedTeacher, courseProgress } = useAppSelector(
     (state) => state.teachers,
   );
+  const displayedCourses = showAllCourses
+    ? courseProgress
+    : courseProgress.slice(0, 6);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -315,34 +326,36 @@ const TeacherDashboard: React.FC = () => {
             sx={{
               fontSize: 16,
               fontWeight: 900,
-              color: "#1e293b",
+              color: "#4A7FA7",
               fontFamily: "Tajawal",
             }}>
             الدورات الحالية
           </Typography>
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#64748b",
-              cursor: "pointer",
-              fontFamily: "Tajawal",
-              "&:hover": { color: "#1e293b" },
-            }}>
-            عرض الجميع
-          </Typography>
+          {courseProgress.length > 6 && (
+            <Typography
+              onClick={() => setShowAllCourses(!showAllCourses)}
+              sx={{
+                cursor: "pointer",
+                color: "#4A7FA7",
+                fontWeight: 700,
+                fontFamily: "Tajawal",
+                "&:hover": {
+                  color: "#1e293b",
+                },
+              }}>
+              {showAllCourses ? "عرض أقل" : "عرض الجميع"}
+            </Typography>
+          )}
         </Stack>
 
         <Grid container spacing={2}>
-          {courseProgress.map((course, index) => (
-            <Grid key={course.courseId} size={{ xs: 12, sm: 6, md: 4 }}>
+          {displayedCourses.map((course) => (
+            <Grid
+              key={course.trainingSessionId}
+              size={{ xs: 12, sm: 6, md: 4 }}>
               <CourseCard
                 title={course.courseName}
-                image={
-                  index % 2 === 0
-                    ? "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
-                    : "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop"
-                }
+                image={course.image}
                 progress={course.progressPercentage}
                 progressColor={
                   course.progressPercentage >= 70
@@ -352,8 +365,8 @@ const TeacherDashboard: React.FC = () => {
                       : "#FF8B61"
                 }
                 studentsCount={course.numberOfStudents}
-                completedSessions={course.completedSessions}
-                totalSessions={course.totalSessions}
+                completedSessions={course.lecturesGiven}
+                totalSessions={course.totalLectures}
               />
             </Grid>
           ))}
