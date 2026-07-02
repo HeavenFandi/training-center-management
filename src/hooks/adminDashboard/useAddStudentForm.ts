@@ -101,7 +101,8 @@ export const useAddStudentForm = ({
           address: data.address,
           interest: data.interest,
           bio: data.bio,
-          enrollmentDate: data.enrollmentDate,
+          enrollmentDate:
+            data.enrollmentDate ?? new Date().toISOString().split("T")[0],
           tenantId: currentInstitute?.tenantId,
           instituteId: currentInstitute?.id,
         };
@@ -113,7 +114,7 @@ export const useAddStudentForm = ({
         if (actCreateStudent.fulfilled.match(resultAction)) {
           const response = resultAction.payload;
           console.log("Create student response:", response);
-          
+
           if (onAdd) {
             onAdd(response);
           }
@@ -140,7 +141,16 @@ export const useAddStudentForm = ({
         setIsSubmitting(false);
       }
     },
-    [imageFile, onAdd, onClose, reset, showSnackbar, dispatch, user, currentInstitute],
+    [
+      imageFile,
+      onAdd,
+      onClose,
+      reset,
+      showSnackbar,
+      dispatch,
+      user,
+      currentInstitute,
+    ],
   );
 
   const onError = useCallback(
