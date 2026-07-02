@@ -78,7 +78,7 @@ export const logoSectionStyle: SxProps<Theme> = {
 };
 
 export const authButtonStyle = (isLoggedIn: boolean): SxProps<Theme> => ({
-  bgcolor: isLoggedIn ? "#d32f2f" : "#0A1931",
+  bgcolor: isLoggedIn ? "#133E65" : "#133E65",
   color: "#fff",
   borderRadius: "50px",
   px: 4,
@@ -86,12 +86,12 @@ export const authButtonStyle = (isLoggedIn: boolean): SxProps<Theme> => ({
   fontWeight: "900",
   fontFamily: "Tajawal",
   textTransform: "none",
-  boxShadow: "0 4px 15px rgba(5, 22, 48, 0.2)",
+  boxShadow: "0 4px 15px rgba(19, 62, 101, 0.2)",
   transition: "all 0.3s ease",
   "&:hover": {
-    bgcolor: isLoggedIn ? "#b71c1c" : "#1a2a44",
+    bgcolor: "#1e5a91",
     transform: "scale(1.03)",
-    boxShadow: "0 8px 25px rgba(99, 102, 241, 0.3)",
+    boxShadow: "0 8px 25px rgba(19, 62, 101, 0.3)",
   },
 });
 

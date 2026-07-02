@@ -46,6 +46,7 @@ export const useAddStudentForm = ({
       birthDate: "",
       address: "",
       interest: "",
+      // Always initialize bio as a string so it is never undefined or null
       bio: "",
       image: "",
       enrollmentDate: new Date().toISOString().split("T")[0],

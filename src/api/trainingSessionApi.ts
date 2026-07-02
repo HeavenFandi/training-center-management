@@ -7,7 +7,9 @@ export type TimeObject = {
   nano?: number;
 };
 
-export const convertTimeStringToTimeObject = (timeStr: string): { hour: number; minute: number; second: number; nano: 0 } => {
+export const convertTimeStringToTimeObject = (
+  timeStr: string,
+): { hour: number; minute: number; second: number; nano: 0 } => {
   // Accepts "HH:mm" or "HH:mm:ss"
   const parts = timeStr.split(":").map(Number);
   const hour = parts[0] || 0;
@@ -16,7 +18,9 @@ export const convertTimeStringToTimeObject = (timeStr: string): { hour: number; 
   return { hour, minute, second, nano: 0 };
 };
 
-export const convertTimeObjectToString = (timeObj: TimeObject | string): string => {
+export const convertTimeObjectToString = (
+  timeObj: TimeObject | string,
+): string => {
   // If it's already a string, just ensure it's in "HH:mm:ss" format
   if (typeof timeObj === "string") {
     const parts = timeObj.split(":");
@@ -55,10 +59,19 @@ export type CreateTrainingSessionRequest = {
   startDate: string;
   startTime: string | TimeObject;
   endTime: string | TimeObject;
-  daysOfWeek: Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
+  daysOfWeek: Array<
+    | "MONDAY"
+    | "TUESDAY"
+    | "WEDNESDAY"
+    | "THURSDAY"
+    | "FRIDAY"
+    | "SATURDAY"
+    | "SUNDAY"
+  >;
 };
 
-export type UpdateTrainingSessionRequest = Partial<CreateTrainingSessionRequest>;
+export type UpdateTrainingSessionRequest =
+  Partial<CreateTrainingSessionRequest>;
 
 export type TrainingSessionResponse = {
   id: number;
@@ -79,6 +92,7 @@ export type TrainingSessionResponse = {
   instituteName: string;
   instituteId: number;
   image: string;
+  studentEnrollmentCount?: number;
   startDate?: string;
   startTime?: TimeObject;
   endTime?: TimeObject;
@@ -109,25 +123,30 @@ export type UpdateLectureRequest = {
 };
 
 // Helper to convert response time fields to TimeObject
-const convertSessionResponseTimeFields = (session: any): TrainingSessionResponse => {
+const convertSessionResponseTimeFields = (
+  session: any,
+): TrainingSessionResponse => {
   const converted = { ...session };
-  
-  if (typeof converted.startTime === 'string') {
+
+  if (typeof converted.startTime === "string") {
     converted.startTime = convertTimeStringToTimeObject(converted.startTime);
   }
-  
-  if (typeof converted.endTime === 'string') {
+
+  if (typeof converted.endTime === "string") {
     converted.endTime = convertTimeStringToTimeObject(converted.endTime);
   }
-  
+
   return converted;
 };
 
 export const createTrainingSession = async (
   data: CreateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
-  console.log("[DEBUG createTrainingSession] Data received from frontend:", data);
-  
+  console.log(
+    "[DEBUG createTrainingSession] Data received from frontend:",
+    data,
+  );
+
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -136,8 +155,11 @@ export const createTrainingSession = async (
   if (payload.endTime) {
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
-  
-  console.log("[DEBUG createTrainingSession] Final payload being sent:", payload);
+
+  console.log(
+    "[DEBUG createTrainingSession] Final payload being sent:",
+    payload,
+  );
   const response = await axiosClient.post<TrainingSessionResponse>(
     "/training-sessions",
     payload,
@@ -151,8 +173,11 @@ export const updateTrainingSession = async (
   data: UpdateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
   console.log("[DEBUG updateTrainingSession] id:", id);
-  console.log("[DEBUG updateTrainingSession] Data received from frontend:", data);
-  
+  console.log(
+    "[DEBUG updateTrainingSession] Data received from frontend:",
+    data,
+  );
+
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -161,8 +186,11 @@ export const updateTrainingSession = async (
   if (payload.endTime) {
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
-  
-  console.log("[DEBUG updateTrainingSession] Final payload being sent:", payload);
+
+  console.log(
+    "[DEBUG updateTrainingSession] Final payload being sent:",
+    payload,
+  );
   const response = await axiosClient.put<TrainingSessionResponse>(
     `/training-sessions/${id}`,
     payload,
@@ -184,18 +212,27 @@ export const updateTrainingSessionImage = async (
   return response.data;
 };
 
+export const getTopEnrolledTrainingSessions = async (): Promise<
+  TrainingSessionResponse[]
+> => {
+  const response = await axiosClient.get<TrainingSessionResponse[]>(
+    "/training-sessions/top-enrolled",
+  );
+  return response.data;
+};
+
 // Helper to convert response time fields to TimeObject
 const convertLectureResponseTimeFields = (lecture: any): LectureResponse => {
   const converted = { ...lecture };
-  
-  if (typeof converted.startTime === 'string') {
+
+  if (typeof converted.startTime === "string") {
     converted.startTime = convertTimeStringToTimeObject(converted.startTime);
   }
-  
-  if (typeof converted.endTime === 'string') {
+
+  if (typeof converted.endTime === "string") {
     converted.endTime = convertTimeStringToTimeObject(converted.endTime);
   }
-  
+
   return converted;
 };
 
@@ -205,7 +242,7 @@ export const createLecture = async (
 ): Promise<LectureResponse> => {
   console.log("sessionId:", sessionId);
   console.log("URL:", `/lectures/session/${sessionId}`);
-  
+
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -214,7 +251,7 @@ export const createLecture = async (
   if (payload.endTime) {
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
-  
+
   console.log("Payload:", payload);
   const response = await axiosClient.post<LectureResponse>(
     `/lectures/session/${sessionId}`,
@@ -242,7 +279,7 @@ export const updateLecture = async (
   data: any,
 ): Promise<LectureResponse> => {
   console.log("[DEBUG updateLecture] Data received from frontend:", data);
-  
+
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -251,9 +288,9 @@ export const updateLecture = async (
   if (payload.endTime) {
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
-  
+
   console.log("[DEBUG updateLecture] Payload being sent to API:", payload);
-  
+
   const response = await axiosClient.put<LectureResponse>(
     `/lectures/${id}`,
     payload,
@@ -266,15 +303,11 @@ export const updateLecture = async (
   return converted;
 };
 
-export const deleteLecture = async (
-  id: number,
-): Promise<void> => {
+export const deleteLecture = async (id: number): Promise<void> => {
   await axiosClient.delete(`/lectures/${id}`);
 };
 
-export const deleteTrainingSession = async (
-  id: number,
-): Promise<void> => {
+export const deleteTrainingSession = async (id: number): Promise<void> => {
   await axiosClient.delete(`/training-sessions/${id}`);
 };
 

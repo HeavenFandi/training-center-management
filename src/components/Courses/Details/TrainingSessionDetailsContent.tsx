@@ -14,6 +14,7 @@ import {
   IconButton,
   Dialog,
   DialogContent,
+  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -65,6 +66,7 @@ function TrainingSessionDetailsContent() {
   const [rating, setRating] = useState<number | null>(5);
   const [reviewText, setReviewText] = useState("");
   const [touched, setTouched] = useState({ rating: false, review: false });
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   const resolvedCourseId = session?.courseId;
 
@@ -90,14 +92,11 @@ function TrainingSessionDetailsContent() {
   const handleEnroll = useCallback(async () => {
     if (isAuthenticated) {
       try {
-        showSnackbar("جاري تحويلك إلى صفحة الدفع...", "info");
-
+        setIsEnrolling(true);
         const paymentUrl = await handleInitiatePayment();
-
         if (paymentUrl && typeof paymentUrl === "string") {
           window.location.href = paymentUrl;
         } else {
-          // إذا لم يتوفر رابط، نبلغ المستخدم بوجود مشكلة في نظام الدفع
           showSnackbar(
             "لم يتم الحصول على رابط الدفع، يرجى المحاولة لاحقاً.",
             "error",
@@ -110,6 +109,8 @@ function TrainingSessionDetailsContent() {
             : "فشل البدء في عملية الدفع، يرجى المحاولة لاحقاً.",
           "error",
         );
+      } finally {
+        setIsEnrolling(false);
       }
     } else {
       setOpenAuth(true);
@@ -660,6 +661,7 @@ function TrainingSessionDetailsContent() {
               <Button
                 variant="contained"
                 onClick={handleEnroll}
+                disabled={isEnrolling}
                 sx={{
                   minWidth: 260,
                   height: 52,
@@ -678,9 +680,17 @@ function TrainingSessionDetailsContent() {
                   "&:active": {
                     transform: "translateY(0)",
                   },
+                  "&.Mui-disabled": {
+                    backgroundColor: "#051630",
+                    opacity: 0.7,
+                  },
                 }}
               >
-                سجل الآن
+                {isEnrolling ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : (
+                  "سجل الآن"
+                )}
               </Button>
             </Box>
           </Box>

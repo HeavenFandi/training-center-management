@@ -130,7 +130,11 @@ const StudentDetailsModal: React.FC<Props> = ({ open, onClose, student }) => {
                 <DetailItem icon={<PersonIcon />} label="اسم المستخدم" value={`@${student.username}`} />
               </Grid>
               <Grid size={{xs:12, sm:12}}>
-                <DetailItem icon={<SchoolIcon />} label="السيرة الذاتية (Bio)" value={student.bio} />
+                <DetailItem
+                  icon={<SchoolIcon />}
+                  label="السيرة الذاتية (Bio)"
+                  value={student.bio || "لا يوجد سيرة ذاتية"}
+                />
               </Grid>
               <Grid size={{xs:12, sm:6}}>
                 <DetailItem icon={<HomeIcon />} label="العنوان" value={student.address} />

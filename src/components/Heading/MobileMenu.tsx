@@ -137,10 +137,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             borderRadius: "12px",
             justifyContent: "center",
             py: 1.8,
-            bgcolor: isLoggedIn ? "rgba(211, 47, 47, 0.08)" : "#051630",
-            color: isLoggedIn ? "#d32f2f" : "white",
+            bgcolor: "#133E65",
+            color: "white",
             "&:hover": {
-              bgcolor: isLoggedIn ? "rgba(211, 47, 47, 0.15)" : "#0a2245",
+              bgcolor: "#1e5a91",
             },
           }}
         >
