@@ -5,6 +5,7 @@ import actGetTeacherById from "../../store/teachers/act/actGetTeacherById";
 import actDeleteTeacher from "../../store/teachers/act/actDeleteTeacher";
 import actUpdateTeacher from "../../store/teachers/act/actUpdateTeacher";
 import actUpdateTeacherProfileImage from "../../store/teachers/act/actUpdateTeacherProfileImage";
+import actSearchTeachers from "../../store/teachers/act/actSearchTeachers";
 import { selectTeachersState, resetTeachersError, resetSelectedTeacher } from "../../store/teachers/teachersSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TeacherApiResponse, UpdateTeacherRequest } from "../../api/teacherApi";
@@ -13,7 +14,7 @@ import { AddTeacherFormData, EditTeacherFormData } from "../../validation/Teache
 export const useTeacherManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
-  const { teachers, loading, error, selectedTeacher, selectedTeacherLoading, selectedTeacherError, updateLoading } = useAppSelector(selectTeachersState);
+  const { teachers, searchResults, loading, searchLoading, error, selectedTeacher, selectedTeacherLoading, selectedTeacherError, updateLoading } = useAppSelector(selectTeachersState);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [teacherToDelete, setTeacherToDelete] = useState<TeacherApiResponse | null>(null);
@@ -24,6 +25,8 @@ export const useTeacherManagement = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Fetch all teachers on mount only if we don't have data yet
   useEffect(() => {
@@ -31,6 +34,16 @@ export const useTeacherManagement = () => {
       dispatch(actGetTeachers());
     }
   }, [dispatch, teachers.length]);
+
+  // Debounce search term and dispatch search
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const timer = setTimeout(() => {
+        dispatch(actSearchTeachers(searchTerm.trim()));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [dispatch, searchTerm]);
 
   // Show error snackbar if error
   useEffect(() => {
@@ -47,29 +60,32 @@ export const useTeacherManagement = () => {
     }
   }, [selectedTeacherError, showSnackbar]);
 
-  // Filter and sort teachers (newest first, like students)
+  // Reset page to 1 when search term changes
+  const handleSearchTermChange = useCallback((newTerm: string) => {
+    setSearchTerm(newTerm);
+    setPage(1);
+  }, []);
+
+  // Get filtered teachers (use searchResults if searchTerm exists, else all teachers sorted newest first)
   const filteredTeachers = useMemo(() => {
-    // Sort newest first (assuming id is numeric)
-    const sortedTeachers = [...teachers].sort((a, b) => b.id - a.id);
+    if (searchTerm.trim()) {
+      return searchResults;
+    }
+    // Sort newest first (assuming id is numeric) when no search
+    return [...teachers].sort((a, b) => b.id - a.id);
+  }, [searchTerm, teachers, searchResults]);
 
-    if (!searchTerm.trim()) return sortedTeachers;
+  // Calculate total pages
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredTeachers.length / ITEMS_PER_PAGE);
+  }, [filteredTeachers.length, ITEMS_PER_PAGE]);
 
-    const term = searchTerm.toLowerCase();
-    return sortedTeachers.filter((teacher) => {
-      const fullName = `${teacher.firstName || ""} ${teacher.lastName || ""}`.toLowerCase();
-      const email = (teacher.email || "").toLowerCase();
-      const specialization = (teacher.specialization || "").toLowerCase();
-      const username = (teacher.username || "").toLowerCase();
-      const contactInfo = (teacher.contactInfo || "").toLowerCase();
-      return (
-        fullName.includes(term) ||
-        email.includes(term) ||
-        specialization.includes(term) ||
-        username.includes(term) ||
-        contactInfo.includes(term)
-      );
-    });
-  }, [teachers, searchTerm]);
+  // Get paginated teachers
+  const paginatedTeachers = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredTeachers.slice(startIndex, endIndex);
+  }, [filteredTeachers, page, ITEMS_PER_PAGE]);
 
   const handleAddTeacher = useCallback((newTeacher: AddTeacherFormData & { cvFile: File | null }) => {
     // Modal is closed by useAddTeacherForm now
@@ -215,8 +231,9 @@ export const useTeacherManagement = () => {
   return {
     teachers,
     filteredTeachers,
+    paginatedTeachers,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: handleSearchTermChange,
     selectedTeacher,
     localEditTeacher,
     teacherToDelete,
@@ -225,6 +242,7 @@ export const useTeacherManagement = () => {
     isDeleteOpen,
     isViewOpen,
     loading,
+    searchLoading,
     selectedTeacherLoading,
     isUpdating,
     pendingImageFile,
@@ -241,6 +259,10 @@ export const useTeacherManagement = () => {
     handleCloseAdd,
     handleSaveEdit,
     handleImageUpdate,
+    page,
+    setPage,
+    totalPages,
+    rowsPerPage: ITEMS_PER_PAGE,
   };
 };
 

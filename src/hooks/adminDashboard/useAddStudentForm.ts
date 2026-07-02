@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { studentSchema, StudentFormData } from "../../validation/StudentSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { CreateStudentResponse } from "../../api/studentApi";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actCreateStudent from "../../store/Students/act/actCreateStudent";
 
 interface UseAddStudentFormProps {
@@ -23,6 +23,8 @@ export const useAddStudentForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
 
   const {
     register,
@@ -67,6 +69,13 @@ export const useAddStudentForm = ({
     async (data: StudentFormData) => {
       setIsSubmitting(true);
       try {
+        // Strict Payload Logging
+        console.log("Current Auth Context Info:", {
+          user,
+          institute: currentInstitute,
+          tenant: currentInstitute?.tenantId,
+        });
+
         // Convert image file to base64 if present
         let imageBase64 = "";
         if (imageFile) {
@@ -92,9 +101,12 @@ export const useAddStudentForm = ({
           address: data.address,
           interest: data.interest,
           bio: data.bio,
+          enrollmentDate: data.enrollmentDate,
+          tenantId: currentInstitute?.tenantId,
+          instituteId: currentInstitute?.id,
         };
 
-        console.log("Create student payload:", payload);
+        console.log("Exact Create Student Payload Sent to API:", payload);
 
         const resultAction = await dispatch(actCreateStudent(payload));
 
@@ -128,7 +140,7 @@ export const useAddStudentForm = ({
         setIsSubmitting(false);
       }
     },
-    [imageFile, onAdd, onClose, reset, showSnackbar, dispatch],
+    [imageFile, onAdd, onClose, reset, showSnackbar, dispatch, user, currentInstitute],
   );
 
   const onError = useCallback(

@@ -8,12 +8,15 @@ import actCreateTeacher from "./act/actCreateTeacher";
 import actUpdateTeacher from "./act/actUpdateTeacher";
 import actDeleteTeacher from "./act/actDeleteTeacher";
 import actUpdateTeacherProfileImage from "./act/actUpdateTeacherProfileImage";
+import actSearchTeachers from "./act/actSearchTeachers";
 import { TeacherApiResponse } from "../../api/teacherApi";
 import { RootState } from "../index";
 
 interface ITeachersState {
   teachers: TeacherApiResponse[];
+  searchResults: TeacherApiResponse[];
   loading: "idle" | "pending" | "succeeded" | "failed";
+  searchLoading: "idle" | "pending" | "succeeded" | "failed";
   error: string | null;
   createLoading: "idle" | "pending" | "succeeded" | "failed";
   updateLoading: "idle" | "pending" | "succeeded" | "failed";
@@ -29,7 +32,9 @@ interface ITeachersState {
 
 const initialState: ITeachersState = {
   teachers: [],
+  searchResults: [],
   loading: "idle",
+  searchLoading: "idle",
   error: null,
   createLoading: "idle",
   updateLoading: "idle",
@@ -177,6 +182,22 @@ const teachersSlice = createSlice({
       })
       .addCase(actUpdateTeacherProfileImage.rejected, (state, action) => {
         state.updateLoading = "failed";
+        if (action.payload && typeof action.payload === "string") {
+          state.error = action.payload;
+        }
+      })
+
+      // Search teachers cases
+      .addCase(actSearchTeachers.pending, (state) => {
+        state.searchLoading = "pending";
+        state.error = null;
+      })
+      .addCase(actSearchTeachers.fulfilled, (state, action) => {
+        state.searchLoading = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(actSearchTeachers.rejected, (state, action) => {
+        state.searchLoading = "failed";
         if (action.payload && typeof action.payload === "string") {
           state.error = action.payload;
         }
