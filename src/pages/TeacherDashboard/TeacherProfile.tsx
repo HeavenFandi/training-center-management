@@ -1,23 +1,55 @@
+import { useEffect, useState } from "react";
 import {
+  Avatar,
   Box,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Chip,
+  Grid,
   IconButton,
+  Paper,
   Stack,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
-import { TeacherProfileTopSections } from "./TeacherProfile/TeacherProfileTopSection";
-import { TeacherProfileBottomSections } from "./TeacherProfile/TeacherProfileBottomSection";
+
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import PhoneIphoneOutlinedIcon from "@mui/icons-material/PhoneIphoneOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import Groups2OutlinedIcon from "@mui/icons-material/Groups2Outlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import EditInformationTeacher, {
+import actUpdateTeacher from "../../store/teachers/act/actUpdateTeacher";
+import EditTeacherModal, {
   TeacherFormData,
 } from "../../components/AdminDasboard/Teachers/PersonalInfo/EditInformationTeacher";
-import { useState } from "react";
-export const teacher = {
-  fname: " أحمد ",
-  lname: "علي ",
+import actUpdateTeacherProfileImage from "../../store/teachers/act/actUpdateTeacherProfileImage";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import actGetTeacherById from "../../store/teachers/act/actGetTeacherById";
+import actGetTeacherCourseProgress from "../../store/teachers/act/actGetTeacherCourseProgress";
+
+type Course = {
+  id: number;
+  title: string;
+  hours: string;
+  students: number;
+};
+
+type Teacher = TeacherFormData & {
+  students: number;
+  coursesCount: number;
+  courses: Course[];
+};
+
+const initialTeacher: Teacher = {
+  fname: "أحمد",
+  lname: "علي",
+  username: "ahmed_ali",
   specialty: "مدرب تسويق رقمي",
   teacherCode: "T-2041",
   status: "نشط",
@@ -25,167 +57,582 @@ export const teacher = {
   experience: "+10",
   students: 200,
   coursesCount: 10,
-  username: "ahmed_ali",
   email: "ahmad@gmail.com",
   phone: "0987354546",
   bio: "خبير في مجال التسويق الرقمي مع خبرة تزيد عن 10 سنوات في إدارة الحملات الإعلانية، وبناء الخطط التسويقية، وتطوير الاستراتيجيات الرقمية وتحليل الأداء وتحسين نتائج الحملات.",
   image:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop",
   courses: [
-    {
-      id: 1,
-      title: "التسويق الإلكتروني",
-      hours: "30 ساعة",
-      students: 45,
-    },
-    {
-      id: 2,
-      title: "إدارة الحملات الإعلانية",
-      hours: "24 ساعة",
-      students: 32,
-    },
-    {
-      id: 3,
-      title: "تحليل الأداء الرقمي",
-      hours: "18 ساعة",
-      students: 27,
-    },
+    { id: 1, title: "التسويق الإلكتروني", hours: "30 ساعة", students: 45 },
+    { id: 2, title: "إدارة الحملات الإعلانية", hours: "24 ساعة", students: 32 },
+    { id: 3, title: "تحليل الأداء الرقمي", hours: "18 ساعة", students: 27 },
   ],
 };
 
-export const sectionSx = {
-  borderRadius: "22px",
-  p: { xs: 2, md: 3 },
-  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
-  border: "1px solid #e9eef5",
-  backgroundColor: "#fff",
-};
-
-export const chipSx = {
-  borderRadius: "10px",
-  backgroundColor: "#f1f5f9",
-  color: "#334155",
-  fontWeight: 700,
-  fontFamily: "Tajawal, sans-serif",
-};
-
-export const miniChipSx = {
-  borderRadius: "10px",
-  backgroundColor: "#eef2f7",
-  color: "#475569",
-  fontWeight: 700,
-  fontFamily: "Tajawal, sans-serif",
-};
-
-export type TTeacher = typeof teacher;
-
-export default function TeacherProfile() {
+const TeacherProfile = () => {
+  const [teacher, setTeacher] = useState<Teacher>(initialTeacher);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [teacherData, setTeacherData] = useState<TTeacher>(teacher);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const handleSave = (updatedTeacher: TeacherFormData) => {
-    setTeacherData({
-      ...teacherData,
-      ...updatedTeacher,
-      courses: teacherData.courses, // Keep original courses as they are not edited in this modal
-    });
-    setOpenEditModal(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const dispatch = useAppDispatch();
+
+  const { selectedTeacher, courseProgress } = useAppSelector(
+    (state) => state.teachers,
+  );
+  console.log("courseProgress", courseProgress);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (user?.teacherId) {
+      dispatch(actGetTeacherById(user.teacherId));
+      dispatch(actGetTeacherCourseProgress(user.teacherId));
+    }
+  }, [dispatch]);
+  useEffect(() => {
+    if (selectedTeacher) {
+      setTeacher((prev) => ({
+        ...prev,
+        fname: selectedTeacher.firstName || "",
+        lname: selectedTeacher.lastName || "",
+        username: selectedTeacher.username || "",
+        specialty: selectedTeacher.specialization || "",
+        city: selectedTeacher.address || "",
+        experience: selectedTeacher.experienceYears
+          ? `${selectedTeacher.experienceYears}`
+          : "",
+        email: selectedTeacher.email || "",
+        phone: selectedTeacher.contactInfo || "",
+        bio: selectedTeacher.cv || "",
+        image: selectedTeacher.image || prev.image,
+        students: selectedTeacher.numberOfStudents || 0,
+        coursesCount: courseProgress.length,
+      }));
+    }
+  }, [selectedTeacher, courseProgress.length]);
+
+  const handleSaveTeacher = async (
+    updatedTeacher: TeacherFormData,
+    imageFile?: File | null,
+  ) => {
+    console.log("handleSaveTeacher");
+    console.log(updatedTeacher);
+
+    if (!selectedTeacher) return;
+    console.log("Updated Teacher Phone:", updatedTeacher.phone);
+    const result = await dispatch(
+      actUpdateTeacher({
+        id: selectedTeacher.id,
+        data: {
+          userId: selectedTeacher.userId!,
+          username: updatedTeacher.username,
+          email: updatedTeacher.email,
+          firstName: updatedTeacher.fname,
+          lastName: updatedTeacher.lname,
+          phone: updatedTeacher.phone,
+          specialization: updatedTeacher.specialty,
+          certificates: "",
+          address: updatedTeacher.city,
+          cv: updatedTeacher.bio,
+          experienceYears: Number(updatedTeacher.experience),
+        },
+      }),
+    );
+    console.log("After dispatch", result);
+    if (actUpdateTeacher.fulfilled.match(result)) {
+      let newImage = updatedTeacher.image;
+
+      if (imageFile) {
+        const imageResult = await dispatch(
+          actUpdateTeacherProfileImage({
+            id: selectedTeacher.id,
+            file: imageFile,
+          }),
+        );
+
+        if (actUpdateTeacherProfileImage.fulfilled.match(imageResult)) {
+          newImage = imageResult.payload.image || newImage;
+        }
+      }
+
+      setTeacher((prev) => ({
+        ...prev,
+        fname: updatedTeacher.fname,
+        lname: updatedTeacher.lname,
+        username: updatedTeacher.username,
+        specialty: updatedTeacher.specialty,
+        city: updatedTeacher.city,
+        experience: updatedTeacher.experience,
+        email: updatedTeacher.email,
+        phone: updatedTeacher.phone,
+        bio: updatedTeacher.bio,
+        image: newImage,
+        students: prev.students,
+        coursesCount: courseProgress.length,
+        courses: prev.courses,
+      }));
+
+      dispatch(actGetTeacherById(selectedTeacher.id));
+
+      setOpenEditModal(false);
+    }
   };
+
   return (
-    <Box sx={{ maxWidth: "1250px", mx: "auto", px: isMobile ? 1 : 0 }}>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        alignItems={{ xs: "stretch", md: "center" }}
-        justifyContent="space-between"
-        mb={isMobile ? 4 : 8}
-        spacing={2}>
-        <Box>
-          <Stack
-            direction={"row"}
-            alignItems={"center"}
-            justifyContent={"flex-start"}
-            spacing={1.5}
-            gap={2}
-            sx={{ mb: 1 }}>
-            <IconButton
-              sx={{
-                backgroundColor: "#091c39",
-                color: "white",
-                "&:hover": { backgroundColor: "#0d2d4a" },
-                width: 28,
-                height: 28,
-              }}>
-              <ChevronRightIcon fontSize="small" />
-            </IconButton>
+    <Box
+      dir="rtl"
+      sx={{
+        minHeight: "100vh",
+        p: { xs: 2, md: 2.5 },
+        boxSizing: "border-box",
+      }}>
+      <Stack spacing={3}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", sm: "center" }}
+          spacing={2}>
+          <Box>
+            <Stack direction="row" alignItems="center" gap={1.5}>
+              <IconButton
+                sx={{
+                  width: 34,
+                  height: 34,
+                  bgcolor: "#091c39",
+                  color: "#fff",
+                  "&:hover": { bgcolor: "#0d2d4a" },
+                }}>
+                <ChevronRightIcon />
+              </IconButton>
+
+              <Typography
+                sx={{
+                  fontSize: { xs: 24, md: 30 },
+                  fontWeight: 900,
+                  color: "#091c39",
+                  fontFamily: "Tajawal",
+                }}>
+                الملف الشخصي
+              </Typography>
+            </Stack>
+
             <Typography
               sx={{
-                fontSize: { xs: "28px", md: "34px" },
-                fontWeight: 800,
-                color: "#0f172a",
-
-                fontFamily: "Tajawal, sans-serif",
+                mt: 1,
+                color: "#64748b",
+                fontSize: 14,
+                fontFamily: "Tajawal",
               }}>
-              الملف الشخصي
+              إدارة معلوماتك الشخصية والمهنية
             </Typography>
-          </Stack>
-          <Typography
+          </Box>
+
+          <Button
+            onClick={() => setOpenEditModal(true)}
+            variant="contained"
+            startIcon={<EditIcon sx={{ ml: 1 }} />}
             sx={{
-              mt: 0.5,
-              color: "#64748b",
-              fontSize: "16px",
-              fontFamily: "Tajawal, sans-serif",
+              bgcolor: "#091c39",
+              color: "#fff",
+              borderRadius: "50px",
+              px: 4,
+              py: 1.3,
+              fontWeight: "bold",
+              fontSize: "15px",
+              boxShadow: "0px 8px 20px rgba(19, 62, 101, 0.2)",
+              fontFamily: "Tajawal",
+              alignSelf: { xs: "flex-start", sm: "center" },
+              "&:hover": { bgcolor: "#0d2d4a" },
+              "& .MuiButton-startIcon": {
+                marginLeft: "8px",
+                marginRight: 0,
+              },
             }}>
-            إدارة معلوماتك الشخصية والمهنية
-          </Typography>
-        </Box>
-        {/* CALL MODAL */}
-        <EditInformationTeacher
-          key={`${openEditModal}-${teacherData.fname}-${teacherData.lname}-${teacherData.email}-${teacherData.phone}`}
-          open={openEditModal}
-          onClose={() => setOpenEditModal(false)}
-          teacher={teacherData}
-          onSave={handleSave}
-        />
-        <Button
-          onClick={() => setOpenEditModal(true)}
-          variant="contained"
-          startIcon={<EditOutlinedIcon sx={{ ml: { xs: 1, sm: 3 } }} />}
+            تعديل المعلومات
+          </Button>
+        </Stack>
+
+        <Paper
+          elevation={0}
           sx={{
-            width: { xs: "100%", md: "auto" },
-            maxWidth: { xs: "320px", md: "unset" },
-            alignSelf: { xs: "center", md: "flex-start" },
-            height: { xs: 56, md: 46 },
-            px: { xs: 4, md: 3 },
-            borderRadius: "999px",
-            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-            boxShadow: "0 8px 20px rgba(15,23,42,0.16)",
-            fontWeight: 700,
-
-            fontSize: { xs: "20px", md: "15px" },
-            fontFamily: "Tajawal, sans-serif",
-            "&:hover": {
-              background: "linear-gradient(135deg, #111827 0%, #334155 100%)",
-            },
-            "& .MuiButton-startIcon": {
-              marginLeft: "8px",
-              marginRight: 0,
-            },
+            p: { xs: 2.5, md: 3 },
+            borderRadius: "28px",
+            background: "#eef6ff",
+            border: "1px solid #e5edf7",
+            boxShadow: "0 10px 30px rgba(15,23,42,0.06)",
           }}>
-          تعديل المعلومات
-        </Button>
-      </Stack>
-      <TeacherProfileTopSections
-        teacher={teacherData}
-        sectionSx={sectionSx}
-        chipSx={chipSx}
-      />
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            alignItems="center"
+            spacing={3}
+            gap={4}>
+            <Avatar
+              src={teacher.image}
+              sx={{
+                width: 120,
 
-      <TeacherProfileBottomSections
-        teacher={teacherData}
-        sectionSx={sectionSx}
-        miniChipSx={miniChipSx}
+                height: 120,
+                border: "5px solid #fff",
+                boxShadow: "0 10px 30px rgba(15,23,42,0.15)",
+              }}
+            />
+
+            <Box sx={{ flex: 1, textAlign: { xs: "center", md: "right" } }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: 28, md: 36 },
+                  fontWeight: 900,
+                  color: "#091c39",
+                  fontFamily: "Tajawal",
+                }}>
+                {teacher.fname} {teacher.lname}
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.5,
+                  fontSize: 18,
+                  mr: 3,
+                  color: "#64748b",
+                  fontWeight: 700,
+                  fontFamily: "Tajawal",
+                }}>
+                {teacher.specialty}
+              </Typography>
+
+              <Stack
+                direction="row"
+                flexWrap="wrap"
+                gap={1}
+                justifyContent={{ xs: "center", md: "flex-start" }}
+                mt={2}>
+                <Chip label={teacher.city} sx={chipStyle} />
+                <Chip label={teacher.email} sx={chipStyle} />
+                <Chip label={teacher.phone} sx={chipStyle} />
+              </Stack>
+            </Box>
+          </Stack>
+        </Paper>
+
+        <Paper sx={mainCardStyle}>
+          <Typography sx={sectionTitle}>المعلومات الأساسية</Typography>
+
+          <Grid container spacing={2}>
+            <InfoBox label="الاسم الأول" value={teacher.fname} />
+            <InfoBox label="الاسم الأخير" value={teacher.lname} />
+            <InfoBox label="اسم المستخدم" value={teacher.username} />
+            <InfoBox label="التخصص" value={teacher.specialty} />
+
+            <InfoBox label="المدينة" value={teacher.city} />
+          </Grid>
+        </Paper>
+
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Stack spacing={3}>
+              <Paper sx={mainCardStyle}>
+                <Typography sx={sectionTitle}>النبذة المهنية</Typography>
+                <Typography
+                  sx={{
+                    color: "#475569",
+                    lineHeight: 2,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    fontFamily: "Tajawal",
+                  }}>
+                  {teacher.bio}
+                </Typography>
+              </Paper>
+
+              <Paper sx={mainCardStyle}>
+                <Typography sx={sectionTitle}>الدورات التي يدرّسها</Typography>
+
+                <Stack spacing={2}>
+                  {courseProgress.map((course) => (
+                    <Paper
+                      key={course.trainingSessionId}
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        borderRadius: "18px",
+                        bgcolor: "#eef6ff",
+                        border: "1px solid #dbe9f6",
+                      }}>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        justifyContent="space-between"
+                        alignItems={{ xs: "stretch", sm: "center" }}
+                        spacing={2}>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: 20,
+                              fontWeight: 900,
+                              color: "#091c39",
+                              fontFamily: "Tajawal",
+                            }}>
+                            {course.courseName}
+                          </Typography>
+
+                          <Stack direction="row" gap={1} flexWrap="wrap" mt={1}>
+                            <Chip
+                              label={`التقدم: ${course.progressPercentage}%`}
+                              sx={smallChipStyle}
+                            />
+
+                            <Chip
+                              label={`بدأت: ${course.startDate || "غير محدد"}`}
+                              sx={smallChipStyle}
+                            />
+                          </Stack>
+                        </Box>
+
+                        <Button
+                          onClick={() =>
+                            setSelectedCourse({
+                              id: course.trainingSessionId,
+                              title: course.courseName,
+                              hours: `${course.totalLectures} جلسة`,
+                              students: course.numberOfStudents,
+                            })
+                          }
+                          variant="contained"
+                          startIcon={<VisibilityOutlinedIcon sx={{ ml: 1 }} />}
+                          sx={{
+                            bgcolor: "#091c39",
+                            borderRadius: "12px",
+                            px: 3,
+                            fontWeight: 800,
+                            fontFamily: "Tajawal",
+                            "&:hover": { bgcolor: "#0d2d4a" },
+                            "& .MuiButton-startIcon": {
+                              marginLeft: "8px",
+                              marginRight: 0,
+                            },
+                          }}>
+                          عرض
+                        </Button>
+                      </Stack>
+                    </Paper>
+                  ))}
+                </Stack>
+              </Paper>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack spacing={2}>
+              <StatCard
+                title="إجمالي الطلاب"
+                value={`${teacher.students} طالب`}
+                icon={<Groups2OutlinedIcon />}
+              />
+              <StatCard
+                title="الدورات التدريبية"
+                value={`${teacher.coursesCount} دورات`}
+                icon={<SchoolOutlinedIcon />}
+              />
+              <StatCard
+                title="سنوات الخبرة"
+                value={`${teacher.experience} سنة`}
+                icon={<WorkspacePremiumOutlinedIcon />}
+              />
+
+              <Paper sx={mainCardStyle}>
+                <Typography sx={sectionTitle}>التواصل</Typography>
+
+                <ContactLine
+                  icon={<EmailOutlinedIcon />}
+                  label="البريد الإلكتروني"
+                  value={teacher.email}
+                />
+                <ContactLine
+                  icon={<PhoneIphoneOutlinedIcon />}
+                  label="رقم الهاتف"
+                  value={teacher.phone}
+                />
+                <ContactLine
+                  icon={<LocationOnOutlinedIcon />}
+                  label="المدينة"
+                  value={teacher.city}
+                />
+              </Paper>
+            </Stack>
+          </Grid>
+        </Grid>
+      </Stack>
+
+      <EditTeacherModal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        teacher={teacher}
+        onSave={handleSaveTeacher}
       />
+      <Dialog
+        open={!!selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { borderRadius: "22px" } }}>
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography sx={{ fontWeight: 900, color: "#091c39" }}>
+              تفاصيل الدورة
+            </Typography>
+
+            <IconButton onClick={() => setSelectedCourse(null)}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent>
+          {selectedCourse && (
+            <Stack spacing={2}>
+              <Typography sx={{ fontSize: 24, fontWeight: 900 }}>
+                {selectedCourse.title}
+              </Typography>
+
+              <Chip
+                label={`المدة: ${selectedCourse.hours}`}
+                sx={smallChipStyle}
+              />
+
+              <Chip
+                label={`عدد الطلاب: ${selectedCourse.students}`}
+                sx={smallChipStyle}
+              />
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
+};
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: "18px",
+          bgcolor: "#eef6ff",
+          border: "1px solid #dbe9f6",
+        }}>
+        <Typography sx={{ color: "#64748b", fontSize: 13, fontWeight: 800 }}>
+          {label}
+        </Typography>
+        <Typography
+          sx={{
+            color: "#091c39",
+            fontSize: 18,
+            fontWeight: 900,
+            mt: 0.5,
+          }}>
+          {value}
+        </Typography>
+      </Box>
+    </Grid>
+  );
 }
+
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Paper
+      sx={{
+        p: 2,
+        borderRadius: "20px",
+        bgcolor: "#fff",
+        border: "1px solid #e8eef7",
+        boxShadow: "0 10px 25px rgba(15,23,42,0.05)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+      <Box sx={{ color: "#4A7FA7", display: "flex" }}>{icon}</Box>
+
+      <Box>
+        <Typography sx={{ color: "#64748b", fontWeight: 800, fontSize: 13 }}>
+          {title}
+        </Typography>
+        <Typography sx={{ color: "#091c39", fontWeight: 900, fontSize: 20 }}>
+          {value}
+        </Typography>
+      </Box>
+    </Paper>
+  );
+}
+
+function ContactLine({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Stack direction="row" alignItems="center" gap={1.5} mt={2}>
+      <Box
+        sx={{
+          width: 42,
+          height: 42,
+          borderRadius: "14px",
+          bgcolor: "#eef6ff",
+          color: "#4A7FA7",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+        {icon}
+      </Box>
+
+      <Box>
+        <Typography sx={{ color: "#94a3b8", fontSize: 13 }}>{label}</Typography>
+        <Typography sx={{ color: "#091c39", fontWeight: 900 }}>
+          {value}
+        </Typography>
+      </Box>
+    </Stack>
+  );
+}
+
+const mainCardStyle = {
+  p: { xs: 2.5, md: 3 },
+  borderRadius: "26px",
+  bgcolor: "#fff",
+  border: "1px solid #e8eef7",
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
+};
+
+const sectionTitle = {
+  fontSize: { xs: 22, md: 28 },
+  fontWeight: 900,
+  color: "#091c39",
+  mb: 2,
+  fontFamily: "Tajawal",
+};
+
+const chipStyle = {
+  bgcolor: "#eef6ff",
+  color: "#091c39",
+  fontWeight: 800,
+  borderRadius: "10px",
+};
+
+const smallChipStyle = {
+  bgcolor: "#eef2f7",
+  color: "#475569",
+  fontWeight: 800,
+  borderRadius: "10px",
+};
+
+export default TeacherProfile;

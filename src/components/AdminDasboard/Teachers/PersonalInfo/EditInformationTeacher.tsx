@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,8 @@ export type TeacherFormData = {
   courses?: any[];
 };
 
+export type TeacherFormErrors = Partial<Record<keyof TeacherFormData, string>>;
+
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
   ref: React.Ref<unknown>,
@@ -45,7 +47,7 @@ interface EditTeacherModalProps {
   open: boolean;
   onClose: () => void;
   teacher: TeacherFormData | null;
-  onSave: (updatedTeacher: TeacherFormData) => void;
+  onSave: (updatedTeacher: TeacherFormData, imageFile?: File | null) => void;
 }
 
 const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
@@ -55,8 +57,65 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
   onSave,
 }) => {
   const [formData, setFormData] = useState<TeacherFormData | null>(teacher);
+  const [errors, setErrors] = useState<TeacherFormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setFormData(teacher);
+      setErrors({});
+      setSuccess(false);
+    }
+  }, [teacher, open]);
+
+  const validate = () => {
+    const newErrors: TeacherFormErrors = {};
+
+    if (!formData) return false;
+
+    if (!formData.fname.trim()) {
+      newErrors.fname = "الاسم الأول مطلوب";
+    }
+
+    if (!formData.lname.trim()) {
+      newErrors.lname = "الاسم الأخير مطلوب";
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = "اسم المستخدم مطلوب";
+    }
+
+    if (!formData.specialty.trim()) {
+      newErrors.specialty = "التخصص مطلوب";
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "المدينة مطلوبة";
+    }
+
+    if (!formData.experience.trim()) {
+      newErrors.experience = "سنوات الخبرة مطلوبة";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "البريد الإلكتروني غير صحيح";
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "رقم الهاتف مطلوب";
+    } else if (!/^[0-9+\-\s]{8,15}$/.test(formData.phone)) {
+      newErrors.phone = "رقم الهاتف غير صحيح";
+    }
+
+    if (!formData.bio.trim()) {
+      newErrors.bio = "السيرة الذاتية مطلوبة";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange =
     (field: keyof TeacherFormData) =>
@@ -64,28 +123,43 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
       setFormData((prev) =>
         prev ? { ...prev, [field]: e.target.value } : null,
       );
+
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     };
 
-  const handleImageChange = (imageUrl: string) => {
-    setFormData((prev) => (prev ? { ...prev, image: imageUrl } : null));
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  const handleImageChange = (file: File, preview: string) => {
+    setSelectedImage(file);
+
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            image: preview,
+          }
+        : null,
+    );
   };
 
-  const handleSave = useCallback(() => {
+  const handleSave = () => {
     if (!formData || loading) return;
+
+    if (!validate()) return;
 
     setLoading(true);
 
     setTimeout(() => {
-      onSave(formData);
+      onSave(formData, selectedImage);
       setLoading(false);
       setSuccess(true);
+
       setTimeout(() => {
         setSuccess(false);
         onClose();
-      }, 1000);
-    }, 1200);
-  }, [formData, loading, onSave, onClose]);
-
+      }, 800);
+    }, 700);
+  };
   return (
     <Dialog
       open={open}
@@ -129,7 +203,11 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
           alignItems="flex-start"
           sx={{ flexDirection: "row-reverse" }}>
           <Grid size={{ xs: 12, md: 9 }} order={{ xs: 2, md: 1 }}>
-            <EditTeacherForm formData={formData} onChange={handleChange} />
+            <EditTeacherForm
+              formData={formData}
+              onChange={handleChange}
+              errors={errors}
+            />
           </Grid>
 
           <Grid
@@ -148,6 +226,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
           </Grid>
         </Grid>
       </DialogContent>
+
       <DialogActions
         sx={{
           px: 4,
@@ -189,6 +268,10 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
             boxShadow: "0px 8px 20px rgba(19,62,101,0.2)",
             "&:hover": {
               bgcolor: success ? "#10B981" : "#0F2F4D",
+            },
+            "& .MuiButton-startIcon": {
+              marginLeft: "8px",
+              marginRight: 0,
             },
           }}>
           {loading ? "جارٍ الحفظ..." : success ? "تم الحفظ" : "حفظ التعديلات"}

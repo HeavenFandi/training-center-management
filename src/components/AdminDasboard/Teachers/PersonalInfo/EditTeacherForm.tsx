@@ -1,10 +1,11 @@
 import React from "react";
 import { Grid, MenuItem } from "@mui/material";
 import AuthInput from "../../../Auth/AuthInput";
-import { TeacherFormData } from "./EditInformationTeacher";
+import { TeacherFormData, TeacherFormErrors } from "./EditInformationTeacher";
 
 interface EditTeacherFormProps {
   formData: TeacherFormData | null;
+  errors: TeacherFormErrors;
   onChange: (
     field: keyof TeacherFormData,
   ) => (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -12,6 +13,7 @@ interface EditTeacherFormProps {
 
 const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
   formData,
+  errors,
   onChange,
 }) => (
   <Grid container spacing={3} sx={{ width: "100%", m: 0 }}>
@@ -21,6 +23,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل الاسم الأول"
         value={formData?.fname || ""}
         onChange={onChange("fname")}
+        error={!!errors.fname}
+        helperText={errors.fname}
         compact
       />
     </Grid>
@@ -31,39 +35,34 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل الاسم الأخير"
         value={formData?.lname || ""}
         onChange={onChange("lname")}
+        error={!!errors.lname}
+        helperText={errors.lname}
         compact
       />
     </Grid>
 
     <Grid size={{ xs: 12, sm: 6 }}>
       <AuthInput
-        label=" اسم المستخدم"
+        label="اسم المستخدم"
         placeholder="أدخل اسم المستخدم"
-        value={String(formData?.username ?? "")}
+        value={formData?.username || ""}
         onChange={onChange("username")}
+        error={!!errors.username}
+        helperText={errors.username}
         compact
       />
     </Grid>
+
     <Grid size={{ xs: 12, sm: 6 }}>
       <AuthInput
         label="التخصص"
         placeholder="أدخل التخصص"
         value={formData?.specialty || ""}
         onChange={onChange("specialty")}
+        error={!!errors.specialty}
+        helperText={errors.specialty}
         compact
       />
-    </Grid>
-
-    <Grid size={{ xs: 12, sm: 6 }}>
-      <AuthInput
-        label="الحالة"
-        select
-        value={formData?.status || "نشط"}
-        onChange={onChange("status")}
-        compact>
-        <MenuItem value="نشط">نشط</MenuItem>
-        <MenuItem value="غير نشط">غير نشط</MenuItem>
-      </AuthInput>
     </Grid>
 
     <Grid size={{ xs: 12, sm: 6 }}>
@@ -72,6 +71,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل المدينة"
         value={formData?.city || ""}
         onChange={onChange("city")}
+        error={!!errors.city}
+        helperText={errors.city}
         compact
       />
     </Grid>
@@ -82,6 +83,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="مثال: 10+"
         value={formData?.experience || ""}
         onChange={onChange("experience")}
+        error={!!errors.experience}
+        helperText={errors.experience}
         compact
       />
     </Grid>
@@ -92,6 +95,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل البريد الإلكتروني"
         value={formData?.email || ""}
         onChange={onChange("email")}
+        error={!!errors.email}
+        helperText={errors.email}
         compact
       />
     </Grid>
@@ -102,6 +107,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل رقم الهاتف"
         value={formData?.phone || ""}
         onChange={onChange("phone")}
+        error={!!errors.phone}
+        helperText={errors.phone}
         compact
       />
     </Grid>
@@ -112,6 +119,8 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({
         placeholder="أدخل نبذة عن المعلم"
         value={formData?.bio || ""}
         onChange={onChange("bio")}
+        error={!!errors.bio}
+        helperText={errors.bio}
         compact
       />
     </Grid>
