@@ -4,19 +4,24 @@ import actUpdateStudent from "./act/actUpdateStudent";
 import actCreateStudent from "./act/actCreateStudent";
 import actDeleteStudent from "./act/actDeleteStudent";
 import actGetAllStudents from "./act/actGetAllStudents";
+import actSearchStudents from "./act/actSearchStudents";
 import { CreateStudentResponse } from "../../api/studentApi";
 import { RootState } from "..";
 
 interface IStudentsState {
   students: CreateStudentResponse[];
+  searchResults: CreateStudentResponse[];
   loading: "idle" | "pending" | "succeeded" | "failed";
+  searchLoading: "idle" | "pending" | "succeeded" | "failed";
   error: string | null;
   createLoading: "idle" | "pending" | "succeeded" | "failed";
 }
 
 const initialState: IStudentsState = {
   students: [],
+  searchResults: [],
   loading: "idle",
+  searchLoading: "idle",
   error: null,
   createLoading: "idle",
 };
@@ -109,7 +114,23 @@ const studentsSlice = createSlice({
     });
 
     builder.addCase(actGetAllStudents.rejected, (state, action) => {
-      state.loading = "failed";
+        state.loading = "failed";
+        if (action.payload && typeof action.payload === "string") {
+          state.error = action.payload;
+        }
+      });
+
+    // Search students cases
+    builder.addCase(actSearchStudents.pending, (state) => {
+      state.searchLoading = "pending";
+      state.error = null;
+    });
+    builder.addCase(actSearchStudents.fulfilled, (state, action) => {
+      state.searchLoading = "succeeded";
+      state.searchResults = action.payload;
+    });
+    builder.addCase(actSearchStudents.rejected, (state, action) => {
+      state.searchLoading = "failed";
       if (action.payload && typeof action.payload === "string") {
         state.error = action.payload;
       }

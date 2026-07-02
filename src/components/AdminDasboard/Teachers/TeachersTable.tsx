@@ -16,6 +16,8 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
+  Pagination,
+  PaginationItem,
 } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
@@ -35,7 +37,12 @@ interface Props {
   loading?: "idle" | "pending" | "succeeded" | "failed";
   showLoading?: boolean;
   hasData?: boolean;
+  searchLoading?: "idle" | "pending" | "succeeded" | "failed";
   searchTerm?: string;
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  rowsPerPage: number;
 }
 
 const TeachersTable: React.FC<Props> = memo(({
@@ -46,12 +53,17 @@ const TeachersTable: React.FC<Props> = memo(({
   loading,
   showLoading,
   hasData,
+  searchLoading,
+  page,
+  setPage,
+  totalPages,
+  rowsPerPage,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Don't show skeleton if we already have data
-  const isLoading = (loading === "pending" || showLoading) && !hasData;
+  const isLoading = ((loading === "pending" || showLoading) && !hasData) || searchLoading === "pending";
 
   if (isLoading) {
     return <TableSkeleton columnsCount={6} rowsCount={5} showMobileView />;
@@ -231,15 +243,15 @@ const TeachersTable: React.FC<Props> = memo(({
                 }}
               >
                 <TableCell
-                  align="center"
-                  sx={{
-                    borderBottom: "1px solid #eef2f6",
-                    py: 2,
-                    color: "#444",
-                  }}
-                >
-                  {teacher.id}
-                </TableCell>
+                align="center"
+                sx={{
+                  borderBottom: "1px solid #eef2f6",
+                  py: 2,
+                  color: "#444",
+                }}
+              >
+                {(page - 1) * rowsPerPage + (index + 1)}
+              </TableCell>
 
                 <TableCell
                   align="center"
@@ -393,6 +405,42 @@ const TeachersTable: React.FC<Props> = memo(({
             ))}
           </TableBody>
         </Table>
+      )}
+      {totalPages > 1 && (
+        <Stack alignItems="center" sx={{ mt: 4, mb: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, newPage) => setPage(newPage)}
+            shape="rounded"
+            dir="ltr"
+            siblingCount={1}
+            boundaryCount={1}
+            renderItem={(item) => (
+              <PaginationItem
+                {...item}
+                sx={{
+                  fontFamily: "Tajawal",
+                  borderRadius: "10px",
+                  minWidth: "48px",
+                  height: "48px",
+                  border: "1px solid #0b2c5a",
+                  color: "#0b2c5a",
+                  fontWeight: 700,
+                  backgroundColor: "#fff",
+                  "&.Mui-selected": {
+                    backgroundColor: "#0b2c5a",
+                    color: "#fff",
+                    border: "1px solid #0b2c5a",
+                  },
+                  "&:hover": {
+                    backgroundColor: "#f5f7fa",
+                  },
+                }}
+              />
+            )}
+          />
+        </Stack>
       )}
     </TableContainer>
   );

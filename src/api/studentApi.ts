@@ -14,6 +14,9 @@ export interface CreateStudentRequest {
   address: string;
   interest: string;
   bio: string;
+  enrollmentDate: string;
+  tenantId?: number | string;
+  instituteId?: number | string;
 }
 
 export interface CreateStudentResponse {
@@ -137,5 +140,12 @@ export const getStudentActiveCourses = async (studentId: number): Promise<any[]>
 
 export const getAllStudents = async (): Promise<GetStudentsResponse> => {
   const response = await axiosClient.get<GetStudentsResponse>("/students");
+  return response.data;
+};
+
+export const searchStudents = async (query: string): Promise<GetStudentsResponse> => {
+  const response = await axiosClient.get<GetStudentsResponse>("/students/search", {
+    params: { q: query },
+  });
   return response.data;
 };

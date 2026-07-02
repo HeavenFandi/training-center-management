@@ -19,6 +19,7 @@ const Studentmanagment: React.FC = () => {
   const {
     students,
     filteredStudents,
+    paginatedStudents,
     searchTerm,
     setSearchTerm,
     selectedStudent,
@@ -28,6 +29,8 @@ const Studentmanagment: React.FC = () => {
     isDeleteOpen,
     isViewOpen,
     loading,
+    searchLoading,
+    error,
     isUpdating,
     pendingImageFile,
     setPendingImageFile,
@@ -44,6 +47,13 @@ const Studentmanagment: React.FC = () => {
     handleCloseAdd,
     studentsWithActiveCourses,
     deleteErrorMessage,
+    page,
+    setPage,
+    totalPages,
+    rowsPerPage,
+    studentsCount,
+    studentsCountLoading,
+    studentsCountError,
   } = useStudentManagement();
   
   const showLoading = useDelayedLoading(loading);
@@ -52,7 +62,7 @@ const Studentmanagment: React.FC = () => {
     () => [
       {
         title: "إجمالي الطلاب",
-        value: `${students.length}`,
+        value: studentsCountLoading ? "..." : (studentsCountError ? "خطأ" : `${studentsCount ?? 0}`),
         icon: <GroupIcon />,
         color: "#2196f3",
       },
@@ -63,7 +73,7 @@ const Studentmanagment: React.FC = () => {
         color: "#4caf50",
       },
     ],
-    [students.length],
+    [studentsCount, studentsCountLoading, studentsCountError, students.length],
   );
 
   return (
@@ -133,13 +143,18 @@ const Studentmanagment: React.FC = () => {
       </Box>
 
       <StudentsTable
-        studentsData={filteredStudents}
+        studentsData={paginatedStudents}
         onView={handleViewClick}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
         showLoading={showLoading}
         hasData={students.length > 0}
+        searchLoading={searchLoading}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
+        rowsPerPage={rowsPerPage}
       />
 
       <AddStudentModal

@@ -1,8 +1,10 @@
 import React from "react";
 import { Paper, Box, Typography, Stack, LinearProgress } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { ActiveCourse } from "../../types/studentDashboard";
 
 const CourseActivityCard: React.FC<ActiveCourse> = (course) => {
+  const navigate = useNavigate();
   const total = Number(course.totalLectures) || 0;
   const attended = Number(course.lecturesAttended) || 0;
   const remaining = total - attended;
@@ -23,8 +25,15 @@ const CourseActivityCard: React.FC<ActiveCourse> = (course) => {
       : fallbackImage;
   const courseTitle = course.courseName || "دورة نشطة";
 
+  const handleCardClick = () => {
+    if (course.trainingSessionId) {
+      navigate(`/main/training-session-details/${course.trainingSessionId}`);
+    }
+  };
+
   return (
     <Paper
+      onClick={handleCardClick}
       sx={{
         p: 2,
         borderRadius: "20px",
@@ -37,6 +46,7 @@ const CourseActivityCard: React.FC<ActiveCourse> = (course) => {
         flexDirection: { xs: "column", sm: "row" },
         alignItems: { xs: "stretch", sm: "center" },
         gap: 2,
+        cursor: "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
           backgroundColor: "rgba(255, 255, 255, 0.8)",
