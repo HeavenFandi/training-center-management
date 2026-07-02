@@ -37,6 +37,9 @@ const StudentsResults = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+
+  const rowsPerPage = 6;
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -50,6 +53,12 @@ const StudentsResults = () => {
 
   const { grades } = useAppSelector((state) => state.grades);
   const { students } = useAppSelector((state) => state.students);
+  const totalPages = Math.ceil(grades.length / rowsPerPage);
+
+  const paginatedGrades = grades.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage,
+  );
 
   const getStudentName = (studentId: number) => {
     const student = students.find((s) => s.id === studentId);
@@ -227,7 +236,7 @@ const StudentsResults = () => {
       <TableContainer>
         {isMobile ? (
           <Box>
-            {grades.map((grade) => (
+            {paginatedGrades.map((grade) => (
               <Box
                 key={grade.id}
                 sx={{
@@ -315,7 +324,7 @@ const StudentsResults = () => {
             </TableHead>
 
             <TableBody>
-              {grades.map((grade) => {
+              {paginatedGrades.map((grade) => {
                 const isPassed = grade.score >= 60;
 
                 return (
@@ -405,25 +414,33 @@ const StudentsResults = () => {
         mt={3}>
         <Stack direction="row" spacing={2} gap={1}>
           <IconButton
+            disabled={page === totalPages || totalPages === 0}
+            onClick={() => setPage((prev) => prev + 1)}
             sx={{
               border: "2px solid black",
               borderRadius: "16px",
               color: "#091c39",
+              opacity: page === totalPages || totalPages === 0 ? 0.4 : 1,
             }}>
             <ChevronRightIcon />
           </IconButton>
 
           <IconButton
+            disabled={page === 1}
+            onClick={() => setPage((prev) => prev - 1)}
             sx={{
               border: "2px solid black",
               borderRadius: "16px",
               color: "#091c39",
+              opacity: page === 1 ? 0.4 : 1,
             }}>
             <ChevronLeftIcon />
           </IconButton>
         </Stack>
 
-        <Typography fontWeight="bold">عرض {grades.length} نتيجة</Typography>
+        <Typography fontWeight="bold">
+          عرض {paginatedGrades.length} من {grades.length} نتيجة
+        </Typography>
       </Stack>
     </Box>
   );

@@ -8,8 +8,18 @@ import actCreateTeacher from "./act/actCreateTeacher";
 import actUpdateTeacher from "./act/actUpdateTeacher";
 import actDeleteTeacher from "./act/actDeleteTeacher";
 import actUpdateTeacherProfileImage from "./act/actUpdateTeacherProfileImage";
+import actGetTeacherWeeklySchedule from "./act/actGetTeacherWeeklySchedule";
 import { TeacherApiResponse } from "../../api/teacherApi";
 import { RootState } from "../index";
+
+type WeeklyScheduleItem = {
+  day: string;
+  courseName: string;
+  startTime: string;
+  endTime: string;
+  teacherName: string;
+  room: string;
+};
 
 interface ITeachersState {
   teachers: TeacherApiResponse[];
@@ -25,6 +35,10 @@ interface ITeachersState {
   courseProgress: TeacherCourseProgress[];
   courseProgressLoading: "idle" | "pending" | "succeeded" | "failed";
   courseProgressError: string | null;
+
+  weeklySchedule: WeeklyScheduleItem[];
+  weeklyScheduleLoading: "idle" | "pending" | "succeeded" | "failed";
+  weeklyScheduleError: string | null;
 }
 
 const initialState: ITeachersState = {
@@ -41,6 +55,10 @@ const initialState: ITeachersState = {
   courseProgress: [],
   courseProgressLoading: "idle",
   courseProgressError: null,
+
+  weeklySchedule: [],
+  weeklyScheduleLoading: "idle",
+  weeklyScheduleError: null,
 };
 
 const teachersSlice = createSlice({
@@ -100,7 +118,7 @@ const teachersSlice = createSlice({
       .addCase(actUpdateTeacher.fulfilled, (state, action) => {
         state.updateLoading = "succeeded";
         const index = state.teachers.findIndex(
-          (teacher) => teacher.id === action.payload.id
+          (teacher) => teacher.id === action.payload.id,
         );
         if (index !== -1) {
           state.teachers[index] = action.payload;
@@ -142,14 +160,14 @@ const teachersSlice = createSlice({
           state.courseProgressError = action.payload;
         }
       })
-      
+
       // Delete teacher cases
       .addCase(actDeleteTeacher.pending, (state) => {
         state.error = null;
       })
       .addCase(actDeleteTeacher.fulfilled, (state, action) => {
         state.teachers = state.teachers.filter(
-          (teacher) => teacher.id !== action.payload
+          (teacher) => teacher.id !== action.payload,
         );
       })
       .addCase(actDeleteTeacher.rejected, (state, action) => {
@@ -166,7 +184,7 @@ const teachersSlice = createSlice({
       .addCase(actUpdateTeacherProfileImage.fulfilled, (state, action) => {
         state.updateLoading = "succeeded";
         const index = state.teachers.findIndex(
-          (teacher) => teacher.id === action.payload.id
+          (teacher) => teacher.id === action.payload.id,
         );
         if (index !== -1) {
           state.teachers[index] = action.payload;
@@ -179,6 +197,20 @@ const teachersSlice = createSlice({
         state.updateLoading = "failed";
         if (action.payload && typeof action.payload === "string") {
           state.error = action.payload;
+        }
+      })
+      .addCase(actGetTeacherWeeklySchedule.pending, (state) => {
+        state.weeklyScheduleLoading = "pending";
+        state.weeklyScheduleError = null;
+      })
+      .addCase(actGetTeacherWeeklySchedule.fulfilled, (state, action) => {
+        state.weeklyScheduleLoading = "succeeded";
+        state.weeklySchedule = action.payload;
+      })
+      .addCase(actGetTeacherWeeklySchedule.rejected, (state, action) => {
+        state.weeklyScheduleLoading = "failed";
+        if (action.payload && typeof action.payload === "string") {
+          state.weeklyScheduleError = action.payload;
         }
       });
   },

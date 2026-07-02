@@ -4,7 +4,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 interface TeacherImageUploadProps {
   image: string | undefined;
-  onImageChange: (imageUrl: string) => void;
+  onImageChange: (file: File, preview: string) => void;
 }
 
 const TeacherImageUpload: React.FC<TeacherImageUploadProps> = ({
@@ -16,8 +16,8 @@ const TeacherImageUpload: React.FC<TeacherImageUploadProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const imageUrl = URL.createObjectURL(file);
-      onImageChange(imageUrl);
+      const preview = URL.createObjectURL(file);
+      onImageChange(file, preview);
     }
   };
 
@@ -59,5 +59,3 @@ const TeacherImageUpload: React.FC<TeacherImageUploadProps> = ({
 };
 
 export default TeacherImageUpload;
-
-
