@@ -7,6 +7,7 @@ import actUpdateTeacher from "../../store/teachers/act/actUpdateTeacher";
 import actUpdateTeacherProfileImage from "../../store/teachers/act/actUpdateTeacherProfileImage";
 import actSearchTeachers from "../../store/teachers/act/actSearchTeachers";
 import { selectTeachersState, resetTeachersError, resetSelectedTeacher } from "../../store/teachers/teachersSlice";
+import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { TeacherApiResponse, UpdateTeacherRequest } from "../../api/teacherApi";
 import { AddTeacherFormData, EditTeacherFormData } from "../../validation/TeacherSchema";
@@ -15,6 +16,8 @@ export const useTeacherManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
   const { teachers, searchResults, loading, searchLoading, error, selectedTeacher, selectedTeacherLoading, selectedTeacherError, updateLoading } = useAppSelector(selectTeachersState);
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [teacherToDelete, setTeacherToDelete] = useState<TeacherApiResponse | null>(null);
@@ -27,6 +30,14 @@ export const useTeacherManagement = () => {
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // First, fetch institute by userId
+  useEffect(() => {
+    const userId = user?.id;
+    if (userId && !currentInstitute) {
+      dispatch(actGetInstituteByUserId(userId));
+    }
+  }, [dispatch, user, currentInstitute]);
 
   // Fetch all teachers on mount only if we don't have data yet
   useEffect(() => {

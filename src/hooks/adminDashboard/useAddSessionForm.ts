@@ -117,12 +117,17 @@ const formatTimeForApi = (timeStr: string) => {
 
 // Helper to convert any time value (string or object) to "HH:mm" for form state
 const parseTimeToFormState = (time: any): string => {
-  if (!time) return "09:00";
+  if (!time) return "";
   
   // If time is a string (already "HH:mm" or "HH:mm:ss")
   if (typeof time === "string") {
     const parts = time.split(":");
-    return `${parts[0]?.padStart(2, "0") || "09"}:${parts[1]?.padStart(2, "0") || "00"}`;
+    const hour = parts[0]?.padStart(2, "0");
+    const minute = parts[1]?.padStart(2, "0");
+    if (hour && minute) {
+      return `${hour}:${minute}`;
+    }
+    return "";
   }
   
   // If time is an object with hour and minute
@@ -130,7 +135,7 @@ const parseTimeToFormState = (time: any): string => {
     return `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
   }
   
-  return "09:00";
+  return "";
 };
 
 // Helper to add hours to a time string (HH:mm)
@@ -159,6 +164,45 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
   // Create schema with classrooms context using useMemo to prevent recreation
   const sessionSchema = useMemo(() => createSessionSchema(classrooms, isEditMode), [classrooms, isEditMode]);
 
+  // Initialize default values based on whether we're in edit mode or not
+  const defaultValues = useMemo((): SessionFormData => {
+    if (initialSession) {
+      // Edit mode: use initialSession data
+      return {
+        courseId: courseId || initialSession.courseId || 0,
+        teacherId: 0, // Will be set later via useEffect
+        classroomId: 0, // Will be set later via useEffect
+        price: initialSession.price || 0,
+        availableSeats: initialSession.availableSeats || 0,
+        minSeats: initialSession.minCapacity || 0,
+        numberOfLectures: 0,
+        status: initialSession.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status as "UPCOMING" | "ACTIVE" | "COMPLETED" : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
+        requiredEquipment: initialSession.requiredEquipment || "",
+        startDate: initialSession.startDate ? formatDateToYYYYMMDD(initialSession.startDate) : "",
+        startTime: parseTimeToFormState(initialSession.startTime),
+        endTime: parseTimeToFormState(initialSession.endTime),
+        daysOfWeek: (initialSession.days || []).map(day => reverseDayMap[day] || undefined).filter(Boolean) as ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[] || [],
+      };
+    } else {
+      // New mode: completely empty
+      return {
+        courseId: courseId || 0,
+        teacherId: 0,
+        classroomId: 0,
+        price: 0,
+        availableSeats: 0,
+        minSeats: 0,
+        numberOfLectures: 0,
+        status: "UPCOMING",
+        requiredEquipment: "",
+        startDate: "",
+        startTime: "",
+        endTime: "",
+        daysOfWeek: [],
+      };
+    }
+  }, [initialSession, courseId]);
+
   const {
     register,
     handleSubmit,
@@ -171,25 +215,23 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     mode: "onChange",
-    defaultValues: {
-      courseId: courseId || 0,
-      teacherId: 0,
-      classroomId: 0,
-      price: initialSession?.price || 0,
-      availableSeats: initialSession?.availableSeats || 0,
-      minSeats: initialSession?.minCapacity || 0,
-      numberOfLectures: 0,
-      duration: initialSession?.duration || "",
-      status: initialSession?.status ? (["UPCOMING", "ACTIVE", "COMPLETED"].includes(initialSession.status) ? initialSession.status as "UPCOMING" | "ACTIVE" | "COMPLETED" : arabicToEnglishStatus[initialSession.status]) : "UPCOMING",
-      requiredEquipment: initialSession?.requiredEquipment || "",
-      startDate: formatDateToYYYYMMDD(initialSession?.startDate),
-      startTime: parseTimeToFormState(initialSession?.startTime),
-      endTime: parseTimeToFormState(initialSession?.endTime) === parseTimeToFormState(initialSession?.startTime) 
-        ? addHoursToTime(parseTimeToFormState(initialSession?.startTime), 2) 
-        : parseTimeToFormState(initialSession?.endTime),
-      daysOfWeek: (initialSession?.days || []).map(day => reverseDayMap[day] || undefined).filter(Boolean) as ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[] || [],
-    },
+    defaultValues: defaultValues,
   });
+
+  // Watch classroomId to auto-set requiredEquipment
+  const watchedClassroomId = watch("classroomId");
+  
+  // Get selected classroom based on watchedClassroomId
+  const selectedClassroom = useMemo(() => {
+    return classrooms.find(c => c.id === watchedClassroomId);
+  }, [classrooms, watchedClassroomId]);
+
+  // Auto-set requiredEquipment when selectedClassroom changes
+  useEffect(() => {
+    if (selectedClassroom) {
+      setValue("requiredEquipment", selectedClassroom.availableDevices, { shouldValidate: false });
+    }
+  }, [selectedClassroom, setValue]);
 
   // When initialSession is provided, fetch the latest training session details and lectures
   useEffect(() => {
@@ -203,9 +245,8 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
     } else {
       // If no initialSession, reset to defaults
       setSelectedDays([]);
-      setValue("numberOfLectures", 0, { shouldValidate: true });
-      setValue("daysOfWeek", [], { shouldValidate: true });
-      setValue("duration", "", { shouldValidate: true });
+      setValue("numberOfLectures", 0, { shouldValidate: false });
+      setValue("daysOfWeek", [], { shouldValidate: false });
     }
   }, [initialSession?.id, dispatch, setValue]);
 
@@ -263,23 +304,22 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       }
       
       // Update form fields
-      setValue("teacherId", teacherId, { shouldValidate: true });
-      setValue("classroomId", classroomId, { shouldValidate: true });
-      setValue("status", status as "UPCOMING" | "ACTIVE" | "COMPLETED", { shouldValidate: true });
-      setValue("duration", selectedTrainingSession.duration, { shouldValidate: true });
-      setValue("price", selectedTrainingSession.price, { shouldValidate: true });
-      setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: true });
-      setValue("minSeats", selectedTrainingSession.minSeats, { shouldValidate: true });
-      setValue("requiredEquipment", selectedTrainingSession.requiredEquipment, { shouldValidate: true });
-      setValue("startDate", formattedStartDate, { shouldValidate: true });
-      setValue("startTime", parsedStartTime, { shouldValidate: true });
-      setValue("endTime", parsedEndTime, { shouldValidate: true });
+      setValue("teacherId", teacherId, { shouldValidate: false });
+      setValue("classroomId", classroomId, { shouldValidate: false });
+      setValue("status", status as "UPCOMING" | "ACTIVE" | "COMPLETED", { shouldValidate: false });
+      setValue("price", selectedTrainingSession.price, { shouldValidate: false });
+      setValue("availableSeats", selectedTrainingSession.availableSeats, { shouldValidate: false });
+      setValue("minSeats", selectedTrainingSession.minSeats, { shouldValidate: false });
+      setValue("requiredEquipment", selectedTrainingSession.requiredEquipment, { shouldValidate: false });
+      setValue("startDate", formattedStartDate, { shouldValidate: false });
+      setValue("startTime", parsedStartTime, { shouldValidate: false });
+      setValue("endTime", parsedEndTime, { shouldValidate: false });
       
       // Also set days from selectedTrainingSession if available
       if (selectedTrainingSession.daysOfWeek) {
         const arabicDays = selectedTrainingSession.daysOfWeek.map((day: string) => reverseDayMap[day]).filter(Boolean);
         setSelectedDays(arabicDays);
-        setValue("daysOfWeek", selectedTrainingSession.daysOfWeek as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">, { shouldValidate: true });
+        setValue("daysOfWeek", selectedTrainingSession.daysOfWeek as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">, { shouldValidate: false });
       }
     }
   }, [selectedTrainingSession, initialSession?.id, teachers, classrooms, trainingSessionsList, setValue]);
@@ -289,7 +329,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
     if (initialSession?.id && sessionLectures[initialSession.id]) {
       const lectures = sessionLectures[initialSession.id];
       const freshNumberOfLectures = lectures.length;
-      setValue("numberOfLectures", freshNumberOfLectures, { shouldValidate: true });
+      setValue("numberOfLectures", freshNumberOfLectures, { shouldValidate: false });
 
       // Extract unique days from lecture dates
       const uniqueEnglishDays = new Set<string>();
@@ -308,21 +348,11 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       // Update selectedDays state and form daysOfWeek
       setSelectedDays(arabicDays);
       const englishDaysForApi = arabicDays.map(day => dayMap[day]) as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
-      setValue("daysOfWeek", englishDaysForApi, { shouldValidate: true });
+      setValue("daysOfWeek", englishDaysForApi, { shouldValidate: false });
     }
   }, [initialSession?.id, sessionLectures, setValue]);
 
-  // For new sessions (not editing), set default values for teacherId and classroomId when options are loaded
-  useEffect(() => {
-    if (!initialSession) {
-      if (classrooms.length > 0 && watch("classroomId") === 0) {
-        setValue("classroomId", classrooms[0].id, { shouldValidate: true });
-      }
-      if (teachers.length > 0 && watch("teacherId") === 0) {
-        setValue("teacherId", teachers[0].id, { shouldValidate: true });
-      }
-    }
-  }, [classrooms, teachers, initialSession, watch, setValue]);
+
 
   useEffect(() => {
     if (courseId) {
@@ -340,7 +370,7 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       const newEnglishDays = newArabicDays.map((d) => dayMap[d]) as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
 
       console.log("Toggling day:", arabicDay, "New Arabic days:", newArabicDays, "New English days:", newEnglishDays);
-      setValue("daysOfWeek", newEnglishDays, { shouldValidate: true });
+      setValue("daysOfWeek", newEnglishDays, { shouldValidate: false });
       return newArabicDays;
     });
   }, [setValue]);
@@ -385,20 +415,39 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
   }, [onSave, initialSession, selectedImageFile]);
 
   const handleTimeChange = (field: "startTime" | "endTime", timeStr: string) => {
-    setValue(field, timeStr, { shouldValidate: true });
+    setValue(field, timeStr, { shouldValidate: false });
   };
 
-  // Override the reset to also reset selectedDays
+  // Override the reset to also reset selectedDays and image state
   const resetSelectedDays = useCallback(() => {
-    const days = initialSession?.days || [];
-    const arabicDays = days.map((day: string) => reverseDayMap[day] || day).filter(Boolean);
-    setSelectedDays(arabicDays);
+    if (initialSession) {
+      // Edit mode: reset to initialSession days
+      const days = initialSession.days || [];
+      const arabicDays = days.map((day: string) => reverseDayMap[day] || day).filter(Boolean);
+      setSelectedDays(arabicDays);
+    } else {
+      // New mode: clear all days
+      setSelectedDays([]);
+    }
   }, [initialSession]);
 
   const resetWithDays = useCallback((values?: Partial<SessionFormData>) => {
-    reset(values);
+    // Reset form
+    if (values) {
+      reset(values);
+    } else {
+      reset(defaultValues);
+    }
+    // Reset days
     resetSelectedDays();
-  }, [reset, resetSelectedDays]);
+    // Reset image state
+    setSelectedImageFile(null);
+    setImagePreview(null);
+    setImageError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [reset, resetSelectedDays, defaultValues]);
 
   return {
     register,
@@ -422,5 +471,6 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
     clearImage,
     isLoadingSessionDetails,
     selectedTrainingSession,
+    selectedClassroom,
   };
 };

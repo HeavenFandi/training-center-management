@@ -1,6 +1,6 @@
 import axiosClient from "./axiosClient";
 
-export interface CreateStudentRequest {
+export interface StudentRegistrationData {
   username: string;
   email: string;
   password: string;
@@ -14,9 +14,11 @@ export interface CreateStudentRequest {
   address: string;
   interest: string;
   bio: string;
-  enrollmentDate: string;
-  tenantId?: number | string;
-  instituteId?: number | string;
+}
+
+export interface CreateStudentRequest {
+  student: StudentRegistrationData;
+  instituteId: number;
 }
 
 export interface CreateStudentResponse {
@@ -39,7 +41,7 @@ export interface CreateStudentResponse {
 export type GetStudentsResponse = CreateStudentResponse[];
 
 export const createStudent = async (data: CreateStudentRequest): Promise<CreateStudentResponse> => {
-  const response = await axiosClient.post<CreateStudentResponse>("/students", data);
+  const response = await axiosClient.post<CreateStudentResponse>("/students/register", data);
   return response.data;
 };
 
@@ -143,9 +145,9 @@ export const getAllStudents = async (): Promise<GetStudentsResponse> => {
   return response.data;
 };
 
-export const searchStudents = async (query: string): Promise<GetStudentsResponse> => {
+export const searchStudents = async (query: string, instituteId: number | string): Promise<GetStudentsResponse> => {
   const response = await axiosClient.get<GetStudentsResponse>("/students/search", {
-    params: { q: query },
+    params: { q: query, instituteId },
   });
   return response.data;
 };

@@ -83,11 +83,15 @@ const SchedulingConflictDialog: React.FC<Props> = ({
 
   // Helper to render a suggestion card
   const renderSuggestion = (suggestion: any, index: number) => {
-    // Filter out note keys and clean up values
-    const entries = Object.entries(suggestion).filter(([key]) => !key.toLowerCase().includes("note"));
+    // Filter out unwanted keys: note, type, roomId, id, roomid, etc.
+    const unwantedKeys = ["note", "type", "roomid", "id", "room_id"];
+    const entries = Object.entries(suggestion).filter(([key]) => {
+      const lowerKey = key.toLowerCase();
+      return !unwantedKeys.some(unwanted => lowerKey.includes(unwanted));
+    });
     
     // Try to find a label or title, exclude note
-    let label = suggestion.label || suggestion.title || suggestion.name || `اقتراح ${index + 1}`;
+    let label = suggestion.label || suggestion.title || suggestion.name || suggestion.number || `اقتراح ${index + 1}`;
     
     // Clean label from note prefixes
     label = label.replace(/^note:/i, "").replace(/:note:$/i, "").trim();

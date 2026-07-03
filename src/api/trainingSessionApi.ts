@@ -51,7 +51,7 @@ export type CreateTrainingSessionRequest = {
   minSeats: number;
   numberOfLectures: number;
   requiredEquipment: string;
-  duration: string;
+  duration?: string;
   status: "UPCOMING" | "ACTIVE" | "COMPLETED";
   courseId: number;
   classroomId: number;
