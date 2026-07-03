@@ -46,6 +46,7 @@ interface SessionDetailsModalProps {
   session: TSession | null;
   course: TCourse;
   onUpdateSession: (updatedSession: TSession) => void;
+  onDeleteSuccess?: () => void;
 }
 
 const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
@@ -54,6 +55,7 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
   session,
   course,
   onUpdateSession,
+  onDeleteSuccess,
 }) => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
@@ -297,6 +299,9 @@ const SessionDetailsModal: React.FC<SessionDetailsModalProps> = ({
         setLectureToDelete(null);
         if (session) {
           showSnackbar("تم حذف المحاضرة بنجاح", "success");
+        }
+        if (onDeleteSuccess) {
+          onDeleteSuccess();
         }
       } else if (actDeleteLecture.rejected.match(result)) {
         const errorMessage = result.payload as string;

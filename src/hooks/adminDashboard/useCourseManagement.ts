@@ -431,6 +431,11 @@ export const useCourseManagement = () => {
           })
         );
       }
+
+      // Refresh courses list to reflect changes in CourseManagementGrid
+      if (currentInstitute?.tenantId) {
+        dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
+      }
     } catch (error) {
       console.error("Error in post update session:", error);
     }
@@ -459,6 +464,16 @@ export const useCourseManagement = () => {
   const handleFetchSessions = useCallback((courseId: number) => {
     if (currentInstitute?.id) {
       dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: currentInstitute.id }));
+    }
+  }, [dispatch, currentInstitute]);
+
+  const refreshCourseSessions = useCallback((courseId: number) => {
+    handleFetchSessions(courseId);
+  }, [handleFetchSessions]);
+
+  const refreshCourses = useCallback(() => {
+    if (currentInstitute?.tenantId) {
+      dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
     }
   }, [dispatch, currentInstitute]);
 
@@ -503,6 +518,8 @@ export const useCourseManagement = () => {
     handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    refreshCourseSessions,
+    refreshCourses,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,

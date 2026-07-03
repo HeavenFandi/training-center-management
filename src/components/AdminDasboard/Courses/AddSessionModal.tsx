@@ -56,13 +56,12 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
     clearImage,
     isLoadingSessionDetails,
     selectedTrainingSession,
+    selectedClassroom,
   } = useAddSessionForm({ onClose, onSave, initialSession, courseId: course?.id, teachers });
 
-  // Reset form when modal closes
+  // Reset form when modal opens or closes
   React.useEffect(() => {
-    if (!open) {
-      reset();
-    }
+    reset();
   }, [open, reset]);
 
   useEffect(() => {
@@ -88,12 +87,17 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
 
   // Helper to convert any time format (string or object) to "HH:mm" for the time input
   const formatTimeForInput = (time: any) => {
-    if (!time) return "00:00";
+    if (!time) return "";
     
     // If time is a string (already "HH:mm" or "HH:mm:ss")
     if (typeof time === "string") {
       const parts = time.split(":");
-      return `${parts[0]?.padStart(2, "0") || "00"}:${parts[1]?.padStart(2, "0") || "00"}`;
+      const hour = parts[0]?.padStart(2, "0");
+      const minute = parts[1]?.padStart(2, "0");
+      if (hour && minute) {
+        return `${hour}:${minute}`;
+      }
+      return "";
     }
     
     // If time is an object with hour and minute
@@ -101,7 +105,7 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
       return `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
     }
     
-    return "00:00";
+    return "";
   };
 
   // Determine if we need to show loading
@@ -247,18 +251,9 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <AuthInput
-                label="المدة *"
-                placeholder="مثال: 4 أسابيع"
-                {...register("duration")}
-                error={!!errors.duration}
-                helperText={errors.duration?.message}
-                compact
-              />
-            </Grid>
+
             {initialSession && (
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <Controller
                   name="status"
                   control={control}
@@ -280,16 +275,82 @@ const AddSessionModal: React.FC<Props> = ({ open, onClose, course, onSave, initi
                 />
               </Grid>
             )}
-            <Grid size={{ xs: 12, sm: 4 }}>
-                <AuthInput
-                  label="المتطلبات"
-                  placeholder="أدخل المتطلبات"
-                  {...register("requiredEquipment")}
-                  error={!!errors.requiredEquipment}
-                  helperText={errors.requiredEquipment?.message}
-                  compact
+            <Grid size={{ xs: 12, sm: initialSession ? 6 : 9 }}>
+              <Box sx={{ width: '100%', backgroundColor: 'transparent' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '0.7rem', md: '0.75rem' },
+                    mb: 0.1,
+                    textAlign: 'right',
+                    fontFamily: 'Tajawal',
+                    color: '#133E65'
+                  }}
+                >
+                  التجهيزات المتاحة
+                </Typography>
+                <Box
+                  sx={{
+                    width: '100%',
+                    borderRadius: '10px',
+                    minHeight: { xs: '28px', md: '32px' },
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    p: { xs: '2px 5px', md: '3px 5px' },
+                    alignItems: 'center',
+                    border: '1px solid rgba(0, 0, 0, 0.23)',
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  {selectedClassroom && selectedClassroom.availableDevices ? (
+                    selectedClassroom.availableDevices.split(',').map((device, index) => {
+                      const trimmedDevice = device.trim();
+                      if (trimmedDevice) {
+                        return (
+                          <Chip
+                            key={index}
+                            label={trimmedDevice}
+                            size="small"
+                            sx={{
+                              fontFamily: 'Tajawal',
+                              fontSize: { xs: '0.7rem', md: '0.75rem' },
+                              height: '24px'
+                            }}
+                          />
+                        );
+                      }
+                      return null;
+                    })
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#9ca3af',
+                        fontSize: { xs: '0.7rem', md: '0.75rem' },
+                        fontFamily: 'Tajawal',
+                        py: '4px'
+                      }}
+                    >
+                      الرجاء اختيار قاعة أولاً لعرض التجهيزات...
+                    </Typography>
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    textAlign: 'right',
+                    fontWeight: 'bold',
+                    margin: 0,
+                    padding: '0 4px 0 0',
+                    height: '12px',
+                    fontSize: '0.6rem',
+                    color: 'transparent',
+                    mt: 0.1
+                  }}
                 />
-              </Grid>
+              </Box>
+            </Grid>
             {initialSession && (
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" fontWeight="bold" mt={1.5} mb={1} color="#133E65">

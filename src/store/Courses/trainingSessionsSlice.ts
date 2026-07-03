@@ -448,7 +448,8 @@ const trainingSessionsSlice = createSlice({
       state.lectureDeleteError = null;
     });
     builder.addCase(actDeleteLecture.rejected, (state, action) => {
-      // Keep deletingLectureId as is until user closes modal
+      // Reset deletingLectureId so modal isn't stuck loading, but keep error
+      state.deletingLectureId = null;
       if (action.payload && typeof action.payload == "string")
         state.lectureDeleteError = action.payload;
     });
@@ -601,6 +602,10 @@ const trainingSessionsSlice = createSlice({
       state.trainingSessions = state.trainingSessions.filter(
         (session) => session.id !== action.payload,
       );
+      // Remove from activeSessions
+      state.activeSessions = state.activeSessions.filter(
+        (session) => session.id !== action.payload,
+      );
       // Also remove from courseSessions if exists
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
@@ -611,7 +616,8 @@ const trainingSessionsSlice = createSlice({
       }
     });
     builder.addCase(actDeleteTrainingSession.rejected, (state, action) => {
-      // Keep deletingSessionId as is until user closes modal
+      // Reset deletingSessionId so modal isn't stuck loading, but keep error
+      state.deletingSessionId = null;
       if (action.payload && typeof action.payload == "string")
         state.sessionDeleteError = action.payload;
     });

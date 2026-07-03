@@ -125,9 +125,9 @@ export const updateTeacherProfileImage = async (
   return response.data;
 };
 
-export const searchTeachers = async (query: string): Promise<TeacherSearchResult[]> => {
+export const searchTeachers = async (query: string, instituteId: number | string): Promise<TeacherSearchResult[]> => {
   const response = await axiosClient.get<TeacherSearchResult[]>("/teachers/search", {
-    params: { q: query },
+    params: { q: query, instituteId },
   });
   return response.data;
 };

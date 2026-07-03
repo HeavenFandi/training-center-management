@@ -49,6 +49,8 @@ const CourseManagement = () => {
     handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    refreshCourseSessions,
+    refreshCourses,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,
@@ -142,8 +144,10 @@ const CourseManagement = () => {
     if (success) {
       setIsDeleteSessionOpen(false);
       setSessionToDelete(null);
+      refreshCourseSessions(course.id);
+      refreshCourses();
     }
-  }, [sessionToDelete, handleDeleteSession]);
+  }, [sessionToDelete, handleDeleteSession, refreshCourseSessions, refreshCourses]);
 
   const handleCloseDeleteSession = useCallback(() => {
     setIsDeleteSessionOpen(false);
@@ -189,9 +193,17 @@ const CourseManagement = () => {
               handleCloseAddSession();
               // THEN handle post-update steps (snackbar, refetch, etc.)
               handlePostUpdateSession(result.sessionId, result.imageFile, result.courseId);
+              refreshCourseSessions(result.courseId);
+              refreshCourses();
             }
             } else {
-              handleAddSession(data, handleCloseAddSession);
+              handleAddSession(data, () => {
+                handleCloseAddSession();
+                if (sessionTargetCourse?.id) {
+                  refreshCourseSessions(sessionTargetCourse.id);
+                  refreshCourses();
+                }
+              });
             }
           }}
           initialSession={editingSession}
@@ -215,6 +227,12 @@ const CourseManagement = () => {
           session={selectedSession}
           course={sessionTargetCourse || { id: 0, title: "", category: "", categoryName: "", price: 0, requirements: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, hours: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
           onUpdateSession={handleLocalUpdateSession}
+          onDeleteSuccess={() => {
+            if (sessionTargetCourse?.id) {
+              refreshCourseSessions(sessionTargetCourse.id);
+              refreshCourses();
+            }
+          }}
         />
       )}
 

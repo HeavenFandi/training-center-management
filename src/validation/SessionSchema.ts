@@ -16,11 +16,10 @@ export const createSessionSchema = (classrooms: Classroom[], isEditMode: boolean
     courseId: z.number().int().min(1, "الكورس مطلوب"),
     teacherId: z.number().int().min(1, "المدرس مطلوب"),
     classroomId: z.number().int().min(1, "القاعة مطلوبة"),
-    price: z.number().min(0, "السعر لا يقبل قيم سالبة").refine((val) => val >= 0, "السعر يجب أن يكون موجباً"),
+    price: z.number().min(0, "السعر لا يقبل قيم سالبة").min(1, "السعر مطلوب"),
     availableSeats: z.number().int().min(1, "المقاعد المتاحة مطلوبة").refine((val) => val > 0, "المقاعد المتاحة يجب أن تكون أكبر من 0"),
     minSeats: z.number().int().min(1, "الحد الأدنى للمقاعد مطلوب").refine((val) => val > 0, "الحد الأدنى للمقاعد يجب أن يكون أكبر من 0"),
     numberOfLectures: z.number().int().min(1, "عدد المحاضرات مطلوب").max(100, "عدد المحاضرات لا يمكن أن يتجاوز 100"),
-    duration: z.string().min(1, "المدة مطلوبة"),
     status: z.enum(["UPCOMING", "ACTIVE", "COMPLETED"]),
     requiredEquipment: z.string().optional(),
     startDate: z.string().min(1, "تاريخ البداية مطلوب").refine((dateStr) => {
