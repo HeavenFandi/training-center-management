@@ -160,7 +160,6 @@ export const useAddStudentForm = ({
 
   const onError = useCallback(
     (errors: FieldErrors<StudentFormData>) => {
-      console.log("Form validation errors:", errors);
       showSnackbar("يرجى التأكد من ملء جميع الحقول بشكل صحيح", "error");
     },
     [showSnackbar],

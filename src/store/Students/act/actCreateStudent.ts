@@ -8,12 +8,9 @@ const actCreateStudent = createAsyncThunk(
   async (data: CreateStudentRequest, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Create student payload:", data);
       const response = await createStudent(data);
-      console.log("Create student response:", response);
       return response;
     } catch (error) {
-      console.error("actCreateStudent error:", error);
       return rejectWithValue(axiosErrorHandler(error));
     }
   }

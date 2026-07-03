@@ -64,9 +64,6 @@ export const updateStudent = async (
   // Always use FormData (server doesn't support JSON)
   const formData = new FormData();
   
-  // Debug logs
-  console.log("updateStudent data:", data);
-  
   formData.append("firstName", data.firstName);
   formData.append("lastName", data.lastName);
   formData.append("username", data.username);
@@ -78,10 +75,8 @@ export const updateStudent = async (
   
   if (data.profilePicture) {
     if (data.profilePicture instanceof File) {
-      console.log("Appending File:", data.profilePicture);
       formData.append("profilePicture", data.profilePicture);
     } else {
-      console.log("Appending base64 image");
       try {
         const [header, base64Data] = data.profilePicture.split(",");
         const mimeMatch = header.match(/:(.*?);/);
@@ -94,18 +89,11 @@ export const updateStudent = async (
         }
         const blob = new Blob([ab], { type: mimeType });
         const file = new File([blob], "profilePicture.jpg", { type: mimeType });
-        console.log("Created File from base64:", file);
         formData.append("profilePicture", file);
       } catch (error) {
-        console.error("Error converting base64 to file:", error);
+        // Error converting base64 to file
       }
     }
-  }
-
-  // Log all form data entries
-  console.log("FormData entries:");
-  for (const [key, value] of formData.entries()) {
-    console.log(key, value);
   }
 
   const response = await axiosClient.put<CreateStudentResponse>(`/students/${id}`, formData, {

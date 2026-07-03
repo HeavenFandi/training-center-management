@@ -206,8 +206,6 @@ export const useTeacherManagement = () => {
   const handleConfirmDelete = useCallback(async () => {
     if (!teacherToDelete || !teacherToDelete.id) return;
 
-    console.log("Deleting teacher id:", teacherToDelete.id);
-
     try {
       const resultAction = await dispatch(
         actDeleteTeacher(teacherToDelete.id)

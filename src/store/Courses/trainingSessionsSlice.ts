@@ -382,7 +382,6 @@ const trainingSessionsSlice = createSlice({
       state.ratingsLoading = "succeeded";
       state.ratings = action.payload;
       state.ratingsError = null;
-      console.log("ratings fulfilled:", action.payload);
     });
     builder.addCase(actGetCourseRatings.rejected, (state, action) => {
       state.ratingsLoading = "failed";

@@ -409,7 +409,6 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       endTime: formatTimeForApi(data.endTime),
       requiredEquipment: data.requiredEquipment || "",
     };
-    console.log("Submitting session data to API:", apiData);
     onSave(apiData, selectedImageFile);
     // Don't close the modal automatically - let the parent decide based on success/conflict
   }, [onSave, initialSession, selectedImageFile]);

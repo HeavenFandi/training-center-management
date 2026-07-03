@@ -142,11 +142,6 @@ const convertSessionResponseTimeFields = (
 export const createTrainingSession = async (
   data: CreateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
-  console.log(
-    "[DEBUG createTrainingSession] Data received from frontend:",
-    data,
-  );
-
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -156,15 +151,10 @@ export const createTrainingSession = async (
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
 
-  console.log(
-    "[DEBUG createTrainingSession] Final payload being sent:",
-    payload,
-  );
   const response = await axiosClient.post<TrainingSessionResponse>(
     "/training-sessions",
     payload,
   );
-  console.log("[DEBUG createTrainingSession] Backend response:", response);
   return convertSessionResponseTimeFields(response.data);
 };
 
@@ -172,12 +162,6 @@ export const updateTrainingSession = async (
   id: number,
   data: UpdateTrainingSessionRequest,
 ): Promise<TrainingSessionResponse> => {
-  console.log("[DEBUG updateTrainingSession] id:", id);
-  console.log(
-    "[DEBUG updateTrainingSession] Data received from frontend:",
-    data,
-  );
-
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -187,15 +171,10 @@ export const updateTrainingSession = async (
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
 
-  console.log(
-    "[DEBUG updateTrainingSession] Final payload being sent:",
-    payload,
-  );
   const response = await axiosClient.put<TrainingSessionResponse>(
     `/training-sessions/${id}`,
     payload,
   );
-  console.log("[DEBUG updateTrainingSession] Backend response:", response);
   return convertSessionResponseTimeFields(response.data);
 };
 
@@ -240,9 +219,6 @@ export const createLecture = async (
   sessionId: number,
   data: any,
 ): Promise<LectureResponse> => {
-  console.log("sessionId:", sessionId);
-  console.log("URL:", `/lectures/session/${sessionId}`);
-
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -252,7 +228,6 @@ export const createLecture = async (
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
 
-  console.log("Payload:", payload);
   const response = await axiosClient.post<LectureResponse>(
     `/lectures/session/${sessionId}`,
     payload,
@@ -278,8 +253,6 @@ export const updateLecture = async (
   id: number,
   data: any,
 ): Promise<LectureResponse> => {
-  console.log("[DEBUG updateLecture] Data received from frontend:", data);
-
   // Convert time fields to "HH:mm:ss" strings
   const payload = { ...data };
   if (payload.startTime) {
@@ -288,8 +261,6 @@ export const updateLecture = async (
   if (payload.endTime) {
     payload.endTime = convertTimeObjectToString(payload.endTime);
   }
-
-  console.log("[DEBUG updateLecture] Payload being sent to API:", payload);
 
   const response = await axiosClient.put<LectureResponse>(
     `/lectures/${id}`,

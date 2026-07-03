@@ -14,18 +14,13 @@ interface AuthState {
   registerSuccess: boolean;
 }
 
-console.log("[DEBUG authSlice] Initializing auth slice...");
 const savedUser = localStorage.getItem("user");
 const savedStudentId = localStorage.getItem("studentId");
-console.log("[DEBUG authSlice] localStorage.user raw:", savedUser);
-console.log("[DEBUG authSlice] localStorage.studentId raw:", savedStudentId);
 const parsedUser = savedUser ? JSON.parse(savedUser) : null;
-console.log("[DEBUG authSlice] parsedUser after JSON.parse:", parsedUser);
 
 // If we have a saved user and saved studentId but user doesn't have studentId, add it
 if (parsedUser && savedStudentId && !parsedUser.studentId) {
   parsedUser.studentId = Number(savedStudentId);
-  console.log("[DEBUG authSlice] Added studentId to parsedUser:", parsedUser);
 }
 
 const initialState: AuthState = {
@@ -39,7 +34,6 @@ const initialState: AuthState = {
   registerError: null,
   registerSuccess: false,
 };
-console.log("[DEBUG authSlice] Initial auth state:", initialState);
 
 const authSlice = createSlice({
   name: "auth",
@@ -83,20 +77,28 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(actAuthLogin.pending, (state) => {
-        console.log("[DEBUG authSlice] actAuthLogin.pending");
         state.loginLoading = true;
         state.loginError = null;
       })
       .addCase(actAuthLogin.fulfilled, (state, action) => {
-        console.log("[DEBUG authSlice] actAuthLogin.fulfilled, payload:", action.payload);
         state.loginLoading = false;
         state.user = action.payload;
         state.userType = action.payload.userType;
         state.isAuthenticated = true;
         state.loginError = null;
+        
+        // Keep localStorage in sync
+        localStorage.setItem("user", JSON.stringify(action.payload));
+        localStorage.setItem("userType", action.payload.userType);
+        localStorage.setItem("userId", String(action.payload.id));
+        if (action.payload.studentId) {
+          localStorage.setItem("studentId", String(action.payload.studentId));
+        }
+        if (action.payload.token) {
+          localStorage.setItem("token", action.payload.token);
+        }
       })
       .addCase(actAuthLogin.rejected, (state, action) => {
-        console.error("[DEBUG authSlice] actAuthLogin.rejected, payload:", action.payload);
         state.loginLoading = false;
         state.loginError = action.payload as string;
         state.isAuthenticated = false;

@@ -100,11 +100,6 @@ const CourseManagement = () => {
   };
 
   const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] handleSessionClick called!`);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session received:`, session);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session keys:`, Object.keys(session));
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.teacherId:`, session.teacherId);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.classroomId:`, session.classroomId);
     setSessionTargetCourse(course);
     setSelectedSession(session);
     setIsSessionDetailsOpen(true);

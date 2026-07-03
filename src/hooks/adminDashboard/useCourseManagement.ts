@@ -27,16 +27,10 @@ export const useCourseManagement = () => {
   const { currentInstitute } = useAppSelector((state) => state.institutes);
   const { user } = useAppSelector((state) => state.auth);
 
-  console.log("[useCourseManagement] currentInstitute:", currentInstitute);
-  console.log("[useCourseManagement] currentInstitute?.tenantId:", currentInstitute?.tenantId);
-  console.log("[useCourseManagement] user:", user);
-
   // Fetch institute by userId
   useEffect(() => {
     const userId = user?.id;
-    console.log("[useCourseManagement] userId:", userId);
     if (userId && !currentInstitute) {
-      console.log("[useCourseManagement] Dispatching actGetInstituteByUserId with userId:", userId);
       dispatch(actGetInstituteByUserId(userId));
     }
   }, [dispatch, user, currentInstitute]);
@@ -208,7 +202,7 @@ export const useCourseManagement = () => {
         dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
       }
     } catch (error) {
-      console.error("Error creating course: ", error);
+      // Error creating course
     }
   }, [dispatch, currentInstitute, showSnackbar]);
 
@@ -236,10 +230,6 @@ export const useCourseManagement = () => {
 
   // دالة اختيار اقتراح الباك إند المحدّثة لمعالجة تكرار الـ 409 وحساب الوقت بدقة
   const handleSelectSuggestion = useCallback(async (suggestion: any, onSuccess?: () => void) => {
-    console.log("=== handleSelectSuggestion CALLED ===");
-    console.log("originalFormData:", originalFormData);
-    console.log("Selected Suggestion:", suggestion);
-    
     if (!originalFormData) return;
 
     let updatedData = { ...originalFormData };
@@ -319,7 +309,6 @@ export const useCourseManagement = () => {
       daysOfWeek: updatedData.daysOfWeek,
     };
 
-    console.log("=== cleanPayload to submit ===", cleanPayload);
     setSubmittingSuggestion(true);
     
     try {
@@ -336,10 +325,9 @@ export const useCourseManagement = () => {
       } else {
         const payload = resultAction.payload as any;
         
-        // إذا واجه الاقتراح الحالي تضارباً إضافياً، يتم تحديث الديالوج بالاقتراحات الجديدة فوراً
+        // إذا واجه الاقتراح الحالي تعارضاً إضافياً، يتم تحديث الديالوج بالاقتراحات الجديدة فوراً
         if (payload?.status === 409 || resultAction.meta.requestStatus === "rejected") {
           const errorData = payload?.data || payload;
-          console.log("New Conflict from suggestion. Updating dialogue:", errorData);
           setConflictData(errorData);
           showSnackbar("الاقتراح المختار واجه تعارضاً زملانياً آخر، تم تحديث كروت الخيارات.", "warning");
         } else {
@@ -404,7 +392,6 @@ export const useCourseManagement = () => {
         return { success: false };
       }
     } catch (error) {
-      console.error("Error updating session:", error);
       showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
       return { success: false };
     } finally {
@@ -437,7 +424,7 @@ export const useCourseManagement = () => {
         dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
       }
     } catch (error) {
-      console.error("Error in post update session:", error);
+      // Error in post update session
     }
   }, [dispatch, showSnackbar, currentInstitute]);
 
@@ -457,7 +444,7 @@ export const useCourseManagement = () => {
       }
       // Don't show snackbar on rejection - error will appear in DeleteModal
     } catch (error) {
-      console.error("Error deleting session:", error);
+      // Error deleting session
     }
   }, [dispatch, selectedCourse, showSnackbar]);
 
