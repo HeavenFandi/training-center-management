@@ -8,7 +8,7 @@ import Register from "../pages/Auth/Register";
 import LandingPage from "../pages/LandingPage";
 import TrainingSessions from "../pages/TrainingSessions/TrainingSessions";
 import TrainingSessionDetails from "../pages/TrainingSessions/TrainingSessionDetails";
-import ALNourInstitute from "../pages/Institute/ALNourInstitute";
+import InstituteDetails from "../pages/Institute/InstituteDetails";
 import TeacherDetailsPage from "../pages/Teacher/TeacherDetailsPage";
 import MainDashboard from "../pages/AdmainDashboard/MainDashboard";
 import Studentmanagment from "../pages/AdmainDashboard/Studentmanagment";
@@ -134,10 +134,10 @@ const router = createBrowserRouter([
             path: "training-session-details/:id",
             element: <TrainingSessionDetails />,
           },
-          { path: "ALNourInstitute", element: <ALNourInstitute /> },
+          { path: "InstituteDetails", element: <InstituteDetails /> },
           {
             path: "institute/:id",
-            element: <ALNourInstitute />,
+            element: <InstituteDetails />,
           },
           {
             path: "teacher-details/:id",

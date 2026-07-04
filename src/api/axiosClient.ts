@@ -5,19 +5,29 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  console.log("=== [DEBUG axiosClient] REQUEST SENDING ===");
-  console.log("Full URL:", (config.baseURL ?? "") + (config.url ?? ""));
-  console.log("Method:", config.method?.toUpperCase());
-  console.log("Request Payload (JSON stringified):", JSON.stringify(config.data, null, 2));
-  console.log("Request Payload raw:", config.data);
+  // Only log safe metadata in development mode
+  if (import.meta.env.DEV) {
+    console.log("[axiosClient] Request:", {
+      method: config.method?.toUpperCase(),
+      url: (config.baseURL ?? "") + (config.url ?? ""),
+    });
+  }
   
   const user = localStorage.getItem("user");
   if (user) {
-    const parsedUser = JSON.parse(user);
-    const token = parsedUser.token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("[DEBUG axiosClient] Added Authorization header");
+    try {
+      const parsedUser = JSON.parse(user);
+      const token = parsedUser?.token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      // Invalid JSON, clear all corrupted auth-related localStorage entries
+      localStorage.removeItem("user");
+      localStorage.removeItem("userType");
+      localStorage.removeItem("studentId");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("token");
     }
   }
   return config;
@@ -25,19 +35,9 @@ axiosClient.interceptors.request.use((config) => {
 
 axiosClient.interceptors.response.use(
   (response) => {
-    console.log("[DEBUG axiosClient] Response received:", {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    });
     return response;
   },
   (error) => {
-    console.error("=== [DEBUG axiosClient] RESPONSE ERROR ===");
-    console.error("Status:", error.response?.status);
-    console.error("Status Text:", error.response?.statusText);
-    console.error("Error Response Data (full):", error.response?.data);
-    console.error("Error message:", error.message);
     return Promise.reject(error);
   }
 );

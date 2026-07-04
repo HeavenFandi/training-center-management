@@ -27,6 +27,10 @@ const actAuthLogin = createAsyncThunk<
   LoginPayload,
   { rejectValue: string }
 >("auth/actAuthLogin", async (data, thunkAPI) => {
+  if (import.meta.env.DEV) {
+    console.log("📧 Login attempt with data:", { email: data.email });
+  }
+
   try {
     const loginData = {
       email: data.email.trim(),
@@ -35,21 +39,19 @@ const actAuthLogin = createAsyncThunk<
 
     const response = await axiosClient.post<User>("/auth/login", loginData);
     
-    const userData = response.data;
- 
-    const userId = userData.id;
-
-    // If token is in response, save it
-    if (userData.token) {
-      localStorage.setItem("token", userData.token);
+    if (import.meta.env.DEV) {
+      console.log("✅ /auth/login response:", response);
     }
+
+    const userData = response.data;
+
+    const userId = userData.id;
 
     // If user is a student, fetch all students and find the matching one
     if (userData.userType === "STUDENT") {
       try {
         const studentsResponse = await axiosClient.get("/students");
 
-        // Process students array, handling nested data
         let students: any[] = [];
         if (studentsResponse.data && Array.isArray(studentsResponse.data)) {
           students = studentsResponse.data;
@@ -61,40 +63,32 @@ const actAuthLogin = createAsyncThunk<
           students = studentsResponse.data.data;
         }
 
-        // Find matching student exactly: student.userId === login userId
         const matchedStudent = students.find((student: any) => {
-          const matches = student.userId === userId;
-          return matches;
+          return student.userId === userId;
         });
 
         if (matchedStudent) {
           const studentId = matchedStudent.id;
           userData.studentId = studentId;
-          // Attach student data (including image) to user
           userData.student = matchedStudent;
           userData.image = matchedStudent.image;
         }
       } catch (studentErr) {
-        // Error fetching students
+        if (import.meta.env.DEV) {
+          console.error("⚠️ Error fetching student data (proceeding):", studentErr);
+        }
       }
     }
 
-    // Clear existing auth data first to avoid stale data
-    localStorage.removeItem("user");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("studentId");
-    localStorage.removeItem("userId");
-
-    // Save user info and user type to localStorage
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("userType", userData.userType);
-    localStorage.setItem("userId", String(userId));
-    if (userData.studentId) {
-      localStorage.setItem("studentId", String(userData.studentId));
+    if (import.meta.env.DEV) {
+      console.log("🎉 Returning user data from actAuthLogin:", userData);
     }
 
     return userData;
   } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("❌ actAuthLogin error:", error);
+    }
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
       const serverData = error.response?.data;

@@ -1,9 +1,13 @@
 import { isAxiosError } from "axios";
 
 const axiosErrorHandler = (error: unknown) => {
-  console.error("Full axios error:", error);
+  if (import.meta.env.DEV) {
+    console.error("Full axios error:", error);
+    if (isAxiosError(error)) {
+      console.error("Error response data:", error.response?.data);
+    }
+  }
   if (isAxiosError(error)) {
-    console.error("Error response data:", error.response?.data);
     if (!error.response) {
       // Network error (no response received)
       return "خطأ في الاتصال بالإنترنت، يرجى التحقق من الشبكة وإعادة المحاولة.";

@@ -94,7 +94,7 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
               {trainingSession.title}
             </Typography>
             <Typography
-              onClick={() => navigate(`/main/ALNourInstitute`)}
+              onClick={() => navigate(`/main/InstituteDetails`)}
               sx={{
                 fontFamily: "Tajawal",
                 color: "#7b8794",
