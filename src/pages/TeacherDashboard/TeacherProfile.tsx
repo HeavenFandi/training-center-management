@@ -24,11 +24,7 @@ import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import actUpdateTeacher from "../../store/teachers/act/actUpdateTeacher";
-import EditTeacherModal, {
-  TeacherFormData,
-} from "../../components/AdminDasboard/Teachers/PersonalInfo/EditInformationTeacher";
-import actUpdateTeacherProfileImage from "../../store/teachers/act/actUpdateTeacherProfileImage";
+
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actGetTeacherById from "../../store/teachers/act/actGetTeacherById";
 import actGetTeacherCourseProgress from "../../store/teachers/act/actGetTeacherCourseProgress";
@@ -40,9 +36,21 @@ type Course = {
   students: number;
 };
 
-type Teacher = TeacherFormData & {
+type Teacher = {
+  fname: string;
+  lname: string;
+  username: string;
+  specialty: string;
+  teacherCode: string;
+  status: string;
+  city: string;
+  experience: string;
   students: number;
   coursesCount: number;
+  email: string;
+  phone: string;
+  bio: string;
+  image: string;
   courses: Course[];
 };
 
@@ -71,7 +79,6 @@ const initialTeacher: Teacher = {
 
 const TeacherProfile = () => {
   const [teacher, setTeacher] = useState<Teacher>(initialTeacher);
-  const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const dispatch = useAppDispatch();
 
@@ -109,72 +116,7 @@ const TeacherProfile = () => {
     }
   }, [selectedTeacher, courseProgress.length]);
 
-  const handleSaveTeacher = async (
-    updatedTeacher: TeacherFormData,
-    imageFile?: File | null,
-  ) => {
-    console.log("handleSaveTeacher");
-    console.log(updatedTeacher);
 
-    if (!selectedTeacher) return;
-    console.log("Updated Teacher Phone:", updatedTeacher.phone);
-    const result = await dispatch(
-      actUpdateTeacher({
-        id: selectedTeacher.id,
-        data: {
-          userId: selectedTeacher.userId!,
-          username: updatedTeacher.username,
-          email: updatedTeacher.email,
-          firstName: updatedTeacher.fname,
-          lastName: updatedTeacher.lname,
-          phone: updatedTeacher.phone,
-          specialization: updatedTeacher.specialty,
-          certificates: "",
-          address: updatedTeacher.city,
-          cv: updatedTeacher.bio,
-          experienceYears: Number(updatedTeacher.experience),
-        },
-      }),
-    );
-    console.log("After dispatch", result);
-    if (actUpdateTeacher.fulfilled.match(result)) {
-      let newImage = updatedTeacher.image;
-
-      if (imageFile) {
-        const imageResult = await dispatch(
-          actUpdateTeacherProfileImage({
-            id: selectedTeacher.id,
-            file: imageFile,
-          }),
-        );
-
-        if (actUpdateTeacherProfileImage.fulfilled.match(imageResult)) {
-          newImage = imageResult.payload.image || newImage;
-        }
-      }
-
-      setTeacher((prev) => ({
-        ...prev,
-        fname: updatedTeacher.fname,
-        lname: updatedTeacher.lname,
-        username: updatedTeacher.username,
-        specialty: updatedTeacher.specialty,
-        city: updatedTeacher.city,
-        experience: updatedTeacher.experience,
-        email: updatedTeacher.email,
-        phone: updatedTeacher.phone,
-        bio: updatedTeacher.bio,
-        image: newImage,
-        students: prev.students,
-        coursesCount: courseProgress.length,
-        courses: prev.courses,
-      }));
-
-      dispatch(actGetTeacherById(selectedTeacher.id));
-
-      setOpenEditModal(false);
-    }
-  };
 
   return (
     <Box
@@ -225,29 +167,7 @@ const TeacherProfile = () => {
             </Typography>
           </Box>
 
-          <Button
-            onClick={() => setOpenEditModal(true)}
-            variant="contained"
-            startIcon={<EditIcon sx={{ ml: 1 }} />}
-            sx={{
-              bgcolor: "#091c39",
-              color: "#fff",
-              borderRadius: "50px",
-              px: 4,
-              py: 1.3,
-              fontWeight: "bold",
-              fontSize: "15px",
-              boxShadow: "0px 8px 20px rgba(19, 62, 101, 0.2)",
-              fontFamily: "Tajawal",
-              alignSelf: { xs: "flex-start", sm: "center" },
-              "&:hover": { bgcolor: "#0d2d4a" },
-              "& .MuiButton-startIcon": {
-                marginLeft: "8px",
-                marginRight: 0,
-              },
-            }}>
-            تعديل المعلومات
-          </Button>
+
         </Stack>
 
         <Paper
@@ -460,12 +380,7 @@ const TeacherProfile = () => {
         </Grid>
       </Stack>
 
-      <EditTeacherModal
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        teacher={teacher}
-        onSave={handleSaveTeacher}
-      />
+
       <Dialog
         open={!!selectedCourse}
         onClose={() => setSelectedCourse(null)}

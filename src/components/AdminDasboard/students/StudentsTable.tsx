@@ -20,7 +20,6 @@ import {
   PaginationItem,
 } from "@mui/material";
 
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SchoolIcon from "@mui/icons-material/School";
@@ -31,7 +30,6 @@ import TableSkeleton from "../../Common/TableSkeleton";
 interface Props {
   studentsData: CreateStudentResponse[];
   onView: (student: CreateStudentResponse) => void;
-  onEdit: (student: CreateStudentResponse) => void;
   onDelete: (student: CreateStudentResponse) => void;
   loading?: "idle" | "pending" | "succeeded" | "failed";
   showLoading?: boolean;
@@ -47,7 +45,6 @@ interface Props {
 const StudentsTable: React.FC<Props> = memo(({
   studentsData,
   onView,
-  onEdit,
   onDelete,
   loading,
   showLoading,
@@ -144,25 +141,6 @@ const StudentsTable: React.FC<Props> = memo(({
                     }}
                   >
                     <VisibilityIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="تعديل الطالب">
-                  <IconButton
-                    onClick={() => onEdit(student)}
-                    sx={{
-                      background: "#e9f7ef",
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        background: "#c8f2dc",
-                        transform: "scale(1.1)",
-                      },
-                    }}
-                  >
-                    <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
 
@@ -305,25 +283,6 @@ const StudentsTable: React.FC<Props> = memo(({
                       >
                         <VisibilityIcon sx={{ color: "#1d4ed8", fontSize: 20 }} />
                       
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="تعديل الطالب">
-                      <IconButton
-                        onClick={() => onEdit(student)}
-                        sx={{
-                          background: "#e9f7ef",
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            background: "#c8f2dc",
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      >
-                        <EditIcon sx={{ color: "#2ecc71", fontSize: 20 }} />
                       </IconButton>
                     </Tooltip>
 

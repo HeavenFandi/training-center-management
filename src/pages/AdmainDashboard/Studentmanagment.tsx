@@ -2,7 +2,6 @@ import React, { memo, useMemo } from "react";
 import { Grid, Box, TextField, InputAdornment, IconButton } from "@mui/material";
 import StudentsTable from "../../components/AdminDasboard/students/StudentsTable";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
-import EditStudentModal from "../../components/AdminDasboard/students/EditStudentModal";
 import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import StudentDetailsModal from "../../components/AdminDasboard/students/StudentDetailsModal";
 import AddStudentModal from "../../components/AdminDasboard/students/AddStudentModal";
@@ -25,23 +24,16 @@ const Studentmanagment: React.FC = () => {
     selectedStudent,
     studentToDelete,
     isAddOpen,
-    isEditOpen,
     isDeleteOpen,
     isViewOpen,
     loading,
     searchLoading,
     error,
-    isUpdating,
-    pendingImageFile,
-    setPendingImageFile,
     handleAddStudent,
     handleViewClick,
     handleCloseView,
-    handleEditClick,
-    handleCloseEdit,
     handleDeleteClick,
     handleCloseDelete,
-    handleSaveEdit,
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
@@ -145,7 +137,6 @@ const Studentmanagment: React.FC = () => {
       <StudentsTable
         studentsData={paginatedStudents}
         onView={handleViewClick}
-        onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
         showLoading={showLoading}
@@ -168,18 +159,6 @@ const Studentmanagment: React.FC = () => {
         student={selectedStudent}
         onClose={handleCloseView}
       />
-
-      {selectedStudent && (
-        <EditStudentModal
-          key={selectedStudent.id}
-          open={isEditOpen}
-          student={selectedStudent}
-          onClose={handleCloseEdit}
-          onSave={handleSaveEdit}
-          loading={isUpdating}
-          setPendingImageFile={setPendingImageFile}
-        />
-      )}
 
       <GenericDeleteModal
         open={isDeleteOpen}

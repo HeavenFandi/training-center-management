@@ -1,8 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { CreateStudentResponse, UpdateStudentRequest, getStudentActiveCourses } from "../../api/studentApi";
+import { CreateStudentResponse, getStudentActiveCourses } from "../../api/studentApi";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actGetStudents from "../../store/Students/act/actGetStudents";
-import actUpdateStudent from "../../store/Students/act/actUpdateStudent";
 import actDeleteStudent from "../../store/Students/act/actDeleteStudent";
 import actSearchStudents from "../../store/Students/act/actSearchStudents";
 import { selectStudentsState, resetStudentsError } from "../../store/Students/studentsSlice";
@@ -24,11 +23,8 @@ export const useStudentManagement = () => {
   const ITEMS_PER_PAGE = 10;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   // Track which students have active courses (cannot be deleted)
   const [studentsWithActiveCourses, setStudentsWithActiveCourses] = useState<Set<number>>(new Set());
 
@@ -152,16 +148,6 @@ export const useStudentManagement = () => {
     setIsViewOpen(false);
   }, []);
 
-  const handleEditClick = useCallback((student: CreateStudentResponse) => {
-    setSelectedStudent(student);
-    setIsEditOpen(true);
-  }, []);
-
-  const handleCloseEdit = useCallback(() => {
-    setIsEditOpen(false);
-    setPendingImageFile(null);
-  }, []);
-
   const handleDeleteClick = useCallback((student: CreateStudentResponse) => {
     setStudentToDelete(student);
     // Check if student has active courses
@@ -177,58 +163,6 @@ export const useStudentManagement = () => {
     setIsDeleteOpen(false);
     setDeleteErrorMessage(null);
   }, []);
-
-  const handleSaveEdit = useCallback(async (formData: CreateStudentResponse) => {
-    if (!selectedStudent || !selectedStudent.id) return;
-
-    console.log("[DEBUG useStudentManagement] handleSaveEdit called with formData:", formData);
-
-    // Merge existing student data with form data
-    const mergedData = {
-      ...selectedStudent,
-      ...formData,
-      bio: formData.bio ?? selectedStudent.bio ?? "",
-    };
-    console.log("[DEBUG useStudentManagement] Merged data:", mergedData);
-
-    // Build update payload for API
-    const updatePayload: UpdateStudentRequest = {
-      firstName: mergedData.firstName,
-      lastName: mergedData.lastName,
-      username: mergedData.username,
-      gender: mergedData.gender,
-      birthDate: mergedData.birthDate,
-      address: mergedData.address,
-      bio: mergedData.bio ?? "",
-      interest: mergedData.interest,
-      profilePicture: pendingImageFile ?? undefined,
-    };
-    console.log("Update payload:", updatePayload);
-
-    setIsUpdating(true);
-    try {
-      const resultAction = await dispatch(
-        actUpdateStudent({ id: selectedStudent.id, data: updatePayload })
-      );
-
-      if (actUpdateStudent.fulfilled.match(resultAction)) {
-        showSnackbar("تم تحديث بيانات الطالب بنجاح", "success");
-        setIsEditOpen(false);
-        setPendingImageFile(null);
-      } else {
-        const errorMessage =
-          typeof resultAction.payload === "string"
-            ? resultAction.payload
-            : "حدث خطأ أثناء تحديث البيانات";
-        showSnackbar(errorMessage, "error");
-      }
-    } catch (error) {
-      console.error("[DEBUG useStudentManagement] handleSaveEdit error:", error);
-      showSnackbar("حدث خطأ أثناء تحديث البيانات", "error");
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [dispatch, showSnackbar, selectedStudent, pendingImageFile]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!studentToDelete || !studentToDelete.id) return;
@@ -292,23 +226,16 @@ export const useStudentManagement = () => {
     selectedStudent,
     studentToDelete,
     isAddOpen,
-    isEditOpen,
     isDeleteOpen,
     isViewOpen,
     loading,
     searchLoading,
     error,
-    isUpdating,
-    pendingImageFile,
-    setPendingImageFile,
     handleAddStudent,
     handleViewClick,
     handleCloseView,
-    handleEditClick,
-    handleCloseEdit,
     handleDeleteClick,
     handleCloseDelete,
-    handleSaveEdit,
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
