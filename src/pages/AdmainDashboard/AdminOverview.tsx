@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useState, useRef } from "react";
 import { Box, Grid, Typography, IconButton, Button, Select, MenuItem, FormControl, InputLabel, CircularProgress } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -6,9 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
 import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
-import { actGetAllLectures } from "../../store/Courses/trainingSessionsSlice";
+import { actGetAllLectures, clearTrainingSessionsState } from "../../store/Courses/trainingSessionsSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
-import { selectCoursesState } from "../../store/Courses/courseSlice";
+import { clearCoursesState, selectCoursesState } from "../../store/Courses/courseSlice";
+import { clearTeachersState } from "../../store/teachers/teachersSlice";
 import MonthlyRegistrationChart from "../../components/AdminDasboard/MainDashboard/MonthlyRegistrationChart";
 import FinancialCard from "../../components/AdminDasboard/MainDashboard/FinancialCard";
 import ScheduleCard from "../../components/AdminDasboard/MainDashboard/ScheduleCard";
@@ -44,6 +45,23 @@ const AdminOverview: React.FC = () => {
   const { courses, loading: coursesLoading, error: coursesError } = useAppSelector(selectCoursesState);
     
   const showInstituteLoading = useDelayedLoading(currentInstituteLoading);
+  
+  // Track previous institute id
+  const previousInstituteIdRef = useRef<number | null>(null);
+
+  // Clear state when institute changes
+  useEffect(() => {
+    const currentInstituteId = currentInstitute?.id || null;
+    if (previousInstituteIdRef.current !== currentInstituteId) {
+      if (import.meta.env.DEV) {
+        console.log(`[AdminOverview] Institute changed from ${previousInstituteIdRef.current} to ${currentInstituteId}, clearing state...`);
+      }
+      dispatch(clearCoursesState());
+      dispatch(clearTrainingSessionsState());
+      dispatch(clearTeachersState());
+      previousInstituteIdRef.current = currentInstituteId;
+    }
+  }, [currentInstitute?.id, dispatch]);
 
   const getTodayDate = (): string => {
     const today = new Date();
@@ -55,10 +73,14 @@ const AdminOverview: React.FC = () => {
 
   const todayLectures = useMemo(() => {
     const today = getTodayDate();
-    console.log("allLectures from Redux:", allLectures);
-    console.log("today date:", today);
+    if (import.meta.env.DEV) {
+      console.log("allLectures from Redux:", allLectures);
+      console.log("today date:", today);
+    }
     const filtered = allLectures.filter(lecture => lecture.lectureDate === today);
-    console.log("filtered todayLectures:", filtered);
+    if (import.meta.env.DEV) {
+      console.log("filtered todayLectures:", filtered);
+    }
     return filtered;
   }, [allLectures]);
 
@@ -67,31 +89,39 @@ const AdminOverview: React.FC = () => {
 
   // Process data to fill missing months with 0 and map to Arabic names
   const processedChartData = useMemo(() => {
-    console.log("Monthly registrations response (processedChartData):", monthlyRegistrations);
-    monthlyRegistrations.forEach((item, idx) => {
-      console.log(`Item ${idx} keys:`, Object.keys(item));
-      console.log(`Item ${idx} values:`, Object.values(item));
-    });
+    if (import.meta.env.DEV) {
+      console.log("Monthly registrations response (processedChartData):", monthlyRegistrations);
+      monthlyRegistrations.forEach((item, idx) => {
+        console.log(`Item ${idx} keys:`, Object.keys(item));
+        console.log(`Item ${idx} values:`, Object.values(item));
+      });
+    }
     const result: { name: string; value: number }[] = [];
 
     for (let i = 1; i <= 12; i++) {
       const monthData = monthlyRegistrations.find((item) => 
         item.month === i || item.Month === i || item.monthNumber === i || item.MonthNumber === i
       );
-      console.log(`Looking for month ${i}, found:`, monthData);
+      if (import.meta.env.DEV) {
+        console.log(`Looking for month ${i}, found:`, monthData);
+      }
       const regValue = monthData?.registrations ?? monthData?.Registrations ?? monthData?.count ?? 0;
       result.push({
         name: arabicMonths[i],
         value: regValue,
       });
     }
-    console.log("AdminOverview: processedChartData:", result);
+    if (import.meta.env.DEV) {
+      console.log("AdminOverview: processedChartData:", result);
+    }
     return result;
   }, [monthlyRegistrations]);
 
   // Process financial monthly data
   const processedFinancialData = useMemo(() => {
-    console.log("Financial monthly response (processedFinancialData):", financialMonthly);
+    if (import.meta.env.DEV) {
+      console.log("Financial monthly response (processedFinancialData):", financialMonthly);
+    }
     const result: { name: string; totalRevenue: number; totalPayments: number }[] = [];
 
     for (let i = 1; i <= 12; i++) {
@@ -104,7 +134,9 @@ const AdminOverview: React.FC = () => {
         totalPayments: monthData?.totalPayments ?? 0,
       });
     }
-    console.log("AdminOverview: processedFinancialData:", result);
+    if (import.meta.env.DEV) {
+      console.log("AdminOverview: processedFinancialData:", result);
+    }
     return result;
   }, [financialMonthly]);
 
@@ -124,9 +156,13 @@ const AdminOverview: React.FC = () => {
 
   // First, fetch institute by userId
   useEffect(() => {
-    console.log("auth user:", user);
+    if (import.meta.env.DEV) {
+      console.log("auth user:", user);
+    }
     const userId = user?.id;
-    console.log("admin userId:", userId);
+    if (import.meta.env.DEV) {
+      console.log("admin userId:", userId);
+    }
     if (userId && !currentInstitute) {
       dispatch(actGetInstituteByUserId(userId));
     }
@@ -135,9 +171,11 @@ const AdminOverview: React.FC = () => {
   // Fetch monthly registrations only when currentInstitute exists
   useEffect(() => {
     const instituteId = currentInstitute?.id;
-    console.log("currentInstitute:", currentInstitute);
-    console.log("currentInstitute.id:", currentInstitute?.id);
-    console.log("Year:", currentYear);
+    if (import.meta.env.DEV) {
+      console.log("currentInstitute:", currentInstitute);
+      console.log("currentInstitute.id:", currentInstitute?.id);
+      console.log("Year:", currentYear);
+    }
     if (!currentInstitute?.id) {
       return; // Guard clause
     }
@@ -147,9 +185,11 @@ const AdminOverview: React.FC = () => {
   // Fetch financial monthly data only when currentInstitute exists
   useEffect(() => {
     const instituteId = currentInstitute?.id;
-    console.log("currentInstitute (financial):", currentInstitute);
-    console.log("currentInstitute.id (financial):", currentInstitute?.id);
-    console.log("Year (financial):", currentYear);
+    if (import.meta.env.DEV) {
+      console.log("currentInstitute (financial):", currentInstitute);
+      console.log("currentInstitute.id (financial):", currentInstitute?.id);
+      console.log("Year (financial):", currentYear);
+    }
     if (!currentInstitute?.id) {
       return; // Guard clause
     }
@@ -179,9 +219,11 @@ const AdminOverview: React.FC = () => {
 
   // Log state changes
   useEffect(() => {
-    console.log("AdminOverview: monthlyRegistrations:", monthlyRegistrations);
-    console.log("AdminOverview: monthlyRegistrationsLoading:", monthlyRegistrationsLoading);
-    console.log("AdminOverview: monthlyRegistrationsError:", monthlyRegistrationsError);
+    if (import.meta.env.DEV) {
+      console.log("AdminOverview: monthlyRegistrations:", monthlyRegistrations);
+      console.log("AdminOverview: monthlyRegistrationsLoading:", monthlyRegistrationsLoading);
+      console.log("AdminOverview: monthlyRegistrationsError:", monthlyRegistrationsError);
+    }
   }, [monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError]);
 
   const userId = user?.id;

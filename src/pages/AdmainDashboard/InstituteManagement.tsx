@@ -29,7 +29,7 @@ import {
   actGetStudentsCount,
 } from "../../store/Institutes/institutesSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
-import actGetTeachers from "../../store/teachers/act/actGetTeachers";
+import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
 import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 
 interface InstituteInfo {
@@ -243,28 +243,32 @@ const InstituteManagement: React.FC = () => {
   }, [updateSuccess, updateError, showSnackbar, dispatch]);
 
   useEffect(() => {
-    console.log(
-      "InstituteManagement: coursesLoading:",
-      coursesLoading,
-      "courses:",
-      courses,
-      "error:",
-      coursesError,
-    );
+    if (import.meta.env.DEV) {
+      console.log(
+        "InstituteManagement: coursesLoading:",
+        coursesLoading,
+        "courses:",
+        courses,
+        "error:",
+        coursesError,
+      );
+    }
     if (coursesError) {
       showSnackbar(coursesError, "error");
     }
   }, [coursesLoading, courses, coursesError, showSnackbar]);
 
   useEffect(() => {
-    console.log(
-      "InstituteManagement: teachersLoading:",
-      teachersLoading,
-      "teachers:",
-      teachers,
-      "error:",
-      teachersError,
-    );
+    if (import.meta.env.DEV) {
+      console.log(
+        "InstituteManagement: teachersLoading:",
+        teachersLoading,
+        "teachers:",
+        teachers,
+        "error:",
+        teachersError,
+      );
+    }
     if (teachersError) {
       showSnackbar(teachersError, "error");
     }
@@ -273,13 +277,18 @@ const InstituteManagement: React.FC = () => {
   // Fetch students count, courses, and teachers when currentInstitute is available
   useEffect(() => {
     const tenantId = currentInstitute?.tenantId;
-    console.log("InstituteManagement: currentInstitute.tenantId:", tenantId);
+    const instituteId = currentInstitute?.id;
+    if (import.meta.env.DEV) {
+      console.log("InstituteManagement: currentInstitute.tenantId:", tenantId);
+    }
     if (tenantId) {
       dispatch(actGetStudentsCount(tenantId));
       dispatch(actGetCoursesByTenantId(tenantId));
-      dispatch(actGetTeachers());
     }
-  }, [dispatch, currentInstitute?.tenantId]);
+    if (instituteId) {
+      dispatch(actGetTeachersByInstituteId(instituteId));
+    }
+  }, [dispatch, currentInstitute?.tenantId, currentInstitute?.id]);
 
   const handleUpdate = async (formData: any) => {
     if (!currentInstitute?.id) {

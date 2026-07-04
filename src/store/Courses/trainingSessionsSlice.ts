@@ -205,6 +205,58 @@ const trainingSessionsSlice = createSlice({
       state.deletingLectureId = null;
       state.lectureDeleteError = null;
     },
+    clearTrainingSessionsState: (state) => {
+      state.trainingSessions = [];
+      state.activeSessions = [];
+      state.activeSessionsLoading = "idle";
+      state.activeSessionsError = null;
+      state.selectedTrainingSession = null;
+      state.loading = "idle";
+      state.sessionDetailsLoading = "idle";
+      state.error = null;
+      state.addRatingLoading = false;
+      state.addRatingError = null;
+      state.categories = [];
+      state.categoriesLoading = "idle";
+      state.categoriesError = null;
+      state.ratings = [];
+      state.ratingsLoading = "idle";
+      state.ratingsError = null;
+      state.averageRating = null;
+      state.averageRatingLoading = "idle";
+      state.averageRatingError = null;
+      state.searchTerm = "";
+      state.instituteInput = "";
+      state.categoryInput = "";
+      state.minPriceInput = "";
+      state.maxPriceInput = "";
+      state.locationInput = "";
+      state.appliedFilters = {
+        institute: "",
+        category: "",
+        minPrice: "",
+        maxPrice: "",
+        location: "",
+      };
+      state.page = 1;
+      state.courseSessions = {};
+      state.courseSessionsLoading = {};
+      state.courseSessionsError = {};
+      state.sessionLectures = {};
+      state.sessionLecturesLoading = {};
+      state.sessionLecturesError = {};
+      state.lectureUpdateLoading = false;
+      state.lectureUpdateError = null;
+      state.deletingLectureId = null;
+      state.lectureDeleteError = null;
+      state.deletingSessionId = null;
+      state.sessionDeleteError = null;
+      state.lectureCreateLoading = false;
+      state.lectureCreateError = null;
+      state.allLectures = [];
+      state.allLecturesLoading = "idle";
+      state.allLecturesError = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(
@@ -652,6 +704,7 @@ export const {
   setPage,
   clearDeleteSessionState,
   clearDeleteLectureState,
+  clearTrainingSessionsState,
 } = trainingSessionsSlice.actions;
 const selectTrainingSessionsState = (state: RootState) =>
   state.trainingSessions;

@@ -8,9 +8,17 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Button,
+  Skeleton,
+  Paper,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
-import { useParams } from "react-router-dom";
+import CloseIcon from "@mui/icons-material/Close";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { InstituteCard } from "../../components/Institute/InstituteCard";
 import { SidebarInfo } from "../../components/Institute/SidebarInfo";
@@ -23,6 +31,7 @@ import { actGetActiveOrUpcomingByCourseAndInstitute } from "../../store/Courses/
 const InstituteDetails = memo(() => {
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const [institute, setInstitute] = useState<Institute | null>(null);
   const [courses, setCourses] = useState<TCourse[]>([]);
@@ -30,6 +39,8 @@ const InstituteDetails = memo(() => {
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedCourseId, setExpandedCourseId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalExpandedCourseId, setModalExpandedCourseId] = useState<number | null>(null);
 
   const courseSessions = useSelector((state: RootState) => state.trainingSessions.courseSessions);
   const courseSessionsLoading = useSelector((state: RootState) => state.trainingSessions.courseSessionsLoading);
@@ -99,11 +110,19 @@ const InstituteDetails = memo(() => {
           { days: "الجمعة - السبت", time: "مغلق" }
         );
       }
+      
+      // Clean description to remove random/English text
+      let cleanDescription = institute.description || "";
+      // Remove any text that looks like English or random characters
+      // Or just keep Arabic text
+      const arabicRegex = /[\u0600-\u06FF\s،؛؟.,!0-9]+/g;
+      const matches = cleanDescription.match(arabicRegex);
+      cleanDescription = matches ? matches.join("").trim() : "";
 
       return {
         id: institute.id,
         name: institute.name,
-        description: institute.description,
+        description: cleanDescription,
         location: institute.location,
         contact: {
           phone: institute.phoneNumber || institute.contactInfo || "",
@@ -133,13 +152,26 @@ const InstituteDetails = memo(() => {
 
   const handleViewSessions = async (courseId: number) => {
     if (institute) {
-      await dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: institute.id }));
-      setExpandedCourseId(courseId === expandedCourseId ? null : courseId);
+      const isCurrentlyExpanded = expandedCourseId === courseId;
+      if (isCurrentlyExpanded) {
+        setExpandedCourseId(null);
+      } else {
+        setExpandedCourseId(courseId);
+        await dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: institute.id }));
+      }
     }
   };
 
-  const handleToggle = (courseId: number) => {
-    setExpandedCourseId(courseId === expandedCourseId ? null : courseId);
+  const handleModalViewSessions = async (courseId: number) => {
+    if (institute) {
+      const isCurrentlyExpanded = modalExpandedCourseId === courseId;
+      if (isCurrentlyExpanded) {
+        setModalExpandedCourseId(null);
+      } else {
+        setModalExpandedCourseId(courseId);
+        await dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: institute.id }));
+      }
+    }
   };
 
   if (loading) {
@@ -149,15 +181,145 @@ const InstituteDetails = memo(() => {
         sx={{
           background: "linear-gradient(135deg, #F8FAFC 0%, #DBEAFE 100%)",
           minHeight: "100vh",
-          pt: { xs: 10, md: 14 },
-          pb: { xs: 4, md: 8 },
+          py: { xs: 4, md: 8 },
         }}>
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress />
-          <Typography fontWeight="700" color="text.secondary">
-            جاري تحميل بيانات المعهد...
-          </Typography>
-        </Stack>
+        <Container
+          maxWidth="lg"
+          sx={{
+            pt: { xs: 10, md: 12 },
+          }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1.3fr 0.7fr" },
+              gap: 5,
+            }}>
+            {/* Left Column Skeleton */}
+            <Box>
+              <Box sx={{ mb: 6, textAlign: "right" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+                  <Skeleton variant="text" width="40%" height={48} />
+                  <Skeleton variant="rounded" width={80} height={32} />
+                </Box>
+
+                <Stack spacing={1}>
+                  <Skeleton variant="text" width="100%" height={24} />
+                  <Skeleton variant="text" width="90%" height={24} />
+                  <Skeleton variant="text" width="70%" height={24} />
+                </Stack>
+              </Box>
+
+              <Stack
+                direction="row-reverse"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={2}
+              >
+                <Skeleton variant="text" width={100} height={28} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Skeleton variant="circular" width={24} height={24} />
+                  <Skeleton variant="text" width={200} height={28} />
+                </Box>
+              </Stack>
+
+              <Stack spacing={2}>
+                {[0,1,2].map((i) => (
+                  <Card
+                    key={i}
+                    elevation={0}
+                    sx={{
+                      borderRadius: "20px",
+                      backgroundColor: "rgba(255, 255, 255, 0.6)",
+                      backdropFilter: "blur(10px)",
+                      border: "1px solid rgba(255, 255, 255, 0.3)",
+                      boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+                    }}
+                  >
+                    <CardContent sx={{ p: "18px !important" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, mb: 2 }}>
+                        <Skeleton variant="circular" width={54} height={54} />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Skeleton variant="text" width="70%" height={28} sx={{ mb: 0.5 }} />
+                          <Skeleton variant="text" width="90%" height={20} />
+                        </Box>
+                        <Skeleton variant="circular" width={40} height={40} />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+            </Box>
+
+            {/* Right Column Skeleton */}
+            <Box>
+              <Stack spacing={4}>
+                {/* Location Skeleton */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: "28px",
+                    bgcolor: "rgba(255, 255, 255, 0.45)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.5)",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                    <Skeleton variant="circular" width={32} height={32} />
+                    <Skeleton variant="text" width="120" height={24} />
+                  </Box>
+                  <Skeleton variant="rectangular" width="100%" height={150} sx={{ borderRadius: "20px" }} />
+                  <Skeleton variant="text" width="70%" height={20} sx={{ mt: 2, mx: "auto" }} />
+                </Paper>
+
+                {/* Working Hours Skeleton */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: "28px",
+                    backgroundColor: "rgba(255, 255, 255, 0.6)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton variant="text" width="100" height={24} />
+                  </Box>
+                  <Stack spacing={1}>
+                    {[0,1].map((i) => (
+                      <Box key={i} sx={{ display: "flex", justifyContent: "space-between", p: 1.5, borderRadius: "12px" }}>
+                        <Skeleton variant="text" width="100" height={20} />
+                        <Skeleton variant="text" width="100" height={20} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Paper>
+
+                {/* Contact Skeleton */}
+                <Box sx={{ px: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton variant="text" width="100" height={24} />
+                  </Box>
+                  <Stack spacing={2}>
+                    {[0,1].map((i) => (
+                      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Skeleton variant="circular" width={40} height={40} />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Skeleton variant="text" width="80" height={16} sx={{ mb: 0.5 }} />
+                          <Skeleton variant="text" width="120" height={20} />
+                        </Box>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </Stack>
+            </Box>
+          </Box>
+        </Container>
       </Box>
     );
   }
@@ -239,90 +401,155 @@ const InstituteDetails = memo(() => {
               </Typography>
             </Box>
 
-            <Typography
-              variant="h6"
-              fontWeight="800"
-              sx={{
-                mb: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-              }}
+            <Stack
+              direction="row-reverse"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
             >
-              <SchoolIcon color="primary" />
-              الدورات التدريبية المتاحة
-            </Typography>
+              {instituteCourses.length > 3 && (
+                <Button
+                  onClick={() => setModalOpen(true)}
+                  sx={{
+                    color: "#2196f3",
+                    fontWeight: "bold",
+                    fontFamily: "Tajawal",
+                  }}
+                >
+                  عرض الكل
+                </Button>
+              )}
+              <Typography
+                variant="h6"
+                fontWeight="800"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                <SchoolIcon color="primary" />
+                الدورات التدريبية المتاحة
+              </Typography>
+            </Stack>
 
             <Stack spacing={2}>
               {coursesLoading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-                  <CircularProgress />
-                </Box>
-              ) : instituteCourses.length > 0 ? (
-                instituteCourses.map((course) => (
-                  <React.Fragment key={course.id}>
-                    <InstituteCard 
-                      course={course} 
-                      isExpanded={expandedCourseId === course.id}
-                      onToggle={() => handleToggle(course.id)}
-                      onViewSessions={() => handleViewSessions(course.id)}
-                    />
-                    {expandedCourseId === course.id && (
-                      <Box sx={{ pl: 2, pr: 2, pb: 2 }}>
-                        {courseSessionsLoading[course.id] ? (
-                          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                            <CircularProgress size={24} />
+                <>
+                  {[0, 1, 2].map((i) => (
+                    <Card
+                      key={i}
+                      elevation={0}
+                      sx={{
+                        borderRadius: "20px",
+                        backgroundColor: "rgba(255, 255, 255, 0.6)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid rgba(255, 255, 255, 0.3)",
+                        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+                      }}
+                    >
+                      <CardContent sx={{ p: "18px !important" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                          <Skeleton variant="circular" width={54} height={54} />
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Skeleton variant="text" width="70%" height={28} sx={{ mb: 0.5 }} />
+                            <Skeleton variant="text" width="90%" height={20} />
                           </Box>
-                        ) : courseSessionsError[course.id] ? (
-                          <Typography color="error" textAlign="center">
-                            {courseSessionsError[course.id]}
-                          </Typography>
-                        ) : courseSessions[course.id] && courseSessions[course.id].length > 0 ? (
-                          <Stack spacing={1}>
-                            {courseSessions[course.id].map((session) => (
-                              <Card 
-                                key={session.id}
-                                sx={{
-                                  borderRadius: "12px",
-                                  backgroundColor: "rgba(255,255,255,0.8)",
-                                  border: "1px solid rgba(19, 62, 101, 0.1)"
-                                }}
-                              >
-                                <CardContent sx={{ p: 2 }}>
-                                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <Box>
-                                      <Typography variant="subtitle2" fontWeight="bold">
-                                        {session.title}
-                                      </Typography>
-                                      <Typography variant="body2" color="text.secondary">
-                                        المدرب: {session.teacherName} | المدة: {session.duration}
-                                      </Typography>
-                                      <Typography variant="body2" color="text.secondary">
-                                        المكان: {session.location}
-                                      </Typography>
+                          <Skeleton variant="circular" width={40} height={40} />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              ) : instituteCourses.length > 0 ? (
+                <>
+                  {instituteCourses.slice(0, 3).map((course) => (
+                    <React.Fragment key={course.id}>
+                      <InstituteCard 
+                        course={course} 
+                        isExpanded={expandedCourseId === course.id}
+                        onToggle={() => handleViewSessions(course.id)}
+                      />
+                      {expandedCourseId === course.id && (
+                        <Box sx={{ pl: 2, pr: 2, pb: 2 }}>
+                          {courseSessionsLoading[course.id] ? (
+                            <Stack spacing={1}>
+                              {[0, 1].map((i) => (
+                                <Card key={i} sx={{ borderRadius: "12px", backgroundColor: "rgba(255,255,255,0.8)", border: "1px solid rgba(19, 62, 101, 0.1)" }}>
+                                  <CardContent sx={{ p: 2 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <Box sx={{ flex: 1 }}>
+                                        <Skeleton variant="text" width="60%" height={24} sx={{ mb: 0.5 }} />
+                                        <Skeleton variant="text" width="80%" height={20} sx={{ mb: 0.5 }} />
+                                        <Skeleton variant="text" width="50%" height={20} />
+                                      </Box>
+                                      <Box sx={{ textAlign: "left", minWidth: 100 }}>
+                                        <Skeleton variant="text" width="40%" height={28} sx={{ mb: 0.5 }} />
+                                        <Skeleton variant="text" width="70%" height={16} />
+                                      </Box>
                                     </Box>
-                                    <Box sx={{ textAlign: "left" }}>
-                                      <Typography variant="h6" color="primary" fontWeight="bold">
-                                        ${session.price}
-                                      </Typography>
-                                      <Typography variant="caption" color="text.secondary">
-                                        المقاعد المتاحة: {session.availableSeats}
-                                      </Typography>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </Stack>
+                          ) : courseSessionsError[course.id] ? (
+                            <Typography color="error" textAlign="center">
+                              {courseSessionsError[course.id]}
+                            </Typography>
+                          ) : courseSessions[course.id] && courseSessions[course.id].length > 0 ? (
+                            <Stack spacing={1}>
+                              {courseSessions[course.id].map((session) => (
+                                <Card 
+                                  key={session.id}
+                                  onClick={() => navigate(`/main/training-session-details/${session.id}`)}
+                                  sx={{
+                                    borderRadius: "12px",
+                                    backgroundColor: "rgba(255,255,255,0.8)",
+                                    border: "1px solid rgba(19, 62, 101, 0.1)",
+                                    cursor: "pointer",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(25, 118, 210, 0.05)",
+                                      borderColor: "rgba(25, 118, 210, 0.3)",
+                                    }
+                                  }}
+                                >
+                                  <CardContent sx={{ p: 2 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <Box>
+                                        <Typography variant="subtitle2" fontWeight="bold">
+                                          {session.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          المدرب: {session.teacherName} | المدة: {session.duration}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          المكان: {session.location}
+                                        </Typography>
+                                      </Box>
+                                      <Box sx={{ textAlign: "left" }}>
+                                        <Typography variant="h6" color="primary" fontWeight="bold">
+                                          ${session.price}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          المقاعد المتاحة: {session.availableSeats}
+                                        </Typography>
+                                      </Box>
                                     </Box>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </Stack>
-                        ) : (
-                          <Typography textAlign="center" color="text.secondary">
-                            لا توجد دورات متاحة حاليًا لهذه الدورة
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-                  </React.Fragment>
-                ))
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </Stack>
+                          ) : (
+                            <Typography textAlign="center" color="text.secondary">
+                              لا توجد دورات متاحة حاليًا لهذه الدورة
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </>
               ) : (
                 <Typography
                   sx={{
@@ -338,6 +565,111 @@ const InstituteDetails = memo(() => {
                 </Typography>
               )}
             </Stack>
+
+            {/* Modal for All Courses */}
+            <Dialog
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              fullWidth
+              maxWidth="md"
+              dir="rtl"
+              PaperProps={{
+                sx: { borderRadius: "28px", p: 0.5 },
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  px: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  bgcolor: "#F8FAFC",
+                }}
+              >
+                <Typography variant="h6" fontWeight="900" color="#133E65">
+                  جميع الدورات التدريبية المتاحة
+                </Typography>
+                <IconButton onClick={() => setModalOpen(false)} sx={{ bgcolor: "#fff" }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              <DialogContent sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC", maxHeight: "70vh" }}>
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                  {instituteCourses.map((course) => (
+                    <React.Fragment key={course.id}>
+                      <InstituteCard 
+                        course={course} 
+                        isExpanded={modalExpandedCourseId === course.id}
+                        onToggle={() => handleModalViewSessions(course.id)}
+                      />
+                      {modalExpandedCourseId === course.id && (
+                        <Box sx={{ pl: 2, pr: 2, pb: 2 }}>
+                          {courseSessionsLoading[course.id] ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                              <CircularProgress size={24} />
+                            </Box>
+                          ) : courseSessionsError[course.id] ? (
+                            <Typography color="error" textAlign="center">
+                              {courseSessionsError[course.id]}
+                            </Typography>
+                          ) : courseSessions[course.id] && courseSessions[course.id].length > 0 ? (
+                            <Stack spacing={1}>
+                              {courseSessions[course.id].map((session) => (
+                                <Card 
+                                  key={session.id}
+                                  onClick={() => navigate(`/main/training-session-details/${session.id}`)}
+                                  sx={{
+                                    borderRadius: "12px",
+                                    backgroundColor: "rgba(255,255,255,0.8)",
+                                    border: "1px solid rgba(19, 62, 101, 0.1)",
+                                    cursor: "pointer",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(25, 118, 210, 0.05)",
+                                      borderColor: "rgba(25, 118, 210, 0.3)",
+                                    }
+                                  }}
+                                >
+                                  <CardContent sx={{ p: 2 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <Box>
+                                        <Typography variant="subtitle2" fontWeight="bold">
+                                          {session.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          المدرب: {session.teacherName} | المدة: {session.duration}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          المكان: {session.location}
+                                        </Typography>
+                                      </Box>
+                                      <Box sx={{ textAlign: "left" }}>
+                                        <Typography variant="h6" color="primary" fontWeight="bold">
+                                          ${session.price}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          المقاعد المتاحة: {session.availableSeats}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </Stack>
+                          ) : (
+                            <Typography textAlign="center" color="text.secondary">
+                              لا توجد دورات متاحة حاليًا لهذه الدورة
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </Stack>
+              </DialogContent>
+            </Dialog>
           </Box>
 
           <SidebarInfo info={displayInfo} />
