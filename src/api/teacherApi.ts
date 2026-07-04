@@ -95,6 +95,11 @@ export const getTeachers = async () => {
   return response.data;
 };
 
+export const getTeachersByInstituteId = async (instituteId: number) => {
+  const response = await axiosClient.get<TeacherApiResponse[]>(`/teachers/by-institute/${instituteId}`);
+  return response.data;
+};
+
 export const getTeacherById = async (id: string | number) => {
   const response = await axiosClient.get<TeacherApiResponse>(`/teachers/${id}`);
   return response.data;

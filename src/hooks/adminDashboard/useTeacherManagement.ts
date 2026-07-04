@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actGetTeachers from "../../store/teachers/act/actGetTeachers";
+import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
 import actGetTeacherById from "../../store/teachers/act/actGetTeacherById";
 import actDeleteTeacher from "../../store/teachers/act/actDeleteTeacher";
 import actSearchTeachers from "../../store/teachers/act/actSearchTeachers";
@@ -33,12 +34,13 @@ export const useTeacherManagement = () => {
     }
   }, [dispatch, user, currentInstitute]);
 
-  // Fetch all teachers on load only if we don't have data yet
+  // Fetch teachers when currentInstitute is available
   useEffect(() => {
-    if (teachers.length === 0) {
-      dispatch(actGetTeachers());
+    const instituteId = currentInstitute?.id;
+    if (instituteId) {
+      dispatch(actGetTeachersByInstituteId(instituteId));
     }
-  }, [dispatch, teachers.length]);
+  }, [dispatch, currentInstitute?.id]);
 
   // Debounce search term and dispatch search
   useEffect(() => {
@@ -128,7 +130,10 @@ export const useTeacherManagement = () => {
         setIsDeleteOpen(false);
         setTeacherToDelete(null);
         showSnackbar("تم حذف المعلم بنجاح", "success");
-        dispatch(actGetTeachers());
+        const instituteId = currentInstitute?.id;
+        if (instituteId) {
+          dispatch(actGetTeachersByInstituteId(instituteId));
+        }
       } else {
         const errorMessage =
           typeof resultAction.payload === "string"
@@ -137,10 +142,12 @@ export const useTeacherManagement = () => {
         showSnackbar(errorMessage, "error");
       }
     } catch (error) {
-      console.error("[DEBUG useTeacherManagement] handleConfirmDelete error:", error);
+      if (import.meta.env.DEV) {
+        console.error("[DEBUG useTeacherManagement] handleConfirmDelete error:", error);
+      }
       showSnackbar("حدث خطأ أثناء حذف المعلم", "error");
     }
-  }, [dispatch, teacherToDelete, showSnackbar]);
+  }, [dispatch, teacherToDelete, showSnackbar, currentInstitute]);
 
   const handleOpenAdd = useCallback(() => {
     setIsAddOpen(true);
