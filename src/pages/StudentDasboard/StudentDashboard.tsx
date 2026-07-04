@@ -51,7 +51,7 @@ const getDynamicDays = (referenceDate: Date = new Date()): Day[] => {
   });
 };
 
-import EditStudentModal from "../../components/AdminDasboard/students/EditStudentModal";
+
 import StatCard from "../../components/StudentDashboard/StatCard";
 import CourseActivityCard from "../../components/StudentDashboard/CourseActivityCard";
 import PersonalInfo from "../../components/StudentDashboard/PersonalInfo";
@@ -413,18 +413,7 @@ const StudentDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      <EditStudentModal
-        open={openEdit}
-        onClose={handleCloseEdit}
-        student={student}
-        onSave={handleSave}
-        onImageUpdate={handleImageUpdate}
-        loading={updateLoading}
-        success={success}
-        error={updateError}
-        setPendingImageFile={setPendingImageFile}
-        imageUpdateLoading={imageUpdateLoading}
-      />
+
     </Box>
   );
 };

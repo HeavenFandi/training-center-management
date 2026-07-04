@@ -3,7 +3,6 @@ import { Box, Grid, TextField, InputAdornment, IconButton } from "@mui/material"
 import TeachersTable from "../../components/AdminDasboard/Teachers/TeachersTable";
 import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import { statsTeacher } from "../../data/TeacherData";
-import EditTeacherModal from "../../components/AdminDasboard/Teachers/EditTeacherModal";
 import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import TeacherDetailsModal from "../../components/AdminDasboard/Teachers/TeacherDetailsModal";
 import AddTeachersModal from "../../components/AdminDasboard/Teachers/AddTeachersModal";
@@ -21,30 +20,21 @@ const TeachersManagement: React.FC = () => {
     searchTerm,
     setSearchTerm,
     selectedTeacher,
-    localEditTeacher,
     teacherToDelete,
     isAddOpen,
-    isEditOpen,
     isDeleteOpen,
     isViewOpen,
     loading,
     searchLoading,
     selectedTeacherLoading,
-    isUpdating,
-    pendingImageFile,
-    setPendingImageFile,
     handleAddTeacher,
     handleViewClick,
     handleCloseView,
-    handleEditClick,
-    handleCloseEdit,
     handleDeleteClick,
     handleCloseDelete,
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
-    handleSaveEdit,
-    handleImageUpdate,
     page,
     setPage,
     totalPages,
@@ -139,7 +129,6 @@ const TeachersManagement: React.FC = () => {
       <TeachersTable
         teachersData={paginatedTeachers}
         onView={handleViewClick}
-        onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         loading={loading}
         showLoading={showLoading}
@@ -164,19 +153,6 @@ const TeachersManagement: React.FC = () => {
         hasData={!!selectedTeacher}
         onClose={handleCloseView}
       />
-
-      {localEditTeacher && (
-        <EditTeacherModal
-          key={localEditTeacher.id}
-          open={isEditOpen}
-          teacher={localEditTeacher}
-          onClose={handleCloseEdit}
-          onSave={handleSaveEdit}
-          onImageUpdate={handleImageUpdate}
-          loading={isUpdating}
-          setPendingImageFile={setPendingImageFile}
-        />
-      )}
 
       <GenericDeleteModal
         open={isDeleteOpen}

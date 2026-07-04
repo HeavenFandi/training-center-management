@@ -722,7 +722,7 @@ export const selectFilteredTrainingSessions = createSelector(
 export const selectTotalPages = createSelector(
   [selectFilteredTrainingSessions],
   (filtered) => {
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 6;
     return Math.ceil(filtered.length / ITEMS_PER_PAGE);
   },
 );
@@ -733,7 +733,7 @@ export const selectPaginatedTrainingSessions = createSelector(
     (state: RootState) => state.trainingSessions.page,
   ],
   (filtered, page) => {
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 6;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return filtered.slice(startIndex, endIndex);

@@ -106,6 +106,7 @@ const TrainingSessions = memo(() => {
   const handlePageChange = useCallback(
     (_: React.ChangeEvent<unknown>, value: number) => {
       dispatch(setPage(value));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [dispatch]
   );
