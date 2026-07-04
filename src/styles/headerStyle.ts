@@ -11,10 +11,12 @@ export const getNavButtonStyle = ({
 }: Tprops): SxProps<Theme> => {
   const isActive = isActivePath(path);
   return {
-    color: isActive ? "rgba(191, 12, 12, 1)" : "rgba(5, 22, 48, 0.85)",
+    color: isActive 
+      ? "#6366F1"
+      : "#051630",
     px: 2,
     py: 1,
-    fontWeight: isActive ? "900" : "bold",
+    fontWeight: isActive ? 800 : 600,
     fontSize: "1rem",
     fontFamily: "Tajawal",
     transition: "all 0.3s ease",
@@ -55,11 +57,11 @@ export const getNavButtonStyle = ({
 export const appBarStyle: SxProps<Theme> = {
   top: 0,
   zIndex: 1100,
-  backgroundColor: "rgba(255, 255, 255, 0.45)",
+  backgroundColor: "#ffffff",
   backdropFilter: "blur(20px)",
   WebkitBackdropFilter: "blur(20px)",
-  boxShadow: "0 4px 30px rgba(0, 0, 0, 0.04)",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+  boxShadow: "0 2px 20px rgba(5, 22, 48, 0.08)",
+  borderBottom: "1px solid rgba(5, 22, 48, 0.06)",
   backgroundImage: "none",
 };
 
@@ -78,32 +80,32 @@ export const logoSectionStyle: SxProps<Theme> = {
 };
 
 export const authButtonStyle = (isLoggedIn: boolean): SxProps<Theme> => ({
-  bgcolor: isLoggedIn ? "#133E65" : "#133E65",
-  color: "#fff",
-  borderRadius: "50px",
+  bgcolor: "#6366F1",
+  color: "#ffffff",
+  borderRadius: "20px",
   px: 4,
   py: 1.2,
-  fontWeight: "900",
+  fontWeight: 800,
   fontFamily: "Tajawal",
   textTransform: "none",
-  boxShadow: "0 4px 15px rgba(19, 62, 101, 0.2)",
+  boxShadow: "0 4px 15px rgba(99, 102, 241, 0.3)",
   transition: "all 0.3s ease",
   "&:hover": {
-    bgcolor: "#1e5a91",
+    bgcolor: "#4f46e5",
     transform: "scale(1.03)",
-    boxShadow: "0 8px 25px rgba(19, 62, 101, 0.3)",
+    boxShadow: "0 6px 20px rgba(99, 102, 241, 0.4)",
   },
 });
 
 export const menuPaperStyle = {
   sx: {
     mt: 2,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backgroundColor: "#ffffff",
     backdropFilter: "blur(25px)",
-    borderRadius: "24px",
+    borderRadius: "16px",
     minWidth: "260px",
     p: 1.5,
-    border: "1px solid rgba(255,255,255,0.4)",
+    border: "1px solid rgba(5, 22, 48, 0.08)",
+    boxShadow: "0 10px 40px rgba(5, 22, 48, 0.15)",
   },
 };
-

@@ -7,14 +7,11 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  
+  Chip,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  instituteInfo as defaultInstituteInfo,
-} from "../../data/coursedata";
 import { InstituteCard } from "../../components/Institute/InstituteCard";
 import { SidebarInfo } from "../../components/Institute/SidebarInfo";
 import { getInstituteById, Institute } from "../../api/instituteApi";
@@ -23,7 +20,7 @@ import { TCourse } from "../../types/cardType";
 import { RootState, AppDispatch } from "../../store";
 import { actGetActiveOrUpcomingByCourseAndInstitute } from "../../store/Courses/trainingSessionsSlice";
 
-const ALNourInstitute = memo(() => {
+const InstituteDetails = memo(() => {
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -34,11 +31,7 @@ const ALNourInstitute = memo(() => {
   const [error, setError] = useState("");
   const [expandedCourseId, setExpandedCourseId] = useState<number | null>(null);
 
-  const courseSessions = useSelector((state: RootState) => {
-    const sessions = state.trainingSessions.courseSessions;
-    console.log("[DEBUG] courseSessions from store:", sessions);
-    return sessions;
-  });
+  const courseSessions = useSelector((state: RootState) => state.trainingSessions.courseSessions);
   const courseSessionsLoading = useSelector((state: RootState) => state.trainingSessions.courseSessionsLoading);
   const courseSessionsError = useSelector((state: RootState) => state.trainingSessions.courseSessionsError);
 
@@ -49,13 +42,13 @@ const ALNourInstitute = memo(() => {
         setError("");
 
         const instituteId = id || 1;
-        console.log("[DEBUG] Fetching institute with ID:", instituteId);
         const data = await getInstituteById(instituteId);
-        console.log("[DEBUG] Institute data received:", data);
 
         setInstitute(data);
       } catch (error) {
-        console.error("Error fetching institute:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching institute:", error);
+        }
         setError("تعذر تحميل بيانات المعهد");
       } finally {
         setLoading(false);
@@ -71,12 +64,12 @@ const ALNourInstitute = memo(() => {
       
       try {
         setCoursesLoading(true);
-        console.log("[DEBUG] Fetching courses for tenantId:", institute.tenantId);
         const coursesData = await getCoursesByTenantId(String(institute.tenantId));
-        console.log("[DEBUG] Courses data received:", coursesData);
         setCourses(coursesData);
       } catch (error) {
-        console.error("Error fetching courses:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching courses:", error);
+        }
       } finally {
         setCoursesLoading(false);
       }
@@ -85,56 +78,63 @@ const ALNourInstitute = memo(() => {
     fetchCourses();
   }, [institute?.tenantId]);
 
+  const formatTime = (time: string | { hour: number; minute: number } | undefined) => {
+    if (!time) return "00:00";
+    if (typeof time === "string") return time;
+    return `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
+  };
+
   const displayInfo = useMemo(() => {
     if (institute) {
+      const workingHoursList: { days: string; time: string }[] = [];
+      
+      if (institute.workingDays && institute.workingDays.length > 0) {
+        workingHoursList.push({
+          days: institute.workingDays.join(", "),
+          time: `${formatTime(institute.startTime)} - ${formatTime(institute.endTime)}`,
+        });
+      } else {
+        workingHoursList.push(
+          { days: "الأحد - الخميس", time: institute.workingHours || "08:00-20:00" },
+          { days: "الجمعة - السبت", time: "مغلق" }
+        );
+      }
+
       return {
-        ...defaultInstituteInfo,
         id: institute.id,
-        name: institute.name || defaultInstituteInfo.name,
-        description: institute.description || defaultInstituteInfo.description,
-        location: institute.location || defaultInstituteInfo.location,
-        email: institute.email || "",
-        contactInfo: institute.contactInfo || "",
-        workingHours: [
-          {
-            days: "الأحد - الخميس",
-            hours: institute.workingHours || "08:00-20:00",
-          },
-          {
-            days: "الجمعة - السبت",
-            hours: "مغلق",
-          },
-        ],
+        name: institute.name,
+        description: institute.description,
+        location: institute.location,
+        contact: {
+          phone: institute.phoneNumber || institute.contactInfo || "",
+          email: institute.email || "",
+        },
+        workingHours: workingHoursList,
         ownerName: institute.ownerName,
         tenantName: institute.tenantName,
+        status: institute.status,
       };
     }
 
-    const saved = localStorage.getItem("instituteInfo");
-
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Error parsing institute info", e);
-      }
-    }
-
-    return defaultInstituteInfo;
+    return {
+      id: 0,
+      name: "معهد التدريب",
+      description: "",
+      location: "",
+      contact: { phone: "", email: "" },
+      workingHours: [],
+      ownerName: "",
+      tenantName: "",
+      status: "",
+    };
   }, [institute]);
 
-  // We'll use the courses from API directly, no need to filter
   const instituteCourses = courses;
 
   const handleViewSessions = async (courseId: number) => {
-    console.log("[DEBUG] handleViewSessions called with courseId:", courseId);
-    console.log("[DEBUG] Current institute:", institute);
     if (institute) {
-      console.log("[DEBUG] Dispatching actGetActiveOrUpcomingByCourseAndInstitute with courseId:", courseId, "instituteId:", institute.id);
       await dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: institute.id }));
       setExpandedCourseId(courseId === expandedCourseId ? null : courseId);
-    } else {
-      console.warn("[DEBUG] No institute available!");
     }
   };
 
@@ -213,12 +213,21 @@ const ALNourInstitute = memo(() => {
           }}>
           <Box>
             <Box sx={{ mb: 6, textAlign: "right" }}>
-              <Typography
-                variant="h3"
-                fontWeight="900"
-                sx={{ color: "#1E293B", mb: 2 }}>
-                {displayInfo.name}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+                <Typography
+                  variant="h3"
+                  fontWeight="900"
+                  sx={{ color: "#1E293B" }}>
+                  {displayInfo.name}
+                </Typography>
+                {institute?.status && (
+                  <Chip
+                    label={institute.status === "ACTIVE" ? "نشط" : "غير نشط"}
+                    color={institute.status === "ACTIVE" ? "success" : "default"}
+                    sx={{ fontWeight: "bold" }}
+                  />
+                )}
+              </Box>
 
               <Typography
                 sx={{
@@ -338,4 +347,4 @@ const ALNourInstitute = memo(() => {
   );
 });
 
-export default ALNourInstitute;
+export default InstituteDetails;

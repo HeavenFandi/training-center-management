@@ -8,6 +8,7 @@ import actGetInstituteMonthlyRegistrations from "./act/actGetInstituteMonthlyReg
 import actGetStudentsCount from "./act/actGetStudentsCount";
 import actGetInstituteFinancialMonthly from "./act/actGetInstituteFinancialMonthly";
 import actGetInstituteUsersCount from "./act/actGetInstituteUsersCount";
+import { logout } from "../Auth/authSlice";
 
 interface InstitutesState {
   createLoading: boolean;
@@ -68,13 +69,52 @@ const institutesSlice = createSlice({
       state.createError = null;
       state.createSuccess = false;
       state.createdInstitute = null;
+      state.currentInstitute = null;
+      state.currentInstituteLoading = false;
+      state.currentInstituteError = null;
       state.updateLoading = false;
       state.updateError = null;
       state.updateSuccess = false;
+      state.monthlyRegistrations = [];
+      state.monthlyRegistrationsLoading = false;
+      state.monthlyRegistrationsError = null;
+      state.studentsCount = null;
+      state.studentsCountLoading = false;
+      state.studentsCountError = null;
+      state.financialMonthly = [];
+      state.financialMonthlyLoading = false;
+      state.financialMonthlyError = null;
+      state.usersCount = null;
+      state.usersCountLoading = false;
+      state.usersCountError = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(logout, (state) => {
+        state.createLoading = false;
+        state.createError = null;
+        state.createSuccess = false;
+        state.createdInstitute = null;
+        state.currentInstitute = null;
+        state.currentInstituteLoading = false;
+        state.currentInstituteError = null;
+        state.updateLoading = false;
+        state.updateError = null;
+        state.updateSuccess = false;
+        state.monthlyRegistrations = [];
+        state.monthlyRegistrationsLoading = false;
+        state.monthlyRegistrationsError = null;
+        state.studentsCount = null;
+        state.studentsCountLoading = false;
+        state.studentsCountError = null;
+        state.financialMonthly = [];
+        state.financialMonthlyLoading = false;
+        state.financialMonthlyError = null;
+        state.usersCount = null;
+        state.usersCountLoading = false;
+        state.usersCountError = null;
+      })
       .addCase(actCreateInstitute.pending, (state) => {
         state.createLoading = true;
         state.createError = null;

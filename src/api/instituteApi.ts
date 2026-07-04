@@ -58,13 +58,26 @@ export const getInstituteByTenantId = async (tenantId: string) => {
   return response.data;
 };
 
-export const getInstituteByUserId = async (userId: string | number) => {
-  const response = await axiosClient.get<Institute | Institute[]>(`/institutes/user/${userId}`);
-  const raw = response.data;
-  const institute = Array.isArray(raw)
-    ? raw[0] ?? null
-    : raw;
-  return institute;
+export const getInstituteByUserId = async (userId: string | number): Promise<Institute | null> => {
+  const response = await axiosClient.get<Institute[]>(`/institutes/user/${userId}`);
+  
+  // Dev-only log to verify API response shape
+  if (import.meta.env.DEV) {
+    console.group("🔍 Institute API Response");
+    console.log("Full response:", response);
+    console.log("Response data (array):", response.data);
+    console.groupEnd();
+  }
+
+  // ALWAYS treat as array (fallback to empty array for safety)
+  const institutes = Array.isArray(response.data) ? response.data : [];
+  
+  // Return first valid institute (must have id), else null
+  const validInstitute = institutes.find(
+    (inst) => inst && typeof inst === "object" && "id" in inst
+  );
+  
+  return validInstitute || null;
 };
 
 export const updateInstitute = async (id: number, data: UpdateInstituteRequest) => {
@@ -113,5 +126,10 @@ export const getStudentsCount = async (tenantId: string | number) => {
 
 export const getInstituteUsersCount = async (id: string | number) => {
   const response = await axiosClient.get<number>(`/institutes/${id}/users/count`);
+  return response.data;
+};
+
+export const getAllInstitutes = async () => {
+  const response = await axiosClient.get<Institute[]>("/institutes");
   return response.data;
 };

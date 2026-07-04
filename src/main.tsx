@@ -1,12 +1,14 @@
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { store } from "./store/index";
-import React from "react";
+import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import AppRouter from "./Routes/AppRouter";
 import "./index.css";
 import { SnackbarProvider } from "./Context/SnackbarContext";
 import { NotificationsProvider } from "./Context/NotificationsContext";
-import { Provider } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
+import { setHydrated } from "./store/Auth/authSlice";
+
 const theme = createTheme({
   typography: {
     fontFamily: "Tajawal, sans-serif",
@@ -19,7 +21,7 @@ const theme = createTheme({
       main: "#134980",
     },
     background: {
-      default: "linear-gradient(180deg, #F6FAFD 0%, #B3CFE5 100%)",
+      default: "#F6FAFD",
     },
   },
   components: {
@@ -69,16 +71,25 @@ const theme = createTheme({
     },
   },
 });
+
+const RootComponent = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(setHydrated());
+  }, [dispatch]);
+
+  return <AppRouter />;
+};
+
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider theme={theme}>
-    <SnackbarProvider>
-      <NotificationsProvider>
-      <Provider store={store}>
-        <AppRouter />
-        </Provider>
-      </NotificationsProvider>
-    </SnackbarProvider>
-  </ThemeProvider>,
+  <Provider store={store}>
+    <ThemeProvider theme={theme}>
+      <SnackbarProvider>
+        <NotificationsProvider>
+          <RootComponent />
+        </NotificationsProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
+  </Provider>
 );
-
-

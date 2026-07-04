@@ -23,5 +23,3 @@ const Home: React.FC = () => {
 };
 
 export default memo(Home);
-
-

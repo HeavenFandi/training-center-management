@@ -7,6 +7,7 @@ import {
   Typography,
   Stack,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import PersonIcon from "@mui/icons-material/Person";
@@ -55,20 +56,29 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         onClose={onClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        PaperProps={{
-          sx: {
-            ...styles.menuPaperStyle,
-            width: "280px",
-            mt: 1.5,
-            borderRadius: "24px",
-            padding: "8px",
-          },
-        }}
+        PaperProps={styles.menuPaperStyle}
       >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontFamily: "Tajawal", 
+              fontWeight: "bold", 
+              color: "#051630" 
+            }}
+          >
+            القائمة
+          </Typography>
+        </Box>
+        <Divider sx={{ opacity: 0.5 }} />
+
         {showIcons && (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Box
-              onClick={() => onNavClick("/main/student-dashboard")}
+              onClick={() => {
+                onNavClick("/main/student-dashboard");
+                onClose();
+              }}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -103,7 +113,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         {pages.map((page) => (
           <MenuItem
             key={page.name}
-            onClick={() => onNavClick(page.path)}
+            onClick={() => {
+              onNavClick(page.path);
+              onClose();
+            }}
             sx={{
               borderRadius: "12px",
               mb: 0.5,
@@ -112,7 +125,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               flexDirection: "row-reverse",
               gap: 2,
               color: isActiveLink(page.path) ? "#6366F1" : "#051630",
-              "&:hover": { bgcolor: "rgba(99, 102, 241, 0.05)" },
+              "&:hover": { 
+                bgcolor: "rgba(99, 102, 241, 0.05)" 
+              },
             }}
           >
             <Box sx={{ display: "flex", color: "inherit" }}>{page.icon}</Box>
@@ -132,19 +147,22 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         <Divider sx={{ my: 1.5, opacity: 0.4 }} />
 
         <MenuItem
-          onClick={handleAuthClick}
+          onClick={() => {
+            handleAuthClick();
+            onClose();
+          }}
           sx={{
             borderRadius: "12px",
             justifyContent: "center",
             py: 1.8,
-            bgcolor: "#133E65",
+            bgcolor: "#6366F1",
             color: "white",
             "&:hover": {
-              bgcolor: "#1e5a91",
+              bgcolor: "#4f46e5",
             },
           }}
         >
-          <Typography sx={{ fontFamily: "Tajawal", fontWeight: "900" }}>
+          <Typography sx={{ fontFamily: "Tajawal", fontWeight: 800 }}>
             {isLoggedIn ? "تسجيل الخروج" : "تسجيل دخول"}
           </Typography>
         </MenuItem>
@@ -154,5 +172,3 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 };
 
 export default MobileMenu;
-
-
