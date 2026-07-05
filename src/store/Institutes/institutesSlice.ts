@@ -8,6 +8,7 @@ import actGetInstituteMonthlyRegistrations from "./act/actGetInstituteMonthlyReg
 import actGetStudentsCount from "./act/actGetStudentsCount";
 import actGetInstituteFinancialMonthly from "./act/actGetInstituteFinancialMonthly";
 import actGetInstituteUsersCount from "./act/actGetInstituteUsersCount";
+import actGetActiveStudentsCount from "./act/actGetActiveStudentsCount";
 import { logout } from "../Auth/authSlice";
 
 interface InstitutesState {
@@ -33,6 +34,9 @@ interface InstitutesState {
   usersCount: number | null;
   usersCountLoading: boolean;
   usersCountError: string | null;
+  activeStudentsCount: number | null;
+  activeStudentsCountLoading: boolean;
+  activeStudentsCountError: string | null;
 }
 
 const initialState: InstitutesState = {
@@ -58,6 +62,9 @@ const initialState: InstitutesState = {
   usersCount: null,
   usersCountLoading: false,
   usersCountError: null,
+  activeStudentsCount: null,
+  activeStudentsCountLoading: false,
+  activeStudentsCountError: null,
 };
 
 const institutesSlice = createSlice({
@@ -87,6 +94,9 @@ const institutesSlice = createSlice({
       state.usersCount = null;
       state.usersCountLoading = false;
       state.usersCountError = null;
+      state.activeStudentsCount = null;
+      state.activeStudentsCountLoading = false;
+      state.activeStudentsCountError = null;
     },
   },
   extraReducers: (builder) => {
@@ -114,6 +124,9 @@ const institutesSlice = createSlice({
         state.usersCount = null;
         state.usersCountLoading = false;
         state.usersCountError = null;
+        state.activeStudentsCount = null;
+        state.activeStudentsCountLoading = false;
+        state.activeStudentsCountError = null;
       })
       .addCase(actCreateInstitute.pending, (state) => {
         state.createLoading = true;
@@ -241,10 +254,23 @@ const institutesSlice = createSlice({
       .addCase(actGetInstituteUsersCount.rejected, (state, action) => {
         state.usersCountLoading = false;
         state.usersCountError = action.payload as string;
+      })
+      .addCase(actGetActiveStudentsCount.pending, (state) => {
+        state.activeStudentsCountLoading = true;
+        state.activeStudentsCountError = null;
+      })
+      .addCase(actGetActiveStudentsCount.fulfilled, (state, action) => {
+        state.activeStudentsCountLoading = false;
+        state.activeStudentsCountError = null;
+        state.activeStudentsCount = action.payload;
+      })
+      .addCase(actGetActiveStudentsCount.rejected, (state, action) => {
+        state.activeStudentsCountLoading = false;
+        state.activeStudentsCountError = action.payload as string;
       });
   },
 });
 
-export { actCreateInstitute, actGetInstituteById, actGetInstituteByTenantId, actGetInstituteByUserId, actUpdateInstitute, actGetInstituteMonthlyRegistrations, actGetStudentsCount, actGetInstituteFinancialMonthly, actGetInstituteUsersCount };
+export { actCreateInstitute, actGetInstituteById, actGetInstituteByTenantId, actGetInstituteByUserId, actUpdateInstitute, actGetInstituteMonthlyRegistrations, actGetStudentsCount, actGetInstituteFinancialMonthly, actGetInstituteUsersCount, actGetActiveStudentsCount };
 export const { resetInstituteState } = institutesSlice.actions;
 export default institutesSlice.reducer;

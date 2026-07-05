@@ -5,7 +5,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
-import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount, actGetActiveStudentsCount } from "../../store/Institutes/institutesSlice";
 import { actGetAllLectures, clearTrainingSessionsState, resetTrainingSessions } from "../../store/Courses/trainingSessionsSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import { clearCoursesState, selectCoursesState } from "../../store/Courses/courseSlice";
@@ -17,6 +17,7 @@ import Card from "../../components/AdminDasboard/MainDashboard/Card";
 import { useDelayedLoading } from "../../hooks/useDelayedLoading";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import SchoolIcon from "@mui/icons-material/School";
 
 const arabicMonths: Record<number, string> = {
   1: "يناير",
@@ -38,7 +39,7 @@ const AdminOverview: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError, usersCount, usersCountLoading, usersCountError } =
+  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError, usersCount, usersCountLoading, usersCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError } =
     useAppSelector((state) => state.institutes);
   const { allLectures, allLecturesLoading, allLecturesError } =
     useAppSelector((state) => state.trainingSessions);
@@ -229,6 +230,14 @@ const AdminOverview: React.FC = () => {
     }
   }, [dispatch, currentInstitute]);
 
+  // Fetch active students count when currentInstitute exists
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    if (tenantId) {
+      dispatch(actGetActiveStudentsCount(tenantId));
+    }
+  }, [dispatch, currentInstitute]);
+
   // Log state changes
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -261,7 +270,13 @@ const AdminOverview: React.FC = () => {
       icon: <MenuBookIcon />,
       color: "#f39c12",
     },
-  ], [usersCount, usersCountLoading, usersCountError, activeCoursesCount, coursesLoading, coursesError]);
+    {
+      title: "الطلاب النشطون",
+      value: activeStudentsCountLoading ? "..." : (activeStudentsCountError ? "خطأ" : (activeStudentsCount?.toString() ?? "0")),
+      icon: <SchoolIcon />,
+      color: "#4caf50",
+    },
+  ], [usersCount, usersCountLoading, usersCountError, activeCoursesCount, coursesLoading, coursesError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError]);
 
   // Handle missing userId
   if (!userId) {

@@ -129,6 +129,13 @@ export const getInstituteUsersCount = async (id: string | number) => {
   return response.data;
 };
 
+export const getActiveStudentsCount = async (tenantId: string | number) => {
+  const response = await axiosClient.get<number>(
+    `/institutes/tenant/${tenantId}/students/active/count`
+  );
+  return response.data;
+};
+
 export const getAllInstitutes = async () => {
   const response = await axiosClient.get<Institute[]>("/institutes");
   return response.data;
