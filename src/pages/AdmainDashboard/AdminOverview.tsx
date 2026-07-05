@@ -5,7 +5,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
-import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount, actGetActiveStudentsCount, actGetActiveTrainingSessionsCount } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount, actGetActiveStudentsCount, actGetActiveTrainingSessionsCount, actGetStudentsCount } from "../../store/Institutes/institutesSlice";
 import { actGetAllLectures, clearTrainingSessionsState, resetTrainingSessions } from "../../store/Courses/trainingSessionsSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import { clearCoursesState, selectCoursesState } from "../../store/Courses/courseSlice";
@@ -39,7 +39,7 @@ const AdminOverview: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError, usersCount, usersCountLoading, usersCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError, activeTrainingSessionsCount, activeTrainingSessionsCountLoading, activeTrainingSessionsCountError } =
+  const { currentInstitute, currentInstituteLoading, monthlyRegistrations, monthlyRegistrationsLoading, monthlyRegistrationsError, financialMonthly, financialMonthlyLoading, financialMonthlyError, usersCount, usersCountLoading, usersCountError, studentsCount, studentsCountLoading, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError, activeTrainingSessionsCount, activeTrainingSessionsCountLoading, activeTrainingSessionsCountError } =
     useAppSelector((state) => state.institutes);
   const { allLectures, allLecturesLoading, allLecturesError } =
     useAppSelector((state) => state.trainingSessions);
@@ -230,10 +230,11 @@ const AdminOverview: React.FC = () => {
     }
   }, [dispatch, currentInstitute]);
 
-  // Fetch active students count when currentInstitute exists
+  // Fetch total & active students count when currentInstitute exists
   useEffect(() => {
     const tenantId = currentInstitute?.tenantId;
     if (tenantId) {
+      dispatch(actGetStudentsCount(tenantId));
       dispatch(actGetActiveStudentsCount(tenantId));
     }
   }, [dispatch, currentInstitute]);
@@ -273,11 +274,14 @@ const AdminOverview: React.FC = () => {
     },
     {
       title: "الطلاب النشطون",
-      value: activeStudentsCountLoading ? "..." : (activeStudentsCountError ? "خطأ" : (activeStudentsCount?.toString() ?? "0")),
+      value: (activeStudentsCountLoading || studentsCountLoading)
+        ? "..."
+        : (activeStudentsCountError ? "خطأ"
+          : Math.min(activeStudentsCount ?? 0, studentsCount ?? 0).toString()),
       icon: <SchoolIcon />,
       color: "#4caf50",
     },
-  ], [usersCount, usersCountLoading, usersCountError, activeTrainingSessionsCount, activeTrainingSessionsCountLoading, activeTrainingSessionsCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError]);
+  ], [usersCount, usersCountLoading, usersCountError, activeTrainingSessionsCount, activeTrainingSessionsCountLoading, activeTrainingSessionsCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError, studentsCount, studentsCountLoading]);
 
   // Handle missing userId
   if (!userId) {

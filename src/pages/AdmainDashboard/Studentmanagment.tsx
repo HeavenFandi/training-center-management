@@ -63,12 +63,15 @@ const Studentmanagment: React.FC = () => {
       },
       {
         title: "الطلاب النشطون",
-        value: activeStudentsCountLoading ? "..." : (activeStudentsCountError ? "خطأ" : `${activeStudentsCount ?? 0}`),
+        value: (activeStudentsCountLoading || studentsCountLoading)
+          ? "..."
+          : (activeStudentsCountError ? "خطأ"
+            : `${Math.min(activeStudentsCount ?? 0, studentsCount ?? 0)}`),
         icon: <PersonIcon />,
         color: "#4caf50",
       },
     ],
-    [studentsCount, studentsCountLoading, studentsCountError, students.length],
+    [studentsCount, studentsCountLoading, studentsCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError],
   );
 
   return (
