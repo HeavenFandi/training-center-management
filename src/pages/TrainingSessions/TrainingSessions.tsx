@@ -185,15 +185,19 @@ const TrainingSessions = memo(() => {
                             </Box>
                             <Skeleton variant="text" width="100%" height={48} />
                             <Stack spacing={1}>
-                              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
-                                <Skeleton variant="circular" width={16} height={16} />
-                                <Skeleton variant="text" width="40%" height={20} />
-                              </Box>
-                              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
-                                <Skeleton variant="circular" width={16} height={16} />
-                                <Skeleton variant="text" width="30%" height={20} />
-                              </Box>
-                            </Stack>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="40%" height={20} />
+              </Box>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="35%" height={20} />
+              </Box>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="30%" height={20} />
+              </Box>
+            </Stack>
                           </Stack>
                         </Box>
                         <Box sx={{ p:2, pt:0, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
