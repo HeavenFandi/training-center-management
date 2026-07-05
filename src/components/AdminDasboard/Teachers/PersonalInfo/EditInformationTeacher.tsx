@@ -17,6 +17,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import SaveIcon from "@mui/icons-material/Save";
 import TeacherImageUpload from "./TeacherImageUpload";
 import EditTeacherForm from "./EditTeacherForm";
+import { useSnackbar } from "../../../../Context/SnackbarContext";
 
 export type TeacherFormData = {
   fname: string;
@@ -60,6 +61,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
   const [errors, setErrors] = useState<TeacherFormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const { showSnackbar } = useSnackbar();
+
   useEffect(() => {
     if (open) {
       setFormData(teacher);
@@ -153,6 +156,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
       onSave(formData, selectedImage);
       setLoading(false);
       setSuccess(true);
+      showSnackbar("تم تعديل المعلومات بنجاح", "success");
 
       setTimeout(() => {
         setSuccess(false);

@@ -113,9 +113,6 @@ const TeacherProfile = () => {
     updatedTeacher: TeacherFormData,
     imageFile?: File | null,
   ) => {
-    console.log("handleSaveTeacher");
-    console.log(updatedTeacher);
-
     if (!selectedTeacher) return;
     console.log("Updated Teacher Phone:", updatedTeacher.phone);
     const result = await dispatch(
