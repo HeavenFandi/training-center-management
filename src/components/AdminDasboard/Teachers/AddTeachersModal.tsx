@@ -50,11 +50,13 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
           overflow: "hidden",
           p: 0.5,
         },
-      }}>
+      }}
+    >
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit, onError)}
-        sx={{ direction: "rtl" }}>
+        sx={{ direction: "rtl" }}
+      >
         <Box
           sx={{
             p: 2,
@@ -63,12 +65,14 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
             alignItems: "center",
             justifyContent: "space-between",
             bgcolor: "#F8FAFC",
-          }}>
+          }}
+        >
           <Typography
             variant="h6"
             fontWeight="900"
             color="#133E65"
-            sx={{ fontFamily: "Tajawal" }}>
+            sx={{ fontFamily: "Tajawal" }}
+          >
             إضافة معلم جديد
           </Typography>
           <IconButton onClick={onClose} sx={{ bgcolor: "#fff" }} type="button">
@@ -133,7 +137,8 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                     <InputAdornment position="end">
                       <IconButton
                         onClick={togglePasswordVisibility}
-                        size="small">
+                        size="small"
+                      >
                         {showPassword ? (
                           <VisibilityOffIcon fontSize="small" />
                         ) : (
@@ -188,16 +193,6 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                 compact
               />
             </Grid>
-            <Grid size={{ xs: 6, sm: 4 }}>
-              <AuthInput
-                label="الشهادات"
-                placeholder="الشهادات (اختياري)"
-                {...register("certificates")}
-                error={!!errors.certificates}
-                helperText={errors.certificates?.message}
-                compact
-              />
-            </Grid>
             <Grid size={{ xs: 12, sm: 12 }}>
               <AuthInput
                 label="العنوان"
@@ -232,7 +227,8 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                 boxShadow: "0 10px 25px rgba(19, 62, 101, 0.3)",
               },
             }}
-            startIcon={<SaveIcon sx={{ ml: 1 }} />}>
+            startIcon={<SaveIcon sx={{ ml: 1 }} />}
+          >
             {isSubmitting ? "جاري الإضافة..." : "إضافة المعلم"}
           </Button>
         </DialogContent>
@@ -242,5 +238,3 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
 };
 
 export default memo(AddTeachersModal);
-
-

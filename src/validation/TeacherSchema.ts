@@ -15,7 +15,6 @@ const baseTeacherSchema = z.object({
   confirmPassword: z.string().min(1, "تأكيد كلمة المرور مطلوب"),
   phone: z.string().min(7, "رقم الهاتف غير صالح"),
   specialization: z.string().min(1, "التخصص مطلوب"),
-  certificates: z.string().optional(),
   experienceYears: z.coerce.number().min(0, "سنوات الخبرة يجب أن تكون رقمًا صالحًا"),
   address: z.string().min(1, "العنوان مطلوب"),
 });
