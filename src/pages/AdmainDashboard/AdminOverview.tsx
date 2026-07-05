@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/Auth/authSlice";
 import { actGetInstituteByUserId, actGetInstituteMonthlyRegistrations, actGetInstituteFinancialMonthly, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
-import { actGetAllLectures, clearTrainingSessionsState } from "../../store/Courses/trainingSessionsSlice";
+import { actGetAllLectures, clearTrainingSessionsState, resetTrainingSessions } from "../../store/Courses/trainingSessionsSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import { clearCoursesState, selectCoursesState } from "../../store/Courses/courseSlice";
 import { clearTeachersState } from "../../store/teachers/teachersSlice";
@@ -196,10 +196,13 @@ const AdminOverview: React.FC = () => {
     dispatch(actGetInstituteFinancialMonthly({ id: instituteId, year: currentYear }));
   }, [dispatch, currentInstitute, currentYear]);
 
-  // Fetch all lectures on mount
+  // Fetch all lectures when institute changes; reset on unmount or before next institute loads
   useEffect(() => {
     dispatch(actGetAllLectures());
-  }, [dispatch]);
+    return () => {
+      dispatch(resetTrainingSessions());
+    };
+  }, [dispatch, currentInstitute?.id]);
   
   // Fetch courses when currentInstitute exists
   useEffect(() => {

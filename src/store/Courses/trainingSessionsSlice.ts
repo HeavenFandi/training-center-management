@@ -205,6 +205,11 @@ const trainingSessionsSlice = createSlice({
       state.deletingLectureId = null;
       state.lectureDeleteError = null;
     },
+    resetTrainingSessions: (state) => {
+      state.allLectures = [];
+      state.allLecturesLoading = "idle";
+      state.allLecturesError = null;
+    },
     clearTrainingSessionsState: (state) => {
       state.trainingSessions = [];
       state.activeSessions = [];
@@ -705,6 +710,7 @@ export const {
   clearDeleteSessionState,
   clearDeleteLectureState,
   clearTrainingSessionsState,
+  resetTrainingSessions,
 } = trainingSessionsSlice.actions;
 const selectTrainingSessionsState = (state: RootState) =>
   state.trainingSessions;
