@@ -196,13 +196,22 @@ const AdminOverview: React.FC = () => {
     dispatch(actGetInstituteFinancialMonthly({ id: instituteId, year: currentYear }));
   }, [dispatch, currentInstitute, currentYear]);
 
-  // Fetch all lectures when institute changes; reset on unmount or before next institute loads
+  // Only fetch lectures after courses have loaded — if the institute has courses fetch them,
+  // otherwise reset so ScheduleCard shows the empty state.
+  // This prevents the race condition where global lectures arrive after an empty-courses reset.
   useEffect(() => {
-    dispatch(actGetAllLectures());
+    if (coursesLoading !== "succeeded") return;
+
+    if (courses.length > 0) {
+      dispatch(actGetAllLectures());
+    } else {
+      dispatch(resetTrainingSessions());
+    }
+
     return () => {
       dispatch(resetTrainingSessions());
     };
-  }, [dispatch, currentInstitute?.id]);
+  }, [dispatch, coursesLoading, courses.length]);
   
   // Fetch courses when currentInstitute exists
   useEffect(() => {

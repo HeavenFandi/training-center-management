@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
-import { getAllLectures, LectureResponse } from "../../../api/trainingSessionApi";
+import { getAllLectures } from "../../../api/trainingSessionApi";
 
 const actGetAllLectures = createAsyncThunk(
   "trainingSessions/actGetAllLectures",

@@ -286,3 +286,8 @@ export const getAllLectures = async (): Promise<LectureResponse[]> => {
   const response = await axiosClient.get<LectureResponse[]>("/lectures");
   return response.data.map(convertLectureResponseTimeFields);
 };
+
+export const getLecturesByInstituteId = async (instituteId: number): Promise<LectureResponse[]> => {
+  const response = await axiosClient.get<LectureResponse[]>(`/lectures/institute/${instituteId}`);
+  return response.data.map(convertLectureResponseTimeFields);
+};
