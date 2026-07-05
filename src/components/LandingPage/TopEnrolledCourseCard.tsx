@@ -60,7 +60,7 @@ const TopEnrolledCourseCard: React.FC<Props> = ({ session }) => {
   const cleanHours = getCleanHours(duration);
 
   const handleCardClick = (): void => {
-    navigate(`/training-sessions/${session.id}`);
+    navigate(`/main/training-session-details/${session.id}`);
   };
 
   return (
