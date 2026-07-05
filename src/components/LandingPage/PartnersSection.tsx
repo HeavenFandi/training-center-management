@@ -84,7 +84,7 @@ function PartnersSection() {
             sx={{ flex: 1 }}
           >
             {loading ? (
-              <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+              <Grid size={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                 <CircularProgress sx={{ color: "white" }} size={24} />
               </Grid>
             ) : (

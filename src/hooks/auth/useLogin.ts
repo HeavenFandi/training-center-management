@@ -145,7 +145,7 @@ const useLogin = () => {
   // OTP HANDLERS
   // =========================
   const handleOtpChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
       const value = e.target.value;
       if (isNaN(Number(value))) return;
 
