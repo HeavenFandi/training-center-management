@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionListItem } from "../../../types/cardType";
+import { getInstituteById } from "../../../api/instituteApi";
 
 interface TTrainingSessionResponse {
   id: number;
@@ -41,20 +42,24 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
     const { rejectWithValue } = thunkAPI;
     try {
       console.log(`[DEBUG][STAGE 1: API REQUEST] Fetching active/upcoming sessions for course ${courseId}, institute ${instituteId}`);
-      const response = await axiosClient.get(
-        `/training-sessions/course/${courseId}/institute/${instituteId}/active-upcoming`
-      );
-      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Full response:`, response);
-      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data field:`, response.data);
-      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data keys:`, Object.keys(response.data));
+      const [sessionsResponse, institute] = await Promise.all([
+        axiosClient.get(
+          `/training-sessions/course/${courseId}/institute/${instituteId}/active-upcoming`
+        ),
+        getInstituteById(instituteId)
+      ]);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Full response:`, sessionsResponse);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data field:`, sessionsResponse.data);
+      console.log(`[DEBUG][STAGE 2: RAW API RESPONSE] Data keys:`, Object.keys(sessionsResponse.data));
+      console.log(`[DEBUG][STAGE 2: INSTITUTE DATA]`, institute);
 
       
       let rawData: TTrainingSessionResponse[] = [];
-      if (Array.isArray(response.data)) {
-        rawData = response.data;
-      } else if (typeof response.data === "object" && response.data !== null) {
-        if ("data" in response.data && Array.isArray(response.data.data)) {
-          rawData = response.data.data;
+      if (Array.isArray(sessionsResponse.data)) {
+        rawData = sessionsResponse.data;
+      } else if (typeof sessionsResponse.data === "object" && sessionsResponse.data !== null) {
+        if ("data" in sessionsResponse.data && Array.isArray(sessionsResponse.data.data)) {
+          rawData = sessionsResponse.data.data;
         }
       }
       console.log(`[DEBUG][STAGE 3: RAW DATA PREPARED] Raw sessions to map:`, rawData);
@@ -77,7 +82,7 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
           status: item.status,
           category: item.categoryName || "", 
           institute: item.instituteName || item.tenantName || "",
-          location: item.location || item.classroomName || "",
+          location: institute.location,
           image: item.image || "",
           description: item.courseDescription || "",
           startDate: item.startDate,
