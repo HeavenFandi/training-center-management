@@ -5,7 +5,7 @@ import actGetStudents from "../../store/Students/act/actGetStudents";
 import actDeleteStudent from "../../store/Students/act/actDeleteStudent";
 import actSearchStudents from "../../store/Students/act/actSearchStudents";
 import { selectStudentsState, resetStudentsError } from "../../store/Students/studentsSlice";
-import { actGetInstituteByUserId, actGetStudentsCount, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetStudentsCount, actGetInstituteUsersCount, actGetActiveStudentsCount } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 
 export const useStudentManagement = () => {
@@ -13,7 +13,7 @@ export const useStudentManagement = () => {
   const { showSnackbar } = useSnackbar();
   const { students, searchResults, loading, searchLoading, error } = useAppSelector(selectStudentsState);
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, studentsCount, studentsCountLoading, studentsCountError } = useAppSelector((state) => state.institutes);
+  const { currentInstitute, studentsCount, studentsCountLoading, studentsCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError } = useAppSelector((state) => state.institutes);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<CreateStudentResponse | null>(null);
@@ -48,6 +48,14 @@ export const useStudentManagement = () => {
     const tenantId = currentInstitute?.tenantId;
     if (tenantId) {
       dispatch(actGetStudentsCount(tenantId));
+    }
+  }, [dispatch, currentInstitute?.tenantId]);
+
+  // Fetch active students count from backend
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    if (tenantId) {
+      dispatch(actGetActiveStudentsCount(tenantId));
     }
   }, [dispatch, currentInstitute?.tenantId]);
 
@@ -248,5 +256,8 @@ export const useStudentManagement = () => {
     studentsCount,
     studentsCountLoading,
     studentsCountError,
+    activeStudentsCount,
+    activeStudentsCountLoading,
+    activeStudentsCountError,
   };
 };

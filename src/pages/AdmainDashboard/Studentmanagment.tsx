@@ -46,6 +46,9 @@ const Studentmanagment: React.FC = () => {
     studentsCount,
     studentsCountLoading,
     studentsCountError,
+    activeStudentsCount,
+    activeStudentsCountLoading,
+    activeStudentsCountError,
   } = useStudentManagement();
   
   const showLoading = useDelayedLoading(loading);
@@ -60,7 +63,7 @@ const Studentmanagment: React.FC = () => {
       },
       {
         title: "الطلاب النشطون",
-        value: `${students.length}`,
+        value: activeStudentsCountLoading ? "..." : (activeStudentsCountError ? "خطأ" : `${activeStudentsCount ?? 0}`),
         icon: <PersonIcon />,
         color: "#4caf50",
       },
