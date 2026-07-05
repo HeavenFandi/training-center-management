@@ -51,7 +51,7 @@ const getDynamicDays = (referenceDate: Date = new Date()): Day[] => {
   });
 };
 
-
+import EditStudentModal from "../../components/AdminDasboard/students/EditStudentModal";
 import StatCard from "../../components/StudentDashboard/StatCard";
 import CourseActivityCard from "../../components/StudentDashboard/CourseActivityCard";
 import PersonalInfo from "../../components/StudentDashboard/PersonalInfo";
@@ -307,14 +307,18 @@ const StudentDashboard = () => {
                 </Typography>
               </Box>
             ) : (
-              activeCourses.slice(0, 3).map((course, index) => (
-                <CourseActivityCard
-                  key={
-                    course.trainingSessionId || course.courseName || `${index}`
-                  }
-                  {...course}
-                />
-              ))
+              activeCourses
+                .slice(0, 3)
+                .map((course, index) => (
+                  <CourseActivityCard
+                    key={
+                      course.trainingSessionId ||
+                      course.courseName ||
+                      `${index}`
+                    }
+                    {...course}
+                  />
+                ))
             )}
           </Grid>
         </Grid>
@@ -394,26 +398,40 @@ const StudentDashboard = () => {
           }}
         >
           <Typography variant="h6" fontWeight="900" color="#133E65">
-           دوراتي التدريبية
+            دوراتي التدريبية
           </Typography>
-          <IconButton onClick={() => setViewAllOpen(false)} sx={{ bgcolor: "#fff" }}>
+          <IconButton
+            onClick={() => setViewAllOpen(false)}
+            sx={{ bgcolor: "#fff" }}
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
 
-        <DialogContent sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC" }}>
+        <DialogContent
+          sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC" }}
+        >
           {activeCourses.map((course, index) => (
             <CourseActivityCard
-              key={
-                course.trainingSessionId || course.courseName || `${index}`
-              }
+              key={course.trainingSessionId || course.courseName || `${index}`}
               {...course}
             />
           ))}
         </DialogContent>
       </Dialog>
 
-
+      <EditStudentModal
+        open={openEdit}
+        onClose={handleCloseEdit}
+        student={student}
+        onSave={handleSave}
+        onImageUpdate={handleImageUpdate}
+        loading={updateLoading}
+        success={success}
+        error={updateError}
+        setPendingImageFile={setPendingImageFile}
+        imageUpdateLoading={imageUpdateLoading}
+      />
     </Box>
   );
 };

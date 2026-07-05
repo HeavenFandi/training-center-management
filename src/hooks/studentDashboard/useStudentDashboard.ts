@@ -51,9 +51,13 @@ export const useStudentDashboard = (options?: { referenceDate?: Date }) => {
   // Fetch data when user changes or on initial load
   useEffect(() => {
     // Only fetch if we have a student user with valid studentId
-    if (userType === "STUDENT" && user?.studentId && !isNaN(Number(user.studentId))) {
+    if (
+      userType === "STUDENT" &&
+      user?.studentId &&
+      !isNaN(Number(user.studentId))
+    ) {
       const studentId = Number(user.studentId);
-      
+
       dispatch(actFetchProfile(studentId));
       dispatch(actFetchTrainingHours(studentId));
       dispatch(actFetchCompletionPercentage(studentId));
@@ -69,10 +73,18 @@ export const useStudentDashboard = (options?: { referenceDate?: Date }) => {
 
   // Refetch weekly schedule when referenceDate changes
   useEffect(() => {
-    if (userType === "STUDENT" && user?.studentId && !isNaN(Number(user.studentId)) && referenceDate) {
+    if (
+      userType === "STUDENT" &&
+      user?.studentId &&
+      !isNaN(Number(user.studentId)) &&
+      referenceDate
+    ) {
       const studentId = Number(user.studentId);
       dispatch(
-        actFetchWeeklySchedule({ studentId, referenceDate: formatDate(referenceDate) }),
+        actFetchWeeklySchedule({
+          studentId,
+          referenceDate: formatDate(referenceDate),
+        }),
       );
     }
   }, [referenceDate, user, userType, dispatch]);
@@ -83,8 +95,8 @@ export const useStudentDashboard = (options?: { referenceDate?: Date }) => {
         typeof item.attendancePercentage === "number"
           ? item.attendancePercentage
           : item.totalLectures > 0
-          ? item.lecturesAttended / item.totalLectures
-          : 0;
+            ? item.lecturesAttended / item.totalLectures
+            : 0;
 
       return {
         studentId: item.studentId ?? 0,
@@ -101,7 +113,11 @@ export const useStudentDashboard = (options?: { referenceDate?: Date }) => {
 
   const handleSave = useCallback(
     async (updatedStudent: Student) => {
-      if (userType !== "STUDENT" || !user?.studentId || isNaN(Number(user.studentId))) {
+      if (
+        userType !== "STUDENT" ||
+        !user?.studentId ||
+        isNaN(Number(user.studentId))
+      ) {
         return;
       }
 
@@ -120,7 +136,11 @@ export const useStudentDashboard = (options?: { referenceDate?: Date }) => {
 
   const handleImageUpdate = useCallback(async () => {
     if (!pendingImageFile) return;
-    if (userType !== "STUDENT" || !user?.studentId || isNaN(Number(user.studentId))) {
+    if (
+      userType !== "STUDENT" ||
+      !user?.studentId ||
+      isNaN(Number(user.studentId))
+    ) {
       return;
     }
 
