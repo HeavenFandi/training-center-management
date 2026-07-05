@@ -38,6 +38,11 @@ interface TTrainingSessionResponse {
   classroomId?: number;
   hallId?: number;
 
+  // Enrollment status properties
+  isEnrolled?: boolean;
+  isRegistered?: boolean;
+  enrolledStudentIds?: number[];
+
   // مهم: ضفنا هدول لأن الباك ممكن يرجع id المعلم بأحد هالأسماء
   teacherId?: number;
   instructorId?: number;
@@ -203,6 +208,9 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         daysOfWeek: daysOfWeek,
         classroomId: classroomId,
         teacherId: instructorId,
+        isEnrolled: item.isEnrolled ?? item.isRegistered,
+        isRegistered: item.isRegistered ?? item.isEnrolled,
+        enrolledStudentIds: item.enrolledStudentIds,
 
         instructor: {
           ...(instructorId !== undefined ? { id: instructorId } : {}),

@@ -1,17 +1,50 @@
-import React from "react";
-import { Box, Typography, Button, Container, Paper, Stack } from "@mui/material";
+import React, { useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Container,
+  Paper,
+  Stack,
+} from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CheckIcon from "@mui/icons-material/Check";
 import HomeIcon from "@mui/icons-material/Home";
 import SchoolIcon from "@mui/icons-material/School";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  actFetchProfile,
+  actFetchTrainingHours,
+  actFetchCompletionPercentage,
+  actFetchWeeklySchedule,
+  actFetchActiveStudentCourses,
+} from "../../store/StudentProfile/studentProfileSlice";
 
 const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+  const dispatch = useAppDispatch();
+  const { user, userType } = useAppSelector((state) => state.auth);
+
   const courseName = searchParams.get("courseName");
   const paymentDate = searchParams.get("paymentDate");
   const transactionId = searchParams.get("transactionId");
+
+  useEffect(() => {
+    // Refresh all student profile and dashboard data after successful payment
+    if (
+      userType === "STUDENT" &&
+      user?.studentId &&
+      !isNaN(Number(user.studentId))
+    ) {
+      const studentId = Number(user.studentId);
+      dispatch(actFetchProfile(studentId));
+      dispatch(actFetchTrainingHours(studentId));
+      dispatch(actFetchCompletionPercentage(studentId));
+      dispatch(actFetchWeeklySchedule({ studentId }));
+      dispatch(actFetchActiveStudentCourses(studentId));
+    }
+  }, [dispatch, user, userType]);
 
   return (
     <Container maxWidth="md">
@@ -49,11 +82,11 @@ const PaymentSuccess: React.FC = () => {
         >
           <CheckIcon sx={{ fontSize: { xs: 60, sm: 70 }, color: "white" }} />
         </Box>
-        
+
         <Typography variant="h3" fontWeight="bold" sx={{ color: "#051630" }}>
           تم الدفع بنجاح!
         </Typography>
-        
+
         <Typography variant="h6" sx={{ color: "#50627b", mb: 2 }}>
           تم تسجيل اشتراكك في الدورة بنجاح. يمكنك الآن متابعة التعلم.
         </Typography>
@@ -76,7 +109,11 @@ const PaymentSuccess: React.FC = () => {
                   <Typography variant="body2" sx={{ color: "#7b8794" }}>
                     اسم الدورة
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold" sx={{ color: "#051630" }}>
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    sx={{ color: "#051630" }}
+                  >
                     {courseName}
                   </Typography>
                 </Box>
@@ -86,7 +123,11 @@ const PaymentSuccess: React.FC = () => {
                   <Typography variant="body2" sx={{ color: "#7b8794" }}>
                     تاريخ الدفع
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold" sx={{ color: "#051630" }}>
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    sx={{ color: "#051630" }}
+                  >
                     {paymentDate}
                   </Typography>
                 </Box>
@@ -96,7 +137,11 @@ const PaymentSuccess: React.FC = () => {
                   <Typography variant="body2" sx={{ color: "#7b8794" }}>
                     رقم العملية
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold" sx={{ color: "#051630", wordBreak: "break-all" }}>
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    sx={{ color: "#051630", wordBreak: "break-all" }}
+                  >
                     {transactionId}
                   </Typography>
                 </Box>
@@ -104,8 +149,16 @@ const PaymentSuccess: React.FC = () => {
             </Stack>
           </Paper>
         )}
-        
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center", mt: 2 }}>
+
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            justifyContent: "center",
+            mt: 2,
+          }}
+        >
           <Button
             variant="contained"
             size="large"
@@ -122,7 +175,7 @@ const PaymentSuccess: React.FC = () => {
           >
             ابدأ التعلم الآن
           </Button>
-          
+
           <Button
             variant="outlined"
             size="large"
@@ -135,7 +188,10 @@ const PaymentSuccess: React.FC = () => {
               px: 4,
               py: 1.5,
               fontWeight: "bold",
-              "&:hover": { borderColor: "#133e65", bgcolor: "rgba(5, 22, 48, 0.04)" },
+              "&:hover": {
+                borderColor: "#133e65",
+                bgcolor: "rgba(5, 22, 48, 0.04)",
+              },
             }}
           >
             العودة للرئيسية
