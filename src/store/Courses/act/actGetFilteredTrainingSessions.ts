@@ -3,6 +3,7 @@ import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionListItem } from "../../../types/cardType";
 import { getAllInstitutes } from "../../../api/instituteApi";
+import { getTeachers } from "../../../api/teacherApi";
 
 export interface TFilters {
   category?: string;
@@ -26,7 +27,8 @@ interface TTrainingSessionResponse {
   courseName: string;
   courseDescription: string;
   classroomName?: string;
-  teacherName: string;
+  teacherName?: string;
+  teacherUsername?: string;
   teacherId?: number;
   instituteName?: string;
   tenantName?: string;
@@ -49,18 +51,21 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
       });
 
       console.log("Fetching sessions with filters:", cleanedFilters);
-      const [sessionsResponse, institutesResponse] = await Promise.all([
-        axiosClient.get<TTrainingSessionResponse[]>(
-          "/training-sessions/sessions-with-filter",
-          {
-            params: cleanedFilters,
-          },
-        ),
-        getAllInstitutes(),
-      ]);
+      const [sessionsResponse, institutesResponse, teachersResponse] =
+        await Promise.all([
+          axiosClient.get<TTrainingSessionResponse[]>(
+            "/training-sessions/sessions-with-filter",
+            {
+              params: cleanedFilters,
+            },
+          ),
+          getAllInstitutes(),
+          getTeachers(),
+        ]);
 
       console.log("Filtered response (sessions):", sessionsResponse.data);
       console.log("Filtered response (institutes):", institutesResponse);
+      console.log("Filtered response (teachers):", teachersResponse);
 
       // Create a map of institute names to their locations
       const instituteLocationMap = new Map<string, string>();
@@ -73,18 +78,38 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
         }
       });
 
+      // Create a map of teacherId to full name
+      const teacherNameMap = new Map<number, string>();
+      teachersResponse.forEach((teacher) => {
+        if (teacher.id) {
+          const fullName =
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
+          if (fullName) {
+            teacherNameMap.set(teacher.id, fullName);
+          }
+        }
+      });
+
       const mappedSessions: TTrainingSessionListItem[] =
         sessionsResponse.data.map((item: TTrainingSessionResponse) => {
           const instituteName = item.instituteName || item.tenantName || "";
           const instituteLocation =
             instituteLocationMap.get(instituteName) || "";
 
+          // Get teacher name from map if available, otherwise fall back to API fields
+          const teacherId = item.teacherId || 0;
+          const finalTeacherName =
+            teacherNameMap.get(teacherId) ||
+            item.teacherName ||
+            item.teacherUsername ||
+            "";
+
           return {
             id: item.id,
             courseId: item.courseId,
             title: item.courseName,
-            teacherName: item.teacherName,
-            teacherId: item.teacherId || 0,
+            teacherName: finalTeacherName,
+            teacherId: teacherId,
             duration: item.duration,
             price: item.price,
             availableSeats: item.availableSeats,

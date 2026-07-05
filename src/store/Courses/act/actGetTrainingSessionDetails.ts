@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionDetails } from "../../../types/cardType";
+import { getTeachers } from "../../../api/teacherApi";
 
 interface TTrainingSessionResponse {
   id: number;
@@ -75,9 +76,10 @@ const actGetTrainingSessionDetails = createAsyncThunk(
     const { rejectWithValue } = thunkAPI;
 
     try {
-      const response = await axiosClient.get<TTrainingSessionResponse>(
-        `/training-sessions/${id}`,
-      );
+      const [response, teachersResponse] = await Promise.all([
+        axiosClient.get<TTrainingSessionResponse>(`/training-sessions/${id}`),
+        getTeachers(),
+      ]);
 
       const item = response.data;
 
@@ -85,6 +87,19 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         "RAW TRAINING SESSION DETAILS (full):",
         JSON.stringify(item, null, 2),
       );
+      console.log("RAW TEACHERS RESPONSE:", teachersResponse);
+
+      // Create a map of teacherId to full name
+      const teacherNameMap = new Map<number, string>();
+      teachersResponse.forEach((teacher) => {
+        if (teacher.id) {
+          const fullName =
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
+          if (fullName) {
+            teacherNameMap.set(teacher.id, fullName);
+          }
+        }
+      });
       console.log("RAW TRAINING SESSION DETAILS (object):", item);
       console.log("All keys in response object:", Object.keys(item));
       console.log(
@@ -197,7 +212,11 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         courseName: item.courseName,
         courseDescription: item.courseDescription,
         classroomName: item.classroomName,
-        teacherName: item.teacherName,
+        teacherName:
+          (instructorId && teacherNameMap.get(instructorId)) ||
+          item.teacherName ||
+          (item as any).teacherUsername ||
+          "",
         instituteName: item.instituteName,
         image: item.image,
         enrolledStudentsCount: mappedEnrollmentCount,
@@ -214,7 +233,12 @@ const actGetTrainingSessionDetails = createAsyncThunk(
 
         instructor: {
           ...(instructorId !== undefined ? { id: instructorId } : {}),
-          name: item.instructor?.name || item.teacherName,
+          name:
+            item.instructor?.name ||
+            (instructorId && teacherNameMap.get(instructorId)) ||
+            item.teacherName ||
+            (item as any).teacherUsername ||
+            "",
           title: item.instructor?.title || "مدرب",
           image: item.instructor?.image || "",
           email: item.instructor?.email || "",

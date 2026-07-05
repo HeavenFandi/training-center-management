@@ -4,6 +4,7 @@ import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionListItem } from "../../../types/cardType";
 import { RootState } from "../../index";
 import { getAllInstitutes, Institute } from "../../../api/instituteApi";
+import { getTeachers, TeacherApiResponse } from "../../../api/teacherApi";
 
 interface TTrainingSessionResponse {
   id: number;
@@ -11,6 +12,7 @@ interface TTrainingSessionResponse {
   courseName: string;
   courseDescription?: string;
   teacherName: string;
+  teacherUsername?: string;
   teacherId: number;
   duration: string;
   price: number;
@@ -43,15 +45,18 @@ const actGetTrainingSessions = createAsyncThunk(
     try {
       console.log("=== actGetTrainingSessions ===");
       console.log("Fetching all sessions without filters");
-      const [sessionsResponse, institutesResponse] = await Promise.all([
-        axiosClient.get<TTrainingSessionResponse[]>(
-          "/training-sessions/sessions-with-filter",
-        ),
-        getAllInstitutes(),
-      ]);
+      const [sessionsResponse, institutesResponse, teachersResponse] =
+        await Promise.all([
+          axiosClient.get<TTrainingSessionResponse[]>(
+            "/training-sessions/sessions-with-filter",
+          ),
+          getAllInstitutes(),
+          getTeachers(),
+        ]);
 
       console.log("Raw API Response (sessions):", sessionsResponse.data);
       console.log("Raw API Response (institutes):", institutesResponse);
+      console.log("Raw API Response (teachers):", teachersResponse);
 
       // Create a map of institute names to their locations
       const instituteLocationMap = new Map<string, string>();
@@ -64,6 +69,18 @@ const actGetTrainingSessions = createAsyncThunk(
         }
       });
 
+      // Create a map of teacherId to full name
+      const teacherNameMap = new Map<number, string>();
+      teachersResponse.forEach((teacher) => {
+        if (teacher.id) {
+          const fullName =
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
+          if (fullName) {
+            teacherNameMap.set(teacher.id, fullName);
+          }
+        }
+      });
+
       const mappedSessions: TTrainingSessionListItem[] =
         sessionsResponse.data.map(
           (item: TTrainingSessionResponse, index: number) => {
@@ -72,11 +89,18 @@ const actGetTrainingSessions = createAsyncThunk(
             const instituteLocation =
               instituteLocationMap.get(instituteName) || "";
 
+            // Get teacher name from map if available, otherwise fall back to API fields
+            const finalTeacherName =
+              teacherNameMap.get(item.teacherId) ||
+              item.teacherName ||
+              item.teacherUsername ||
+              "";
+
             const mapped = {
               id: item.id,
               courseId: item.courseId,
               title: item.courseName,
-              teacherName: item.teacherName,
+              teacherName: finalTeacherName,
               teacherId: item.teacherId,
               duration: item.duration,
               price: item.price,
