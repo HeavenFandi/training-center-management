@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { teacherSchema, AddTeacherFormData } from "../../validation/TeacherSchema";
@@ -9,13 +9,11 @@ import actGetTeachers from "../../store/teachers/act/actGetTeachers";
 
 interface UseAddTeacherFormProps {
   onClose: () => void;
-  onSave?: (data: AddTeacherFormData & { cvFile: File | null }) => void;
+  onSave?: (data: AddTeacherFormData) => void;
 }
 
 export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
@@ -35,26 +33,9 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
     setShowPassword((prev) => !prev);
   }, []);
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setCvFile(e.target.files[0]);
-    }
-  }, []);
-
   const onSubmit = useCallback(async (data: AddTeacherFormData) => {
     setIsSubmitting(true);
     try {
-      // Convert CV file to base64 if present
-      let cvBase64 = "";
-      if (cvFile) {
-        const reader = new FileReader();
-        cvBase64 = await new Promise((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(cvFile);
-        });
-      }
-
       const payload = {
         userId: user?.id || 0,
         username: data.username,
@@ -67,7 +48,6 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
         specialization: data.specialization,
         certificates: data.certificates || "",
         address: data.address,
-        cv: cvBase64,
         experienceYears: data.experienceYears,
       };
 
@@ -80,14 +60,13 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
         console.log("Create teacher response:", response);
 
         if (onSave) {
-          onSave({ ...data, cvFile });
+          onSave(data);
         }
 
         // Refresh teachers list
         dispatch(actGetTeachers());
 
         reset();
-        setCvFile(null);
         showSnackbar("تم إضافة المعلم بنجاح", "success");
         onClose();
       } else {
@@ -107,7 +86,7 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
     } finally {
       setIsSubmitting(false);
     }
-  }, [cvFile, onClose, onSave, reset, showSnackbar, dispatch, user]);
+  }, [onClose, onSave, reset, showSnackbar, dispatch, user]);
 
   const onError = useCallback((errors: FieldErrors<AddTeacherFormData>) => {
     console.log("Form validation errors:", errors);
@@ -120,10 +99,7 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
     errors,
     isSubmitting,
     showPassword,
-    cvFile,
-    fileInputRef,
     togglePasswordVisibility,
-    handleFileChange,
     onSubmit,
     onError,
   };

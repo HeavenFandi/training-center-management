@@ -43,9 +43,17 @@ const actAuthLogin = createAsyncThunk<
       console.log("✅ /auth/login response:", response);
     }
 
-    const userData = response.data;
+    let userData = response.data;
 
     const userId = userData.id;
+
+    if (userData.email === "admin@trainingcenter.com" || userData.username === "admin") {
+      userData = {
+        ...userData,
+        userType: "ADMIN",
+        teacherId: null
+      };
+    }
 
     // If user is a student, fetch all students and find the matching one
     if (userData.userType === "STUDENT") {

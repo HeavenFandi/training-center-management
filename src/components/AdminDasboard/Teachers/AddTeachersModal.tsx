@@ -1,4 +1,4 @@
-import React, { memo, useState, useRef } from "react";
+import React, { memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,6 @@ import {
 import { AddTeacherFormData } from "../../../validation/TeacherSchema";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import AuthInput from "../../Auth/AuthInput";
@@ -23,7 +22,7 @@ import { useAddTeacherForm } from "../../../hooks/adminDashboard/useAddTeacherFo
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave?: (data: AddTeacherFormData & { cvFile: File | null }) => void;
+  onSave?: (data: AddTeacherFormData) => void;
 }
 
 const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
@@ -33,28 +32,10 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
     errors,
     isSubmitting,
     showPassword,
-    cvFile,
-    fileInputRef,
     togglePasswordVisibility,
-    handleFileChange,
     onSubmit,
     onError,
   } = useAddTeacherForm({ onClose, onSave });
-
-  const uploadBoxStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    bgcolor: "rgba(19, 62, 101, 0.05)",
-    color: "#133E65",
-    borderRadius: "12px",
-    p: 1.5,
-    cursor: "pointer",
-    mt: 1,
-    border: "1px dashed rgba(19, 62, 101, 0.3)",
-    transition: "all 0.3s ease",
-    "&:hover": { bgcolor: "rgba(19, 62, 101, 0.1)" },
-  };
 
   return (
     <Dialog
@@ -228,23 +209,6 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
               />
             </Grid>
           </Grid>
-
-          <Box
-            sx={uploadBoxStyle}
-            mt={1}
-            onClick={() => fileInputRef.current?.click()}>
-            <Typography fontSize={14} fontWeight="800">
-              {cvFile ? cvFile.name : "رفع السيرة الذاتية (اختياري)"}
-            </Typography>
-            <CloudUploadIcon fontSize="small" />
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx"
-            />
-          </Box>
 
           <Button
             type="submit"
