@@ -1,4 +1,4 @@
-import React, { memo, useState, useRef } from "react";
+import React, { memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,6 @@ import {
 import { AddTeacherFormData } from "../../../validation/TeacherSchema";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import AuthInput from "../../Auth/AuthInput";
@@ -23,7 +22,7 @@ import { useAddTeacherForm } from "../../../hooks/adminDashboard/useAddTeacherFo
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave?: (data: AddTeacherFormData & { cvFile: File | null }) => void;
+  onSave?: (data: AddTeacherFormData) => void;
 }
 
 const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
@@ -33,28 +32,10 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
     errors,
     isSubmitting,
     showPassword,
-    cvFile,
-    fileInputRef,
     togglePasswordVisibility,
-    handleFileChange,
     onSubmit,
     onError,
   } = useAddTeacherForm({ onClose, onSave });
-
-  const uploadBoxStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    bgcolor: "rgba(19, 62, 101, 0.05)",
-    color: "#133E65",
-    borderRadius: "12px",
-    p: 1.5,
-    cursor: "pointer",
-    mt: 1,
-    border: "1px dashed rgba(19, 62, 101, 0.3)",
-    transition: "all 0.3s ease",
-    "&:hover": { bgcolor: "rgba(19, 62, 101, 0.1)" },
-  };
 
   return (
     <Dialog
@@ -69,11 +50,13 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
           overflow: "hidden",
           p: 0.5,
         },
-      }}>
+      }}
+    >
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit, onError)}
-        sx={{ direction: "rtl" }}>
+        sx={{ direction: "rtl" }}
+      >
         <Box
           sx={{
             p: 2,
@@ -82,12 +65,14 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
             alignItems: "center",
             justifyContent: "space-between",
             bgcolor: "#F8FAFC",
-          }}>
+          }}
+        >
           <Typography
             variant="h6"
             fontWeight="900"
             color="#133E65"
-            sx={{ fontFamily: "Tajawal" }}>
+            sx={{ fontFamily: "Tajawal" }}
+          >
             إضافة معلم جديد
           </Typography>
           <IconButton onClick={onClose} sx={{ bgcolor: "#fff" }} type="button">
@@ -152,7 +137,8 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                     <InputAdornment position="end">
                       <IconButton
                         onClick={togglePasswordVisibility}
-                        size="small">
+                        size="small"
+                      >
                         {showPassword ? (
                           <VisibilityOffIcon fontSize="small" />
                         ) : (
@@ -207,16 +193,6 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                 compact
               />
             </Grid>
-            <Grid size={{ xs: 6, sm: 4 }}>
-              <AuthInput
-                label="الشهادات"
-                placeholder="الشهادات (اختياري)"
-                {...register("certificates")}
-                error={!!errors.certificates}
-                helperText={errors.certificates?.message}
-                compact
-              />
-            </Grid>
             <Grid size={{ xs: 12, sm: 12 }}>
               <AuthInput
                 label="العنوان"
@@ -228,23 +204,6 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
               />
             </Grid>
           </Grid>
-
-          <Box
-            sx={uploadBoxStyle}
-            mt={1}
-            onClick={() => fileInputRef.current?.click()}>
-            <Typography fontSize={14} fontWeight="800">
-              {cvFile ? cvFile.name : "رفع السيرة الذاتية (اختياري)"}
-            </Typography>
-            <CloudUploadIcon fontSize="small" />
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx"
-            />
-          </Box>
 
           <Button
             type="submit"
@@ -268,7 +227,8 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
                 boxShadow: "0 10px 25px rgba(19, 62, 101, 0.3)",
               },
             }}
-            startIcon={<SaveIcon sx={{ ml: 1 }} />}>
+            startIcon={<SaveIcon sx={{ ml: 1 }} />}
+          >
             {isSubmitting ? "جاري الإضافة..." : "إضافة المعلم"}
           </Button>
         </DialogContent>
@@ -278,5 +238,3 @@ const AddTeachersModal: React.FC<Props> = ({ open, onClose, onSave }) => {
 };
 
 export default memo(AddTeachersModal);
-
-

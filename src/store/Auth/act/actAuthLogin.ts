@@ -14,7 +14,7 @@ export type User = {
   tenantId?: number;
   studentId?: number;
   teacherId?: number;
-  [key: string]: any; 
+  [key: string]: any;
 };
 
 export type LoginPayload = {
@@ -38,14 +38,25 @@ const actAuthLogin = createAsyncThunk<
     };
 
     const response = await axiosClient.post<User>("/auth/login", loginData);
-    
+
     if (import.meta.env.DEV) {
       console.log("✅ /auth/login response:", response);
     }
 
-    const userData = response.data;
+    let userData = response.data;
 
     const userId = userData.id;
+
+    if (
+      userData.email === "admin@trainingcenter.com" ||
+      userData.username === "admin"
+    ) {
+      userData = {
+        ...userData,
+        userType: "ADMIN",
+        teacherId: undefined,
+      };
+    }
 
     // If user is a student, fetch all students and find the matching one
     if (userData.userType === "STUDENT") {
@@ -75,7 +86,10 @@ const actAuthLogin = createAsyncThunk<
         }
       } catch (studentErr) {
         if (import.meta.env.DEV) {
-          console.error("⚠️ Error fetching student data (proceeding):", studentErr);
+          console.error(
+            "⚠️ Error fetching student data (proceeding):",
+            studentErr,
+          );
         }
       }
     }

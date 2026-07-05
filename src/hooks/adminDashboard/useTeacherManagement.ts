@@ -94,7 +94,7 @@ export const useTeacherManagement = () => {
     return filteredTeachers.slice(startIndex, endIndex);
   }, [filteredTeachers, page, ITEMS_PER_PAGE]);
 
-  const handleAddTeacher = useCallback((newTeacher: AddTeacherFormData & { cvFile: File | null }) => {
+  const handleAddTeacher = useCallback((newTeacher: AddTeacherFormData) => {
     // Modal is closed by useAddTeacherForm now
   }, []);
 
