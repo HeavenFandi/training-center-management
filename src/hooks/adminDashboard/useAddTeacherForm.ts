@@ -44,7 +44,6 @@ export const useAddTeacherForm = ({
       setIsSubmitting(true);
       try {
         const payload = {
-          userId: user?.id || 0,
           username: data.username,
           email: data.email,
           password: data.password,
@@ -57,13 +56,17 @@ export const useAddTeacherForm = ({
           experienceYears: data.experienceYears,
         };
 
-        console.log("Create teacher payload:", payload);
+        if (import.meta.env.DEV) {
+          console.log("Create teacher payload:", payload);
+        }
 
         const resultAction = await dispatch(actCreateTeacher(payload));
 
         if (actCreateTeacher.fulfilled.match(resultAction)) {
           const response = resultAction.payload;
-          console.log("Create teacher response:", response);
+          if (import.meta.env.DEV) {
+            console.log("Create teacher response:", response);
+          }
 
           if (onSave) {
             onSave(data);
@@ -83,7 +86,9 @@ export const useAddTeacherForm = ({
           showSnackbar(errorMessage, "error");
         }
       } catch (error: any) {
-        console.error("Error adding teacher:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error adding teacher:", error);
+        }
         const errorMessage =
           error.response?.data?.message ||
           error.message ||
@@ -93,7 +98,7 @@ export const useAddTeacherForm = ({
         setIsSubmitting(false);
       }
     },
-    [onClose, onSave, reset, showSnackbar, dispatch, user],
+    [onClose, onSave, reset, showSnackbar, dispatch],
   );
 
   const onError = useCallback(

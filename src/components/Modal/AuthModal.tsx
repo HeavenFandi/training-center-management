@@ -65,7 +65,7 @@ function AuthModal({ open, handleClose }:Tprops) {
             variant="contained"
             onClick={() => {
               handleClose();
-              navigate("/");
+              navigate("/login");
             }}
             sx={{
               mt: 2,
