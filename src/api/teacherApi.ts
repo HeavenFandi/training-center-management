@@ -1,7 +1,6 @@
 import axiosClient from "./axiosClient";
 
 export interface CreateTeacherRequest {
-  userId: number;
   username: string;
   email: string;
   password: string;

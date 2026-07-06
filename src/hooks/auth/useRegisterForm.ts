@@ -57,7 +57,7 @@ export default function useRegisterForm() {
   useEffect(() => {
     if (success) {
       showSnackbar("تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول", "success");
-      navigate("/", {
+      navigate("/login", {
         state: { message: "تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن" },
       });
       dispatch(resetAuthState());

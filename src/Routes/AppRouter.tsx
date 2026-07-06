@@ -1,4 +1,9 @@
-import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  Navigate,
+} from "react-router-dom";
 import ScrollToTop from "../components/Common/ScrollToTop";
 import Login from "../pages/Auth/Login";
 import ResetPassword from "../pages/Auth/ResetPassword";
@@ -29,6 +34,8 @@ import ErrorPage from "../pages/ErrorPage";
 import PaymentSuccess from "../pages/Payment/PaymentSuccess";
 import PaymentCancel from "../pages/Payment/PaymentCancel";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useAppSelector } from "../store/hooks";
+import { CircularProgress, Box } from "@mui/material";
 
 const Root = () => (
   <>
@@ -36,6 +43,44 @@ const Root = () => (
     <Outlet />
   </>
 );
+
+const IndexRoute = () => {
+  const { isAuthenticated, user, isHydrated } = useAppSelector(
+    (state) => state.auth,
+  );
+
+  if (!isHydrated) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <Home>
+        <LandingPage />
+      </Home>
+    );
+  }
+
+  // Redirect authenticated users to appropriate dashboard
+  if (user.userType === "ADMIN") {
+    return <Navigate to="/admin-dashboard" replace />;
+  } else if (user.userType === "TEACHER") {
+    return <Navigate to="/teacher-dashboard" replace />;
+  } else {
+    return <Navigate to="/main" replace />;
+  }
+};
 
 const router = createBrowserRouter([
   {
@@ -45,34 +90,34 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Login />,
+        element: <IndexRoute />,
       },
       { path: "login", element: <Login /> },
       { path: "reset-password", element: <ResetPassword /> },
       { path: "create-account", element: <Register /> },
-      { 
-        path: "institute-setup", 
+      {
+        path: "institute-setup",
         element: (
           <ProtectedRoute>
             <InstituteSetup />
           </ProtectedRoute>
-        ) 
+        ),
       },
-      { 
-        path: "payment/success", 
+      {
+        path: "payment/success",
         element: (
           <ProtectedRoute>
             <PaymentSuccess />
           </ProtectedRoute>
-        ) 
+        ),
       },
-      { 
-        path: "payment/cancel", 
+      {
+        path: "payment/cancel",
         element: (
           <ProtectedRoute>
             <PaymentCancel />
           </ProtectedRoute>
-        ) 
+        ),
       },
       {
         path: "admin-dashboard",
