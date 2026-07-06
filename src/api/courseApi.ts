@@ -59,3 +59,17 @@ export const updateCourse = async (data: UpdateCourseRequest): Promise<UpdateCou
 export const deleteCourse = async (id: number): Promise<void> => {
   await axiosClient.delete(`/courses/${id}`);
 };
+
+export interface CreateCategoryRequest {
+  name: string;
+}
+
+export interface CreateCategoryResponse {
+  id: number;
+  name: string;
+}
+
+export const createCategory = async (data: CreateCategoryRequest): Promise<CreateCategoryResponse> => {
+  const response = await axiosClient.post<CreateCategoryResponse>("/categories", data);
+  return response.data;
+};

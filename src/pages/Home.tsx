@@ -6,7 +6,7 @@ import { useAppSelector } from "../store/hooks";
 import { Box } from "@mui/material";
 import * as styles from "../styles/homeStyle";
 
-const Home: React.FC = () => {
+const Home: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   return (
@@ -14,7 +14,7 @@ const Home: React.FC = () => {
       <Header showIcons={isAuthenticated} />
 
       <Box component="main" sx={styles.mainContentStyle}>
-        <Outlet />
+        {children || <Outlet />}
       </Box>
 
       <Footer />

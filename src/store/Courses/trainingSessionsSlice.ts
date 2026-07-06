@@ -13,6 +13,7 @@ import actAddCourseRating from "./act/actAddCourseRating";
 import actEnrollInSession from "./act/actEnrollInSession";
 import actInitiatePayment from "./act/actInitiatePayment";
 import actGetCategories, { Category } from "./act/actGetCategories";
+import actCreateCategory from "./act/actCreateCategory";
 import actGetCourseRatings, { CourseRating } from "./act/actGetCourseRatings";
 import actGetCourseAverageRating from "./act/actGetCourseAverageRating";
 import actGetLecturesBySessionId from "./act/actGetLecturesBySessionId";
@@ -301,6 +302,10 @@ const trainingSessionsSlice = createSlice({
       state.categoriesLoading = "failed";
       if (action.payload && typeof action.payload == "string")
         state.categoriesError = action.payload;
+    });
+
+    builder.addCase(actCreateCategory.fulfilled, (state, action) => {
+      state.categories = [...state.categories, action.payload];
     });
 
     builder.addCase(actGetTrainingSessions.pending, (state) => {
@@ -614,29 +619,35 @@ const trainingSessionsSlice = createSlice({
       const payload = action.payload as any;
       state.selectedTrainingSession = {
         ...payload,
-        startTime: typeof payload.startTime === "object" 
-          ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00` 
-          : payload.startTime,
-        endTime: typeof payload.endTime === "object" 
-          ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00` 
-          : payload.endTime,
+        startTime:
+          typeof payload.startTime === "object"
+            ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00`
+            : payload.startTime,
+        endTime:
+          typeof payload.endTime === "object"
+            ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00`
+            : payload.endTime,
       } as any;
       // Update trainingSessions list
       state.trainingSessions = state.trainingSessions.map((session) =>
-        session.id === action.payload.id ? {
-          ...session,
-          ...(action.payload as any),
-        } as any : session
+        session.id === action.payload.id
+          ? ({
+              ...session,
+              ...(action.payload as any),
+            } as any)
+          : session,
       );
       // Update courseSessions
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
           state.courseSessions[courseId] = state.courseSessions[courseId].map(
             (session) =>
-              session.id === action.payload.id ? {
-                ...session,
-                ...(action.payload as any),
-              } as any : session
+              session.id === action.payload.id
+                ? ({
+                    ...session,
+                    ...(action.payload as any),
+                  } as any)
+                : session,
           );
         }
       }
