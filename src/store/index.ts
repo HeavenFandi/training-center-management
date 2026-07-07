@@ -10,6 +10,8 @@ import teachersReducer from "./teachers/teachersSlice";
 import classroomsReducer from "./Classrooms/classroomsSlice";
 import quizzesReducer from "./Quizzez/quizzesSlice";
 import gradesReducer from "./Grades/gradesSlice";
+import attendanceReducer from "./Attendance/attendanceSlice";
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -23,6 +25,7 @@ export const store = configureStore({
     teachers: teachersReducer,
     classrooms: classroomsReducer,
     grades: gradesReducer,
+    attendance: attendanceReducer,
   },
 });
 

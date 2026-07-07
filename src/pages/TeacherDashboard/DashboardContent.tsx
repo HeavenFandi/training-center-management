@@ -340,7 +340,7 @@ const TeacherDashboard: React.FC = () => {
                 fontWeight: 700,
                 fontFamily: "Tajawal",
                 "&:hover": {
-                  color: "#1e293b",
+                  color: "#384d73",
                 },
               }}>
               {showAllCourses ? "عرض أقل" : "عرض الجميع"}

@@ -116,8 +116,6 @@ const TeacherProfile = () => {
     }
   }, [selectedTeacher, courseProgress.length]);
 
-
-
   return (
     <Box
       dir="rtl"
