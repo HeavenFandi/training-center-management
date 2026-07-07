@@ -27,6 +27,7 @@ import {
   actUpdateInstitute,
   resetInstituteState,
   actGetStudentsCount,
+  actGetInstituteById,
 } from "../../store/Institutes/institutesSlice";
 import actGetCoursesByTenantId from "../../store/Courses/act/actGetCoursesByTenantId";
 import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
@@ -196,16 +197,68 @@ const InstituteManagement: React.FC = () => {
     dispatch(actGetInstituteByUserId(userId));
   }, [dispatch, user]);
 
+  // Once we have currentInstitute.id from actGetInstituteByUserId, fetch the full institute with actGetInstituteById
+  useEffect(() => {
+    const instituteId = currentInstitute?.id;
+    if (instituteId) {
+      if (import.meta.env.DEV) {
+        console.log(
+          "InstituteManagement: Calling actGetInstituteById with id:",
+          instituteId,
+        );
+      }
+      dispatch(actGetInstituteById(instituteId));
+    }
+  }, [dispatch, currentInstitute?.id]);
+
+  // Clean description from any backend debug text
+  const cleanDescription = (text: string | null | undefined) => {
+    if (!text) return "";
+    if (import.meta.env.DEV) {
+      console.log("cleanDescription: original text:", text);
+    }
+    // Remove any debug text starting with "what" or similar
+    let cleaned = text;
+    // Common debug patterns (only remove if it's at the end)
+    const debugPattern =
+      /\s*(\?what|what\s+happ|what\s*if\s*i\s+send\s+put).*$/i;
+    cleaned = cleaned.replace(debugPattern, "");
+    cleaned = cleaned.trim();
+    if (import.meta.env.DEV) {
+      console.log("cleanDescription: cleaned text:", cleaned);
+    }
+    return cleaned;
+  };
+
   useEffect(() => {
     if (currentInstitute) {
+      if (import.meta.env.DEV) {
+        console.log(
+          "InstituteManagement: currentInstitute FULL OBJECT:",
+          currentInstitute,
+        );
+        console.log(
+          "InstituteManagement: currentInstitute.description:",
+          currentInstitute.description,
+        );
+        console.log(
+          "InstituteManagement: currentInstitute.description length:",
+          currentInstitute.description?.length,
+        );
+        console.log(
+          "InstituteManagement: currentInstitute.description type:",
+          typeof currentInstitute.description,
+        );
+      }
       const timeRange = `${formatTime(currentInstitute.startTime)} - ${formatTime(currentInstitute.endTime)}`;
       const forbiddenDays = ["الجمعة", "السبت", "FRIDAY", "SATURDAY"];
       const mappedDays = (currentInstitute.workingDays ?? [])
         .map((day: string) => mapWorkingDay(day))
         .filter((day: string) => !forbiddenDays.includes(day));
-      setInstituteInfo({
+      const newDescription = cleanDescription(currentInstitute.description);
+      const newInstituteInfo = {
         name: currentInstitute.name ?? "",
-        description: currentInstitute.description ?? "",
+        description: newDescription,
         location: currentInstitute.location ?? "",
         ownerName: currentInstitute.ownerName ?? undefined,
         status: currentInstitute.status ?? "INACTIVE",
@@ -220,7 +273,14 @@ const InstituteManagement: React.FC = () => {
             status: currentInstitute.status ?? "INACTIVE",
           },
         ],
-      });
+      };
+      if (import.meta.env.DEV) {
+        console.log(
+          "InstituteManagement: setting instituteInfo:",
+          newInstituteInfo,
+        );
+      }
+      setInstituteInfo(newInstituteInfo);
     }
   }, [currentInstitute]);
 
@@ -700,7 +760,7 @@ const InstituteManagement: React.FC = () => {
         initialData={{
           name: currentInstitute.name,
           location: currentInstitute.location,
-          description: currentInstitute.description,
+          description: cleanDescription(currentInstitute.description),
           phoneNumber: currentInstitute.phoneNumber,
           email: currentInstitute.email,
           startTime: currentInstitute.startTime,
