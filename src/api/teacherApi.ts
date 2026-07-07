@@ -13,6 +13,7 @@ export interface CreateTeacherRequest {
   address: string;
   cv?: string;
   experienceYears: number;
+  instituteId: number;
 }
 
 export interface UpdateTeacherRequest {
@@ -151,19 +152,5 @@ export const searchTeachers = async (
       params: { q: query },
     },
   );
-  return response.data;
-};
-
-export type AssignTeacherToInstituteRequest = {
-  instituteId: number;
-  teacherId: number;
-  status: string;
-  joinedDate: string;
-};
-
-export const assignTeacherToInstitute = async (
-  data: AssignTeacherToInstituteRequest,
-): Promise<any> => {
-  const response = await axiosClient.post("/institute-teachers", data);
   return response.data;
 };

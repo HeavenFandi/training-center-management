@@ -9,7 +9,6 @@ import { useSnackbar } from "../../Context/SnackbarContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actCreateTeacher from "../../store/teachers/act/actCreateTeacher";
 import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
-import actAssignTeacherToInstitute from "../../store/teachers/act/actAssignTeacherToInstitute";
 
 interface UseAddTeacherFormProps {
   onClose: () => void;
@@ -61,6 +60,7 @@ export const useAddTeacherForm = ({
           specialization: data.specialization,
           address: data.address,
           experienceYears: data.experienceYears,
+          instituteId: currentInstitute.id,
         };
 
         if (import.meta.env.DEV) {
@@ -73,24 +73,6 @@ export const useAddTeacherForm = ({
           const createdTeacher = resultAction.payload;
           if (import.meta.env.DEV) {
             console.log("Create teacher response:", createdTeacher);
-          }
-
-          // Assign teacher to institute
-          const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-          const assignResult = await dispatch(actAssignTeacherToInstitute({
-            instituteId: currentInstitute.id,
-            teacherId: createdTeacher.id,
-            status: "ACTIVE",
-            joinedDate: today,
-          }));
-
-          if (!actAssignTeacherToInstitute.fulfilled.match(assignResult)) {
-            const errorMsg =
-              typeof assignResult.payload === "string"
-                ? assignResult.payload
-                : "حدث خطأ أثناء ربط المعلم بالمعهد";
-            showSnackbar(errorMsg, "error");
-            return;
           }
 
           if (onSave) {
