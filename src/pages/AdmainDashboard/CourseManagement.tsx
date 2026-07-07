@@ -213,6 +213,7 @@ const CourseManagement = () => {
             open={isAddSessionOpen}
             onClose={handleCloseAddSession}
             course={sessionTargetCourse}
+            instituteId={currentInstitute?.id}
             onSave={async (data: any, imageFile: File | null) => {
               if (editingSession) {
                 const result = await handleUpdateSession(
