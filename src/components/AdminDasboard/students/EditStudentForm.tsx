@@ -42,16 +42,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({
         compact
       />
     </Grid>
-    <Grid size={{ xs: 12, sm: 6 }}>
-      <AuthInput
-        label="البريد الإلكتروني"
-        type="email"
-        placeholder="أدخل البريد الإلكتروني"
-        value={formData?.email || ""}
-        onChange={onChange("email")}
-        compact
-      />
-    </Grid>
+
     <Grid size={{ xs: 12, sm: 6 }}>
       <AuthInput
         label="رقم الاتصال"

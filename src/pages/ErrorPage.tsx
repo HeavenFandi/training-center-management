@@ -55,12 +55,12 @@ const ErrorPage: React.FC = () => {
             startIcon={<HomeIcon sx={{ ml: 1, mr: 0 }} />}
             onClick={() => navigate("/")}
             sx={{
-              bgcolor: "#051630",
+              bgcolor: "#133E65",
               borderRadius: "12px",
               px: 4,
               py: 1.5,
               fontWeight: "bold",
-              "&:hover": { bgcolor: "#133e65" },
+              "&:hover": { bgcolor: "#1e5a91" },
             }}
           >
             العودة للرئيسية
@@ -77,7 +77,7 @@ const ErrorPage: React.FC = () => {
               px: 4,
               py: 1.5,
               fontWeight: "bold",
-              "&:hover": { borderColor: "#133e65", bgcolor: "rgba(5, 22, 48, 0.04)" },
+              "&:hover": { borderColor: "#133E65", bgcolor: "rgba(5, 22, 48, 0.04)" },
             }}
           >
             الرجوع للخلف

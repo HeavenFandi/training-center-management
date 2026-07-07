@@ -3,12 +3,12 @@ import {
   AppBar,
   Box,
   Toolbar,
-  IconButton,
   Typography,
   Container,
   Button,
   Stack,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import HomeIcon from "@mui/icons-material/Home";
@@ -17,7 +17,7 @@ import ContactSupportIcon from "@mui/icons-material/ContactSupport";
 import Logo from "../../assets/vectors/logo.png";
 import { useHeader } from "../../hooks/common/useHeader";
 import * as styles from "../../styles/headerStyle";
-import MobileMenu from "../Heading/MobileMenu";
+import MobileMenu from "./MobileMenu";
 
 const pages = [
   { name: "تواصل معنا", path: "#contact-us", icon: <ContactSupportIcon /> },
@@ -110,7 +110,7 @@ function Header({
                         : "rgba(5, 22, 48, 0.6)",
                       bgcolor: "rgba(5, 22, 48, 0.04)",
                       "&:hover": {
-                        transform: "translateY(-2px)",
+                        transform: "translateY(-3px)",
                         color: "#6366F1",
                         bgcolor: "rgba(99, 102, 241, 0.1)",
                       },
@@ -149,5 +149,3 @@ function Header({
 }
 
 export default Header;
-
-

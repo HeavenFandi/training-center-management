@@ -14,6 +14,7 @@ import {
   IconButton,
   Dialog,
   DialogContent,
+  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -48,7 +49,7 @@ function TrainingSessionDetailsContent() {
   } = useTrainingSessionDetails();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const {
     addRatingLoading,
     addRatingError,
@@ -65,6 +66,20 @@ function TrainingSessionDetailsContent() {
   const [rating, setRating] = useState<number | null>(5);
   const [reviewText, setReviewText] = useState("");
   const [touched, setTouched] = useState({ rating: false, review: false });
+  const [isEnrolling, setIsEnrolling] = useState(false);
+
+  // Helper to get current studentId
+  const getCurrentStudentId = () => {
+    if (user?.studentId) return user.studentId;
+    const localStorageId = localStorage.getItem("studentId");
+    return localStorageId ? Number(localStorageId) : null;
+  };
+
+  const currentStudentId = getCurrentStudentId();
+  const isEnrolledViaIds =
+    session?.enrolledStudentIds?.includes(currentStudentId as number) ?? false;
+  const isUserEnrolled =
+    session?.isEnrolled || session?.isRegistered || isEnrolledViaIds;
 
   const resolvedCourseId = session?.courseId;
 
@@ -90,14 +105,11 @@ function TrainingSessionDetailsContent() {
   const handleEnroll = useCallback(async () => {
     if (isAuthenticated) {
       try {
-        showSnackbar("جاري تحويلك إلى صفحة الدفع...", "info");
-
+        setIsEnrolling(true);
         const paymentUrl = await handleInitiatePayment();
-
         if (paymentUrl && typeof paymentUrl === "string") {
           window.location.href = paymentUrl;
         } else {
-          // إذا لم يتوفر رابط، نبلغ المستخدم بوجود مشكلة في نظام الدفع
           showSnackbar(
             "لم يتم الحصول على رابط الدفع، يرجى المحاولة لاحقاً.",
             "error",
@@ -110,6 +122,8 @@ function TrainingSessionDetailsContent() {
             : "فشل البدء في عملية الدفع، يرجى المحاولة لاحقاً.",
           "error",
         );
+      } finally {
+        setIsEnrolling(false);
       }
     } else {
       setOpenAuth(true);
@@ -660,6 +674,7 @@ function TrainingSessionDetailsContent() {
               <Button
                 variant="contained"
                 onClick={handleEnroll}
+                disabled={isEnrolling || isUserEnrolled}
                 sx={{
                   minWidth: 260,
                   height: 52,
@@ -678,9 +693,19 @@ function TrainingSessionDetailsContent() {
                   "&:active": {
                     transform: "translateY(0)",
                   },
+                  "&.Mui-disabled": {
+                    backgroundColor: "#051630",
+                    opacity: 0.7,
+                  },
                 }}
               >
-                سجل الآن
+                {isEnrolling ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : isUserEnrolled ? (
+                  "تم التسجيل"
+                ) : (
+                  "سجل الآن"
+                )}
               </Button>
             </Box>
           </Box>

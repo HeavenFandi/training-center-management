@@ -11,22 +11,7 @@ const actFetchCompletionPercentage = createAsyncThunk<
 >(
   "studentProfile/actFetchCompletionPercentage",
   async (studentId, thunkAPI) => {
-    const { getState } = thunkAPI;
-    const state = getState() as RootState;
-
-    // If we already have completion percentage data and fetch completed (loading is false), don't fetch again
-    if (
-      state.studentProfile.completionPercentageItems.length > 0 &&
-      !state.studentProfile.completionPercentageLoading
-    ) {
-      return state.studentProfile.completionPercentageItems;
-    }
-
     try {
-      console.log(
-        "[DEBUG actFetchCompletionPercentage] Fetching completion percentage for student id:",
-        studentId,
-      );
       const response = await axiosClient.get(
         `/students/${studentId}/completion-percentage`,
       );
@@ -66,21 +51,9 @@ const actFetchCompletionPercentage = createAsyncThunk<
           }))
         : [];
 
-      console.log(
-        "[DEBUG actFetchCompletionPercentage] Response items:",
-        items,
-      );
       return items;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(
-          "[DEBUG actFetchCompletionPercentage] Axios error details:",
-          {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-          },
-        );
         const apiMessage =
           typeof error.response?.data === "string"
             ? error.response.data

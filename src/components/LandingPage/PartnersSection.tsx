@@ -1,37 +1,44 @@
-import React, { useState, useMemo } from "react";
-import { Typography, Box, Stack, Container, Grid, IconButton } from "@mui/material";
-import { Link } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { Typography, Box, Stack, Container, Grid, IconButton, CircularProgress } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import vector1 from "../../assets/icons/معهد الامل.png";
-import vector2 from "../../assets/icons/مركز-الغد.png";
-import vector3 from "../../assets/icons/معهد النور.png";
-import vector4 from "../../assets/icons/مركز تعلم اللغات.png";
+import SchoolIcon from "@mui/icons-material/School";
+import { getAllInstitutes } from "../../api/instituteApi";
+import type { Institute } from "../../api/instituteApi";
 
 function PartnersSection() {
-const centers = [
-  { name: "معهد الأمل", img: vector1, path: "al-amal" },
-  { name: "معهد النور", img: vector2, path: "ALNourInstitute" },
-  { name: "مركز الغد", img: vector3, path: "al-ghad" },
-  { name: "مركز تعلم اللغات", img: vector4, path: "languages-center" },
-  { name: "مركز المستقبل", img: vector1, path: "future-center" },
-  { name: "أكاديمية الإبداع", img: vector2, path: "creativity-academy" },
-  { name: "معهد الريادة", img: vector3, path: "leadership-institute" },
-  { name: "مركز التطوير المهني", img: vector4, path: "career-development-center" },
-];
-
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchInstitutes = async () => {
+      try {
+        const data = await getAllInstitutes();
+        setInstitutes(data);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error("Error fetching institutes:", error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInstitutes();
+  }, []);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(centers.length / itemsPerPage);
-  }, [centers.length]);
+    return Math.ceil(institutes.length / itemsPerPage);
+  }, [institutes.length]);
 
   const currentCenters = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return centers.slice(startIndex, endIndex);
-  }, [currentPage, centers]);
+    return institutes.slice(startIndex, endIndex);
+  }, [currentPage, institutes]);
 
   const handlePrevious = () => {
     if (currentPage > 1) {
@@ -58,7 +65,7 @@ const centers = [
         <Stack direction="row" alignItems="center" spacing={2}>
           <IconButton
             onClick={handleNext}
-            disabled={currentPage === totalPages || totalPages <= 1}
+            disabled={currentPage === totalPages || totalPages <= 1 || loading}
             sx={{
               color: "white",
               "&:disabled": {
@@ -76,66 +83,67 @@ const centers = [
             alignItems="center"
             sx={{ flex: 1 }}
           >
-            {currentCenters.map((center, index) => (
-              <Grid
-                key={index}
-                size={{ xs:6, sm:6,md:3}}    
-               
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  minWidth: { md: "200px" },
-                }}
-              >
-                <Stack
-                  component={Link}
-                  to={center.path}
-                  direction="row"
-                  alignItems="center"
+            {loading ? (
+              <Grid size={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress sx={{ color: "white" }} size={24} />
+              </Grid>
+            ) : (
+              currentCenters.map((institute) => (
+                <Grid
+                  key={institute.id}
+                  size={{ xs:6, sm:6,md:3}}    
+                 
                   sx={{
-                    gap: "15px",
-                    textDecoration: "none",
-                    cursor: "pointer",
-                    transition: "transform 0.2s, opacity 0.2s",
-                    "&:hover": {
-                      opacity: 0.8,
-                      transform: "scale(1.05)",
-                    },
+                    display: "flex",
+                    justifyContent: "center",
+                    minWidth: { md: "200px" },
                   }}
                 >
-                  <Box
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    onClick={() => navigate(`/main/institute/${institute.id}`)}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      width: "30px",
-                      minWidth: "30px",
+                      gap: "15px",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      transition: "transform 0.2s, opacity 0.2s",
+                      "&:hover": {
+                        opacity: 0.8,
+                        transform: "scale(1.05)",
+                      },
                     }}
                   >
-                    <img
-                      src={center.img}
-                      alt={center.name}
-                      style={{ width: "100%", height: "auto", display: "block" }}
-                    />
-                  </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "30px",
+                        minWidth: "30px",
+                      }}
+                    >
+                      <SchoolIcon sx={{ color: "white" }} />
+                    </Box>
 
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontWeight: 500,
-                      color: "white",
-                      whiteSpace: "nowrap",
-                      fontSize: { xs: "0.8rem", md: "1rem" },
-                    }}
-                  >
-                    {center.name}
-                  </Typography>
-                </Stack>
-              </Grid>
-            ))}
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 500,
+                        color: "white",
+                        whiteSpace: "nowrap",
+                        fontSize: { xs: "0.8rem", md: "1rem" },
+                      }}
+                    >
+                      {institute.name}
+                    </Typography>
+                  </Stack>
+                </Grid>
+              ))
+            )}
           </Grid>
           <IconButton
             onClick={handlePrevious}
-            disabled={currentPage === 1 || totalPages <= 1}
+            disabled={currentPage === 1 || totalPages <= 1 || loading}
             sx={{
               color: "white",
               "&:disabled": {
@@ -153,5 +161,3 @@ const centers = [
 }
 
 export default PartnersSection;
-
-

@@ -3,20 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { TSignInType } from "../../validation/SignInSchema";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { actAuthLogin, resetAuthState } from "../../store/Auth/authSlice";
+import { resetInstituteState } from "../../store/Institutes/institutesSlice";
 import {
   actSendOtp,
   actVerifyOtp,
   resetOtpState,
 } from "../../store/OTP/otpSlice";
 import actGetInstituteByUserId from "../../store/Institutes/act/actGetInstituteByUserId";
+import type { Institute } from "../../api/instituteApi";
 
 const useLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const {
-    loginLoading: loading,
-    loginError: error,
-  } = useAppSelector((state) => state.auth);
+
+  const { loginLoading: loading, loginError: error } = useAppSelector(
+    (state) => state.auth
+  );
+
   const {
     sendLoading,
     sendSuccess,
@@ -30,79 +33,142 @@ const useLogin = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [tempEmail, setTempEmail] = useState<string>("");
 
+  // =========================
+  // LOGIN FLOW (FIXED)
+  // =========================
   const onsubmit = useCallback(
     async (data: TSignInType) => {
+      if (import.meta.env.DEV) {
+        console.log("🚀 useLogin onsubmit called with data:", data);
+      }
       try {
-        const userData = await dispatch(actAuthLogin(data)).unwrap();
-        console.log("Login success userData:", userData);
-        console.log("Navigating userType:", userData.userType);
+        dispatch(resetInstituteState());
 
+        // 1. LOGIN
+        if (import.meta.env.DEV) {
+          console.log("📤 Calling actAuthLogin...");
+        }
+        const userData = await dispatch(actAuthLogin(data)).unwrap();
+        if (import.meta.env.DEV) {
+          console.log("✅ actAuthLogin unwrapped successfully:", userData);
+        }
+
+        let institute: Institute | null = null;
+
+        // 2. FETCH INSTITUTE (ADMIN ONLY)
         if (userData.userType === "ADMIN") {
-          const userId = userData.id;
-          console.log("admin userId:", userId);
-          const institute = await dispatch(actGetInstituteByUserId(userId)).unwrap();
-          console.log("admin institute:", institute);
-          if (institute) {
-            navigate("/admin-dashboard");
-          } else {
-            navigate("/institute-setup");
+          if (import.meta.env.DEV) {
+            console.log("🏛️ User is ADMIN, fetching institute...");
           }
+          try {
+            // actGetInstituteByUserId already returns Institute | null (not array)
+            institute = await dispatch(
+              actGetInstituteByUserId(userData.id)
+            ).unwrap();
+            if (import.meta.env.DEV) {
+              console.log("🏫 Institute fetched:", institute);
+            }
+          } catch (err) {
+            if (import.meta.env.DEV) {
+              console.warn("⚠️ Could not fetch institute (proceeding anyway):", err);
+            }
+            institute = null;
+          }
+        }
+
+        const hasInstitute = !!institute?.id;
+
+        if (import.meta.env.DEV) {
+          console.log("🔐 Login successful, user data:", userData);
+          console.log("🏫 Institute data:", institute);
+          console.log("🧭 Navigating to:", userData.userType === "ADMIN" ? (hasInstitute ? "/admin-dashboard" : "/institute-setup") : (userData.userType === "TEACHER" ? "/teacher-dashboard" : "/main"));
+        }
+
+        // 3. NAVIGATION
+        if (userData.userType === "ADMIN") {
+          if (import.meta.env.DEV) {
+            console.log("🧭 Calling navigate to admin route...");
+          }
+          navigate(
+            hasInstitute ? "/admin-dashboard" : "/institute-setup"
+          );
         } else if (userData.userType === "TEACHER") {
+          if (import.meta.env.DEV) {
+            console.log("🧭 Calling navigate to teacher route...");
+          }
           navigate("/teacher-dashboard");
-        } else if (userData.userType === "STUDENT") {
+        } else {
+          if (import.meta.env.DEV) {
+            console.log("🧭 Calling navigate to main route...");
+          }
           navigate("/main");
         }
+
+        if (import.meta.env.DEV) {
+          console.log("✅ navigate called successfully!");
+        }
+
+        // 4. RESET AUTH
         dispatch(resetAuthState());
       } catch (err) {
-        console.error("Login failed:", err);
+        if (import.meta.env.DEV) {
+          console.error("❌ useLogin onsubmit failed:", err);
+          console.error("❌ Error stack:", (err as Error).stack);
+        }
       }
     },
     [dispatch, navigate]
   );
 
+  // =========================
+  // OTP SEND SUCCESS
+  // =========================
   useEffect(() => {
     if (sendSuccess) {
-      console.log("[DEBUG useLogin] sendSuccess triggered!");
       setOpenModal(true);
       dispatch(resetOtpState());
     }
   }, [sendSuccess, dispatch]);
 
+  // =========================
+  // OTP VERIFY SUCCESS
+  // =========================
   useEffect(() => {
     if (verifySuccess) {
-      console.log("[DEBUG useLogin] verifySuccess triggered!");
       setOpenModal(false);
       navigate("/reset-password");
       dispatch(resetOtpState());
     }
   }, [verifySuccess, navigate, dispatch]);
 
+  // =========================
+  // OTP HANDLERS
+  // =========================
   const handleOtpChange = useCallback(
-    (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      index: number,
-    ) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
       const value = e.target.value;
       if (isNaN(Number(value))) return;
-      setOtp((prevOtp) => {
-        const newOtp = [...prevOtp];
-        newOtp[index] = value.substring(value.length - 1);
+
+      setOtp((prev) => {
+        const newOtp = [...prev];
+        newOtp[index] = value.slice(-1);
         return newOtp;
       });
+
       if (value && index < 5) {
         document.getElementById(`otp-${index + 1}`)?.focus();
       }
     },
-    [],
+    []
   );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+    (e: React.KeyboardEvent, index: number) => {
       if (e.key === "Backspace" && !otp[index] && index > 0) {
         document.getElementById(`otp-${index - 1}`)?.focus();
       }
     },
-    [otp],
+    [otp]
   );
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -112,16 +178,13 @@ const useLogin = () => {
 
     const pasteData = data.slice(0, 6).split("");
 
-    setOtp((prevOtp) => {
-      const newOtp = [...prevOtp];
-      pasteData.forEach((char, index) => {
-        if (index < 6) newOtp[index] = char;
+    setOtp((prev) => {
+      const newOtp = [...prev];
+      pasteData.forEach((char, i) => {
+        if (i < 6) newOtp[i] = char;
       });
       return newOtp;
     });
-
-    const lastFocusIndex = Math.min(pasteData.length - 1, 5);
-    document.getElementById(`otp-${lastFocusIndex}`)?.focus();
   }, []);
 
   const handleVerify = useCallback(() => {
@@ -137,25 +200,33 @@ const useLogin = () => {
       localStorage.setItem("otpEmail", email);
       dispatch(actSendOtp(email));
     },
-    [dispatch],
+    [dispatch]
   );
 
   return {
-    handleKeyDown,
+    onsubmit,
+
     handleOtpChange,
+    handleKeyDown,
     handlePaste,
+
     handleVerify,
+    handleSendOtp,
+
     openModal,
     setOpenModal,
+
     otp,
-    onsubmit,
+
     loading,
     error,
-    handleSendOtp,
+
     sendLoading,
     sendError,
+
     verifyLoading,
     verifyError,
   };
 };
+
 export default useLogin;

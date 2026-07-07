@@ -1,25 +1,30 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useForm, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { teacherSchema, AddTeacherFormData } from "../../validation/TeacherSchema";
+import {
+  teacherSchema,
+  AddTeacherFormData,
+} from "../../validation/TeacherSchema";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actCreateTeacher from "../../store/teachers/act/actCreateTeacher";
-import actGetTeachers from "../../store/teachers/act/actGetTeachers";
+import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
 
 interface UseAddTeacherFormProps {
   onClose: () => void;
-  onSave?: (data: AddTeacherFormData & { cvFile: File | null }) => void;
+  onSave?: (data: AddTeacherFormData) => void;
 }
 
-export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) => {
+export const useAddTeacherForm = ({
+  onClose,
+  onSave,
+}: UseAddTeacherFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
 
   const {
     register,
@@ -35,84 +40,81 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
     setShowPassword((prev) => !prev);
   }, []);
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setCvFile(e.target.files[0]);
-    }
-  }, []);
-
-  const onSubmit = useCallback(async (data: AddTeacherFormData) => {
-    setIsSubmitting(true);
-    try {
-      // Convert CV file to base64 if present
-      let cvBase64 = "";
-      if (cvFile) {
-        const reader = new FileReader();
-        cvBase64 = await new Promise((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(cvFile);
-        });
-      }
-
-      const payload = {
-        userId: user?.id || 0,
-        username: data.username,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-        phone: data.phone,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        specialization: data.specialization,
-        certificates: data.certificates || "",
-        address: data.address,
-        cv: cvBase64,
-        experienceYears: data.experienceYears,
-      };
-
-      console.log("Create teacher payload:", payload);
-
-      const resultAction = await dispatch(actCreateTeacher(payload));
-
-      if (actCreateTeacher.fulfilled.match(resultAction)) {
-        const response = resultAction.payload;
-        console.log("Create teacher response:", response);
-
-        if (onSave) {
-          onSave({ ...data, cvFile });
+  const onSubmit = useCallback(
+    async (data: AddTeacherFormData) => {
+      setIsSubmitting(true);
+      try {
+        if (!currentInstitute || !currentInstitute.id) {
+          showSnackbar("لم يتم العثور على المعهد", "error");
+          return;
         }
 
-        // Refresh teachers list
-        dispatch(actGetTeachers());
+        const payload = {
+          username: data.username,
+          email: data.email,
+          password: data.password,
+          confirmPassword: data.confirmPassword,
+          phone: data.phone,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          specialization: data.specialization,
+          address: data.address,
+          experienceYears: data.experienceYears,
+          instituteId: currentInstitute.id,
+        };
 
-        reset();
-        setCvFile(null);
-        showSnackbar("تم إضافة المعلم بنجاح", "success");
-        onClose();
-      } else {
+        if (import.meta.env.DEV) {
+          console.log("Create teacher payload:", payload);
+        }
+
+        const resultAction = await dispatch(actCreateTeacher(payload));
+
+        if (actCreateTeacher.fulfilled.match(resultAction)) {
+          const createdTeacher = resultAction.payload;
+          if (import.meta.env.DEV) {
+            console.log("Create teacher response:", createdTeacher);
+          }
+
+          if (onSave) {
+            onSave(data);
+          }
+
+          // Refresh teachers list (only for this institute)
+          dispatch(actGetTeachersByInstituteId(currentInstitute.id));
+
+          reset();
+          showSnackbar("تم إضافة المعلم بنجاح", "success");
+          onClose();
+        } else {
+          const errorMessage =
+            typeof resultAction.payload === "string"
+              ? resultAction.payload
+              : "حدث خطأ أثناء إضافة المعلم";
+          showSnackbar(errorMessage, "error");
+        }
+      } catch (error: any) {
+        if (import.meta.env.DEV) {
+          console.error("Error adding teacher:", error);
+        }
         const errorMessage =
-          typeof resultAction.payload === "string"
-            ? resultAction.payload
-            : "حدث خطأ أثناء إضافة المعلم";
+          error.response?.data?.message ||
+          error.message ||
+          "حدث خطأ أثناء إضافة المعلم";
         showSnackbar(errorMessage, "error");
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error: any) {
-      console.error("Error adding teacher:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "حدث خطأ أثناء إضافة المعلم";
-      showSnackbar(errorMessage, "error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [cvFile, onClose, onSave, reset, showSnackbar, dispatch, user]);
+    },
+    [onClose, onSave, reset, showSnackbar, dispatch, currentInstitute],
+  );
 
-  const onError = useCallback((errors: FieldErrors<AddTeacherFormData>) => {
-    console.log("Form validation errors:", errors);
-    showSnackbar("يرجى التأكد من ملء جميع الحقول بشكل صحيح", "error");
-  }, [showSnackbar]);
+  const onError = useCallback(
+    (errors: FieldErrors<AddTeacherFormData>) => {
+      console.log("Form validation errors:", errors);
+      showSnackbar("يرجى التأكد من ملء جميع الحقول بشكل صحيح", "error");
+    },
+    [showSnackbar],
+  );
 
   return {
     register,
@@ -120,12 +122,8 @@ export const useAddTeacherForm = ({ onClose, onSave }: UseAddTeacherFormProps) =
     errors,
     isSubmitting,
     showPassword,
-    cvFile,
-    fileInputRef,
     togglePasswordVisibility,
-    handleFileChange,
     onSubmit,
     onError,
   };
 };
-

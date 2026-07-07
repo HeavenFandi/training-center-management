@@ -83,6 +83,19 @@ const coursesSlice = createSlice({
       state.deletingCourseId = null;
       state.deleteError = null;
     },
+    clearCoursesState: (state) => {
+      state.courses = [];
+      state.loading = "idle";
+      state.error = null;
+      state.createLoading = "idle";
+      state.createError = null;
+      state.deletingCourseId = null;
+      state.deleteError = null;
+      state.updateLoading = "idle";
+      state.updateError = null;
+      state.searchLoading = "idle";
+      state.searchError = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(actGetCoursesByTenantId.pending, (state) => {
@@ -341,6 +354,7 @@ export const {
   updateSessionInCourse,
   deleteSessionFromCourse,
   clearDeleteCourseState,
+  clearCoursesState,
 } = coursesSlice.actions;
 export const selectCoursesState = (state: RootState) => state.courses;
 export default coursesSlice.reducer;

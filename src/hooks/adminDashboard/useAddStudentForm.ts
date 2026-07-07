@@ -46,6 +46,7 @@ export const useAddStudentForm = ({
       birthDate: "",
       address: "",
       interest: "",
+      // Always initialize bio as a string so it is never undefined or null
       bio: "",
       image: "",
       enrollmentDate: new Date().toISOString().split("T")[0],
@@ -73,7 +74,6 @@ export const useAddStudentForm = ({
         console.log("Current Auth Context Info:", {
           user,
           institute: currentInstitute,
-          tenant: currentInstitute?.tenantId,
         });
 
         // Convert image file to base64 if present
@@ -87,24 +87,29 @@ export const useAddStudentForm = ({
           });
         }
 
+        const instituteId = currentInstitute?.id;
+        if (!instituteId) {
+          showSnackbar("تعذر تحديد المعهد الحالي", "error");
+          return;
+        }
+
         const payload = {
-          username: data.username,
-          email: data.email,
-          password: data.password,
-          confirmPassword: data.confirmPassword,
-          contactInfo: data.contactInfo,
-          image: imageBase64,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          gender: data.gender,
-          birthDate: data.birthDate,
-          address: data.address,
-          interest: data.interest,
-          bio: data.bio,
-          enrollmentDate:
-            data.enrollmentDate ?? new Date().toISOString().split("T")[0],
-          tenantId: currentInstitute?.tenantId,
-          instituteId: currentInstitute?.id,
+          student: {
+            username: data.username,
+            email: data.email,
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+            contactInfo: data.contactInfo,
+            image: imageBase64,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            gender: data.gender,
+            birthDate: data.birthDate,
+            address: data.address,
+            interest: data.interest,
+            bio: data.bio,
+          },
+          instituteId: instituteId,
         };
 
         console.log("Exact Create Student Payload Sent to API:", payload);
@@ -155,7 +160,6 @@ export const useAddStudentForm = ({
 
   const onError = useCallback(
     (errors: FieldErrors<StudentFormData>) => {
-      console.log("Form validation errors:", errors);
       showSnackbar("يرجى التأكد من ملء جميع الحقول بشكل صحيح", "error");
     },
     [showSnackbar],

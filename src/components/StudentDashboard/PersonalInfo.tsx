@@ -1,12 +1,14 @@
 import React from "react";
-import { Paper, Box, Typography, Stack } from "@mui/material";
+import { Paper, Box, Typography, Stack, Button } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import { Student } from "../../types/studentDashboard";
 
 interface PersonalInfoProps {
   student: Student;
+  onEdit: () => void;
 }
 
-const PersonalInfo: React.FC<PersonalInfoProps> = ({ student }) => {
+const PersonalInfo: React.FC<PersonalInfoProps> = ({ student, onEdit }) => {
   console.log("[DEBUG PersonalInfo] Received student:", student);
   console.log("[DEBUG PersonalInfo] student.bio:", student.bio);
   
@@ -22,18 +24,39 @@ const PersonalInfo: React.FC<PersonalInfoProps> = ({ student }) => {
       textAlign: "right",
     }}
   >
-    <Typography
-      variant="h6"
-      sx={{
-        fontWeight: 900,
-        color: "#091c39",
-        mb: 3,
-        textAlign: "right",
-        fontFamily: "Tajawal",
-      }}
-    >
-      المعلومات الشخصية
-    </Typography>
+    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: 900,
+          color: "#091c39",
+          fontFamily: "Tajawal",
+        }}
+      >
+        المعلومات الشخصية
+      </Typography>
+      <Button
+        variant="text"
+        startIcon={<EditIcon sx={{ ml: 1 }} />}
+        onClick={onEdit}
+        sx={{
+          color: "#133E65",
+          fontWeight: "bold",
+          px: 2,
+          py: 1,
+          fontFamily: "Tajawal",
+          fontSize: "0.9rem",
+          textTransform: "none",
+          borderRadius: "10px",
+          bgcolor: "transparent",
+          "&:hover": {
+            bgcolor: "rgba(19, 62, 101, 0.08)",
+          },
+        }}
+      >
+       
+      </Button>
+    </Box>
     <Stack spacing={2.5}>
       {[
         { label: "البريد الإلكتروني", value: student.email },

@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import actGetTeachers from "./act/actGetTeachers";
+import actGetTeachersByInstituteId from "./act/actGetTeachersByInstituteId";
 import actGetTeacherById from "./act/actGetTeacherById";
 import actGetTeacherCourseProgress, {
   TeacherCourseProgress,
@@ -81,6 +82,24 @@ const teachersSlice = createSlice({
       state.selectedTeacherLoading = "idle";
       state.selectedTeacherError = null;
     },
+    clearTeachersState: (state) => {
+      state.teachers = [];
+      state.searchResults = [];
+      state.loading = "idle";
+      state.searchLoading = "idle";
+      state.error = null;
+      state.createLoading = "idle";
+      state.updateLoading = "idle";
+      state.selectedTeacher = null;
+      state.selectedTeacherLoading = "idle";
+      state.selectedTeacherError = null;
+      state.courseProgress = [];
+      state.courseProgressLoading = "idle";
+      state.courseProgressError = null;
+      state.weeklySchedule = [];
+      state.weeklyScheduleLoading = "idle";
+      state.weeklyScheduleError = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -96,6 +115,25 @@ const teachersSlice = createSlice({
         state.teachers = action.payload;
       })
       .addCase(actGetTeachers.rejected, (state, action) => {
+        state.loading = "failed";
+        if (action.payload && typeof action.payload === "string") {
+          state.error = action.payload;
+        }
+      })
+
+      // Get teachers by institute id cases
+      .addCase(actGetTeachersByInstituteId.pending, (state) => {
+        // Only set loading to pending if we don't have data yet
+        if (state.teachers.length === 0) {
+          state.loading = "pending";
+        }
+        state.error = null;
+      })
+      .addCase(actGetTeachersByInstituteId.fulfilled, (state, action) => {
+        state.loading = "succeeded";
+        state.teachers = action.payload;
+      })
+      .addCase(actGetTeachersByInstituteId.rejected, (state, action) => {
         state.loading = "failed";
         if (action.payload && typeof action.payload === "string") {
           state.error = action.payload;
@@ -240,7 +278,7 @@ const teachersSlice = createSlice({
   },
 });
 
-export const { resetTeachersError, resetSelectedTeacher } =
+export const { resetTeachersError, resetSelectedTeacher, clearTeachersState } =
   teachersSlice.actions;
 
 export const selectTeachersState = (state: RootState) => state.teachers;

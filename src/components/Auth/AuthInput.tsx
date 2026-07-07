@@ -65,7 +65,14 @@ const AuthInputComponent = React.forwardRef<HTMLInputElement, IInput>(function A
             backgroundColor: "transparent",
             py: compact ? { xs: "2px", md: "4px" } : { xs: "8px", md: "12px" },
             textAlign: "right",
-            color: "inherit"
+            color: "inherit",
+            "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+              WebkitAppearance: "none",
+              margin: 0
+            },
+            "&[type=number]": {
+              MozAppearance: "textfield"
+            }
           },
 
           "& .MuiSelect-select": {

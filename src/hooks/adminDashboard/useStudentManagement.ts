@@ -1,12 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { CreateStudentResponse, UpdateStudentRequest, getStudentActiveCourses } from "../../api/studentApi";
+import { CreateStudentResponse, getStudentActiveCourses } from "../../api/studentApi";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actGetStudents from "../../store/Students/act/actGetStudents";
-import actUpdateStudent from "../../store/Students/act/actUpdateStudent";
 import actDeleteStudent from "../../store/Students/act/actDeleteStudent";
 import actSearchStudents from "../../store/Students/act/actSearchStudents";
 import { selectStudentsState, resetStudentsError } from "../../store/Students/studentsSlice";
-import { actGetInstituteByUserId, actGetStudentsCount, actGetInstituteUsersCount } from "../../store/Institutes/institutesSlice";
+import { actGetInstituteByUserId, actGetStudentsCount, actGetInstituteUsersCount, actGetActiveStudentsCount } from "../../store/Institutes/institutesSlice";
 import { useSnackbar } from "../../Context/SnackbarContext";
 
 export const useStudentManagement = () => {
@@ -14,7 +13,7 @@ export const useStudentManagement = () => {
   const { showSnackbar } = useSnackbar();
   const { students, searchResults, loading, searchLoading, error } = useAppSelector(selectStudentsState);
   const { user } = useAppSelector((state) => state.auth);
-  const { currentInstitute, studentsCount, studentsCountLoading, studentsCountError } = useAppSelector((state) => state.institutes);
+  const { currentInstitute, studentsCount, studentsCountLoading, studentsCountError, activeStudentsCount, activeStudentsCountLoading, activeStudentsCountError } = useAppSelector((state) => state.institutes);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<CreateStudentResponse | null>(null);
@@ -24,11 +23,8 @@ export const useStudentManagement = () => {
   const ITEMS_PER_PAGE = 10;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   // Track which students have active courses (cannot be deleted)
   const [studentsWithActiveCourses, setStudentsWithActiveCourses] = useState<Set<number>>(new Set());
 
@@ -52,6 +48,14 @@ export const useStudentManagement = () => {
     const tenantId = currentInstitute?.tenantId;
     if (tenantId) {
       dispatch(actGetStudentsCount(tenantId));
+    }
+  }, [dispatch, currentInstitute?.tenantId]);
+
+  // Fetch active students count from backend
+  useEffect(() => {
+    const tenantId = currentInstitute?.tenantId;
+    if (tenantId) {
+      dispatch(actGetActiveStudentsCount(tenantId));
     }
   }, [dispatch, currentInstitute?.tenantId]);
 
@@ -152,16 +156,6 @@ export const useStudentManagement = () => {
     setIsViewOpen(false);
   }, []);
 
-  const handleEditClick = useCallback((student: CreateStudentResponse) => {
-    setSelectedStudent(student);
-    setIsEditOpen(true);
-  }, []);
-
-  const handleCloseEdit = useCallback(() => {
-    setIsEditOpen(false);
-    setPendingImageFile(null);
-  }, []);
-
   const handleDeleteClick = useCallback((student: CreateStudentResponse) => {
     setStudentToDelete(student);
     // Check if student has active courses
@@ -177,57 +171,6 @@ export const useStudentManagement = () => {
     setIsDeleteOpen(false);
     setDeleteErrorMessage(null);
   }, []);
-
-  const handleSaveEdit = useCallback(async (formData: CreateStudentResponse) => {
-    if (!selectedStudent || !selectedStudent.id) return;
-
-    console.log("[DEBUG useStudentManagement] handleSaveEdit called with formData:", formData);
-
-    // Merge existing student data with form data
-    const mergedData = {
-      ...selectedStudent,
-      ...formData,
-    };
-    console.log("[DEBUG useStudentManagement] Merged data:", mergedData);
-
-    // Build update payload for API
-    const updatePayload: UpdateStudentRequest = {
-      firstName: mergedData.firstName,
-      lastName: mergedData.lastName,
-      username: mergedData.username,
-      gender: mergedData.gender,
-      birthDate: mergedData.birthDate,
-      address: mergedData.address,
-      bio: mergedData.bio,
-      interest: mergedData.interest,
-      profilePicture: pendingImageFile ?? undefined,
-    };
-    console.log("Update payload:", updatePayload);
-
-    setIsUpdating(true);
-    try {
-      const resultAction = await dispatch(
-        actUpdateStudent({ id: selectedStudent.id, data: updatePayload })
-      );
-
-      if (actUpdateStudent.fulfilled.match(resultAction)) {
-        showSnackbar("تم تحديث بيانات الطالب بنجاح", "success");
-        setIsEditOpen(false);
-        setPendingImageFile(null);
-      } else {
-        const errorMessage =
-          typeof resultAction.payload === "string"
-            ? resultAction.payload
-            : "حدث خطأ أثناء تحديث البيانات";
-        showSnackbar(errorMessage, "error");
-      }
-    } catch (error) {
-      console.error("[DEBUG useStudentManagement] handleSaveEdit error:", error);
-      showSnackbar("حدث خطأ أثناء تحديث البيانات", "error");
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [dispatch, showSnackbar, selectedStudent, pendingImageFile]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!studentToDelete || !studentToDelete.id) return;
@@ -291,23 +234,16 @@ export const useStudentManagement = () => {
     selectedStudent,
     studentToDelete,
     isAddOpen,
-    isEditOpen,
     isDeleteOpen,
     isViewOpen,
     loading,
     searchLoading,
     error,
-    isUpdating,
-    pendingImageFile,
-    setPendingImageFile,
     handleAddStudent,
     handleViewClick,
     handleCloseView,
-    handleEditClick,
-    handleCloseEdit,
     handleDeleteClick,
     handleCloseDelete,
-    handleSaveEdit,
     handleConfirmDelete,
     handleOpenAdd,
     handleCloseAdd,
@@ -320,5 +256,8 @@ export const useStudentManagement = () => {
     studentsCount,
     studentsCountLoading,
     studentsCountError,
+    activeStudentsCount,
+    activeStudentsCountLoading,
+    activeStudentsCountError,
   };
 };

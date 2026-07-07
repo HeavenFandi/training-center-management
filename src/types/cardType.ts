@@ -84,6 +84,9 @@ export interface TTrainingSessionDetails {
   daysOfWeek?: string[];
   classroomId?: number;
   teacherId?: number;
+  isEnrolled?: boolean;
+  isRegistered?: boolean;
+  enrolledStudentIds?: number[];
 }
 export interface TReview {
   courseName?: string;

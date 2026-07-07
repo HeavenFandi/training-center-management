@@ -49,7 +49,7 @@ function TrainingSessionsBanner({ searchTerm, onSearchChange }: Props) {
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
-            placeholder="ابحث عن اسم دورة أو معهد..."
+            placeholder="ابحث عن اسم دورة..."
             size="small"
             value={searchTerm}
             onChange={onSearchChange}

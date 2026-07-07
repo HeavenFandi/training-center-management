@@ -1,8 +1,9 @@
 import { Box } from "@mui/material";
 import GenericDeleteModal from "../../components/Modal/DeleteModal";
 import AddCourseModal from "../../components/AdminDasboard/Courses/AddCourseModel";
+import AddCategoryModal from "../../components/AdminDasboard/Courses/AddCategoryModal";
 import CourseDetailsModal from "../../components/AdminDasboard/Courses/CourseDetailsModal";
-import {  useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import EditCourseModal from "../../components/AdminDasboard/Courses/EditCourseModel";
 import { useCourseManagement } from "../../hooks/adminDashboard/useCourseManagement";
 import CourseManagementHeader from "../../components/AdminDasboard/Courses/CourseManagement/CourseManagementHeader";
@@ -22,6 +23,8 @@ const CourseManagement = () => {
     isDeleteOpen,
     openEditModal,
     openAddModal,
+    openAddCategoryModal,
+    createCategoryLoading,
     openDetailsModal,
     openConflictDialog,
     conflictData,
@@ -44,11 +47,16 @@ const CourseManagement = () => {
     handleOpenAdd,
     handleCloseAdd,
     handleSaveAdd,
+    handleOpenAddCategory,
+    handleCloseAddCategory,
+    handleSaveAddCategory,
     handleAddSession,
     handleUpdateSession,
     handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    refreshCourseSessions,
+    refreshCourses,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,
@@ -65,10 +73,13 @@ const CourseManagement = () => {
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
   const [sessionTargetCourse, setSessionTargetCourse] =
     useState<TCourse | null>(null);
-  
+
   const [selectedSession, setSelectedSession] = useState<TSession | null>(null);
   const [editingSession, setEditingSession] = useState<TSession | null>(null);
-  const [sessionToDelete, setSessionToDelete] = useState<{ session: TSession, course: TCourse } | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    session: TSession;
+    course: TCourse;
+  } | null>(null);
   const [isDeleteSessionOpen, setIsDeleteSessionOpen] = useState(false);
   const [isSessionDetailsOpen, setIsSessionDetailsOpen] = useState(false);
   const [isSessionsListOpen, setIsSessionsListOpen] = useState(false);
@@ -97,43 +108,52 @@ const CourseManagement = () => {
     handleFetchSessions(course.id);
   };
 
-  const handleSessionClick = useCallback((session: TSession, course: TCourse) => {
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] handleSessionClick called!`);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session received:`, session);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] Session keys:`, Object.keys(session));
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.teacherId:`, session.teacherId);
-    console.log(`[DEBUG][STAGE 12: COURSE MANAGEMENT] session.classroomId:`, session.classroomId);
-    setSessionTargetCourse(course);
-    setSelectedSession(session);
-    setIsSessionDetailsOpen(true);
-  }, []);
+  const handleSessionClick = useCallback(
+    (session: TSession, course: TCourse) => {
+      setSessionTargetCourse(course);
+      setSelectedSession(session);
+      setIsSessionDetailsOpen(true);
+    },
+    [],
+  );
 
-  const handleLocalUpdateSession = useCallback((updatedSession: TSession) => {
-    // We need to convert TSession to the data format handleUpdateSession expects
-    const data = {
-      price: updatedSession.price,
-      availableSeats: updatedSession.availableSeats,
-      minSeats: updatedSession.minCapacity,
-      numberOfLectures: 0,
-      requiredEquipment: updatedSession.requiredEquipment || "",
-      duration: updatedSession.duration,
-      status: "UPCOMING" as const,
-      courseId: updatedSession.courseId,
-      classroomId: updatedSession.classroomId,
-      teacherId: updatedSession.teacherId,
-      startDate: updatedSession.startDate,
-      startTime: convertTimeStringToTimeObject(updatedSession.startTime),
-      endTime: convertTimeStringToTimeObject("00:00:00"),
-      daysOfWeek: [],
-    };
-    handleUpdateSession(updatedSession.id, data, null, updatedSession.courseId);
-    setSelectedSession(updatedSession);
-  }, [handleUpdateSession]);
+  const handleLocalUpdateSession = useCallback(
+    (updatedSession: TSession) => {
+      // We need to convert TSession to the data format handleUpdateSession expects
+      const data = {
+        price: updatedSession.price,
+        availableSeats: updatedSession.availableSeats,
+        minSeats: updatedSession.minCapacity,
+        numberOfLectures: 0,
+        requiredEquipment: updatedSession.requiredEquipment || "",
+        duration: updatedSession.duration,
+        status: "UPCOMING" as const,
+        courseId: updatedSession.courseId,
+        classroomId: updatedSession.classroomId,
+        teacherId: updatedSession.teacherId,
+        startDate: updatedSession.startDate,
+        startTime: convertTimeStringToTimeObject(updatedSession.startTime),
+        endTime: convertTimeStringToTimeObject("00:00:00"),
+        daysOfWeek: [],
+      };
+      handleUpdateSession(
+        updatedSession.id,
+        data,
+        null,
+        updatedSession.courseId,
+      );
+      setSelectedSession(updatedSession);
+    },
+    [handleUpdateSession],
+  );
 
-  const handleDeleteSessionRequest = useCallback((session: TSession, course: TCourse) => {
-    setSessionToDelete({ session, course });
-    setIsDeleteSessionOpen(true);
-  }, []);
+  const handleDeleteSessionRequest = useCallback(
+    (session: TSession, course: TCourse) => {
+      setSessionToDelete({ session, course });
+      setIsDeleteSessionOpen(true);
+    },
+    [],
+  );
 
   const handleConfirmDeleteSession = useCallback(async () => {
     if (!sessionToDelete) return;
@@ -142,8 +162,15 @@ const CourseManagement = () => {
     if (success) {
       setIsDeleteSessionOpen(false);
       setSessionToDelete(null);
+      refreshCourseSessions(course.id);
+      refreshCourses();
     }
-  }, [sessionToDelete, handleDeleteSession]);
+  }, [
+    sessionToDelete,
+    handleDeleteSession,
+    refreshCourseSessions,
+    refreshCourses,
+  ]);
 
   const handleCloseDeleteSession = useCallback(() => {
     setIsDeleteSessionOpen(false);
@@ -152,144 +179,204 @@ const CourseManagement = () => {
   }, [handleClearDeleteSessionState]);
 
   return (
-    <Box sx={{  width: "100%", overflowX: "hidden", flexGrow: 1 }}>
+    <Box sx={{ width: "100%", overflowX: "hidden", flexGrow: 1 }}>
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
-        <CourseManagementHeader 
+        <CourseManagementHeader
           onAddClick={handleOpenAdd}
+          onAddCategoryClick={handleOpenAddCategory}
           searchQuery={searchQuery}
           onSearch={handleSearch}
           onClearSearch={handleClearSearch}
           isSearchLoading={searchLoading === "pending"}
         />
 
-      {openAddModal && (
-        <AddCourseModal
-          open={openAddModal}
-          onClose={handleCloseAdd}
-          onSave={handleSaveAdd}
-          isLoading={createLoading === "pending"}
-        />
-      )}
+        {openAddModal && (
+          <AddCourseModal
+            open={openAddModal}
+            onClose={handleCloseAdd}
+            onSave={handleSaveAdd}
+            isLoading={createLoading === "pending"}
+          />
+        )}
 
-      {isAddSessionOpen && (
-        <AddSessionModal
-          open={isAddSessionOpen}
-          onClose={handleCloseAddSession}
-          course={sessionTargetCourse}
-          onSave={async (data: any, imageFile: File | null) => {
-            if (editingSession) {
-              const result = await handleUpdateSession(
-              editingSession.id,
-              data,
-              imageFile,
-              sessionTargetCourse?.id || 0
-            );
-            if (result.success) {
-              // FIRST CLOSE MODAL IMMEDIATELY!
-              handleCloseAddSession();
-              // THEN handle post-update steps (snackbar, refetch, etc.)
-              handlePostUpdateSession(result.sessionId, result.imageFile, result.courseId);
+        {openAddCategoryModal && (
+          <AddCategoryModal
+            open={openAddCategoryModal}
+            onClose={handleCloseAddCategory}
+            onSave={handleSaveAddCategory}
+            isLoading={createCategoryLoading}
+          />
+        )}
+
+        {isAddSessionOpen && (
+          <AddSessionModal
+            open={isAddSessionOpen}
+            onClose={handleCloseAddSession}
+            course={sessionTargetCourse}
+            instituteId={currentInstitute?.id}
+            onSave={async (data: any, imageFile: File | null) => {
+              if (editingSession) {
+                const result = await handleUpdateSession(
+                  editingSession.id,
+                  data,
+                  imageFile,
+                  sessionTargetCourse?.id || 0,
+                );
+                if (result.success) {
+                  // FIRST CLOSE MODAL IMMEDIATELY!
+                  handleCloseAddSession();
+                  // THEN handle post-update steps (snackbar, refetch, etc.)
+                  handlePostUpdateSession(
+                    result.sessionId,
+                    result.imageFile,
+                    result.courseId,
+                  );
+                  refreshCourseSessions(result.courseId);
+                  refreshCourses();
+                }
+              } else {
+                handleAddSession(data, () => {
+                  handleCloseAddSession();
+                  if (sessionTargetCourse?.id) {
+                    refreshCourseSessions(sessionTargetCourse.id);
+                    refreshCourses();
+                  }
+                });
+              }
+            }}
+            initialSession={editingSession}
+            isLoading={creatingSession || updatingSession}
+          />
+        )}
+
+        <SchedulingConflictDialog
+          open={openConflictDialog}
+          onClose={handleCloseConflictDialog}
+          conflictData={conflictData}
+          onSelectSuggestion={handleSelectSuggestion}
+          submitting={submittingSuggestion}
+          onSuccess={handleCloseAddSession}
+        />
+
+        {isSessionDetailsOpen && (
+          <SessionDetailsModal
+            open={isSessionDetailsOpen}
+            onClose={() => setIsSessionDetailsOpen(false)}
+            session={selectedSession}
+            course={
+              sessionTargetCourse || {
+                id: 0,
+                title: "",
+                category: "",
+                categoryName: "",
+                price: 0,
+                requirements: "",
+                students: "",
+                description: "",
+                image: "",
+                institute: "",
+                lecturesCount: 0,
+                hours: 0,
+                instructor: {
+                  id: 0,
+                  name: "",
+                  title: "",
+                  image: "",
+                  email: "",
+                  phone: "",
+                  certificates: [],
+                  studentsCount: 0,
+                  courseCount: 0,
+                  experienceYears: 0,
+                  rating: 0,
+                  bio: "",
+                },
+                reviews: [],
+                sessions: [],
+              }
             }
-            } else {
-              handleAddSession(data, handleCloseAddSession);
-            }
-          }}
-          initialSession={editingSession}
-          isLoading={creatingSession || updatingSession}
-        />
-      )}
+            onUpdateSession={handleLocalUpdateSession}
+            onDeleteSuccess={() => {
+              if (sessionTargetCourse?.id) {
+                refreshCourseSessions(sessionTargetCourse.id);
+                refreshCourses();
+              }
+            }}
+          />
+        )}
 
-      <SchedulingConflictDialog
-        open={openConflictDialog}
-        onClose={handleCloseConflictDialog}
-        conflictData={conflictData}
-        onSelectSuggestion={handleSelectSuggestion}
-        submitting={submittingSuggestion}
-        onSuccess={handleCloseAddSession}
-      />
+        {isSessionsListOpen && (
+          <SessionsListModal
+            open={isSessionsListOpen}
+            onClose={() => setIsSessionsListOpen(false)}
+            course={sessionTargetCourse}
+            onEditSession={handleOpenEditSession}
+            onDeleteSession={handleDeleteSessionRequest}
+            onSessionClick={handleSessionClick}
+          />
+        )}
 
-      {isSessionDetailsOpen && (
-        <SessionDetailsModal
-          open={isSessionDetailsOpen}
-          onClose={() => setIsSessionDetailsOpen(false)}
-          session={selectedSession}
-          course={sessionTargetCourse || { id: 0, title: "", category: "", categoryName: "", price: 0, requirements: "", students: "", description: "", image: "", institute: "", lecturesCount: 0, hours: 0, instructor: { id: 0, name: "", title: "", image: "", email: "", phone: "", certificates: [], studentsCount: 0, courseCount: 0, experienceYears: 0, rating: 0, bio: "" }, reviews: [], sessions: [] }}
-          onUpdateSession={handleLocalUpdateSession}
-        />
-      )}
+        {isDeleteOpen && (
+          <GenericDeleteModal
+            open={isDeleteOpen}
+            onClose={handleCloseDelete}
+            onConfirm={handleDeleteCourse}
+            title="تأكيد حذف الكورس"
+            description="هل أنت متأكد من رغبتك في حذف الكورس"
+            itemName={selectedCourse?.title}
+            isLoading={deletingCourseId === selectedCourse?.id}
+            errorMessage={deleteError}
+          />
+        )}
 
-      {isSessionsListOpen && (
-        <SessionsListModal
-          open={isSessionsListOpen}
-          onClose={() => setIsSessionsListOpen(false)}
-          course={sessionTargetCourse}
-          onEditSession={handleOpenEditSession}
-          onDeleteSession={handleDeleteSessionRequest}
-          onSessionClick={handleSessionClick}
-        />
-      )}
+        {isDeleteSessionOpen && (
+          <GenericDeleteModal
+            open={isDeleteSessionOpen}
+            onClose={handleCloseDeleteSession}
+            onConfirm={handleConfirmDeleteSession}
+            title="تأكيد حذف الدورة"
+            description="هل أنت متأكد من رغبتك في حذف الدورة"
+            itemName={sessionToDelete?.session.title}
+            isLoading={deletingSessionId === sessionToDelete?.session.id}
+            errorMessage={sessionDeleteError}
+          />
+        )}
 
-      {isDeleteOpen && (
-        <GenericDeleteModal
-          open={isDeleteOpen}
-          onClose={handleCloseDelete}
-          onConfirm={handleDeleteCourse}
-          title="تأكيد حذف الكورس"
-          description="هل أنت متأكد من رغبتك في حذف الكورس"
-          itemName={selectedCourse?.title}
-          isLoading={deletingCourseId === selectedCourse?.id}
-          errorMessage={deleteError}
-        />
-      )}
+        {openDetailsModal && (
+          <CourseDetailsModal
+            open={openDetailsModal}
+            onClose={handleCloseDetail}
+            course={selectedCourse}
+            onSave={handleSaveEdit}
+            onAddSession={handleOpenAddSession}
+            tenantId={tenantId}
+            isSaving={updateLoading === "pending"}
+          />
+        )}
 
-      {isDeleteSessionOpen && (
-        <GenericDeleteModal
-          open={isDeleteSessionOpen}
-          onClose={handleCloseDeleteSession}
-          onConfirm={handleConfirmDeleteSession}
-          title="تأكيد حذف الدورة"
-          description="هل أنت متأكد من رغبتك في حذف الدورة"
-          itemName={sessionToDelete?.session.title}
-          isLoading={deletingSessionId === sessionToDelete?.session.id}
-          errorMessage={sessionDeleteError}
-        />
-      )}
+        {openEditModal && (
+          <EditCourseModal
+            open={openEditModal}
+            onClose={handleCloseEdit}
+            course={selectedCourse}
+            onSave={(data) => handleSaveEdit(data, handleCloseEdit)}
+            tenantId={tenantId}
+            isLoading={updateLoading === "pending"}
+          />
+        )}
 
-      {openDetailsModal && (
-        <CourseDetailsModal
-          open={openDetailsModal}
-          onClose={handleCloseDetail}
-          course={selectedCourse}
-          onSave={handleSaveEdit}
+        <CourseManagementGrid
+          courses={courses}
+          onView={handleOpenDetail}
+          onEdit={handleOpenEdit}
           onAddSession={handleOpenAddSession}
-          tenantId={tenantId}
-          isSaving={updateLoading === "pending"}
+          onShowSessions={handleOpenSessionsList}
+          onDelete={handleDeleteClick}
+          loading={
+            adminCoursesLoading === "pending" || searchLoading === "pending"
+          }
         />
-      )}
-
-      {openEditModal && (
-        <EditCourseModal
-          open={openEditModal}
-          onClose={handleCloseEdit}
-          course={selectedCourse}
-          onSave={(data) => handleSaveEdit(data, handleCloseEdit)}
-          tenantId={tenantId}
-          isLoading={updateLoading === "pending"}
-        />
-      )}
-
-      <CourseManagementGrid
-        courses={courses}
-        onView={handleOpenDetail}
-        onEdit={handleOpenEdit}
-        onAddSession={handleOpenAddSession}
-        onShowSessions={handleOpenSessionsList}
-        onDelete={handleDeleteClick}
-        loading={adminCoursesLoading === "pending" || searchLoading === "pending"}
-      />
-
-      
-    </Box>
+      </Box>
     </Box>
   );
 };

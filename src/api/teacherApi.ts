@@ -1,7 +1,6 @@
 import axiosClient from "./axiosClient";
 
 export interface CreateTeacherRequest {
-  userId: number;
   username: string;
   email: string;
   password: string;
@@ -14,6 +13,7 @@ export interface CreateTeacherRequest {
   address: string;
   cv?: string;
   experienceYears: number;
+  instituteId: number;
 }
 
 export interface UpdateTeacherRequest {
@@ -67,17 +67,23 @@ export interface TeacherSearchResult {
 }
 
 export const createTeacher = async (
-  data: CreateTeacherRequest
+  data: CreateTeacherRequest,
 ): Promise<TeacherApiResponse> => {
-  const response = await axiosClient.post<TeacherApiResponse>("/teachers", data);
+  const response = await axiosClient.post<TeacherApiResponse>(
+    "/teachers",
+    data,
+  );
   return response.data;
 };
 
 export const updateTeacher = async (
   id: number,
-  data: UpdateTeacherRequest
+  data: UpdateTeacherRequest,
 ): Promise<TeacherApiResponse> => {
-  const response = await axiosClient.put<TeacherApiResponse>(`/teachers/${id}`, data);
+  const response = await axiosClient.put<TeacherApiResponse>(
+    `/teachers/${id}`,
+    data,
+  );
   return response.data;
 };
 
@@ -92,6 +98,13 @@ export interface TeacherCourseProgress {
 
 export const getTeachers = async () => {
   const response = await axiosClient.get<TeacherApiResponse[]>(`/teachers`);
+  return response.data;
+};
+
+export const getTeachersByInstituteId = async (instituteId: number) => {
+  const response = await axiosClient.get<TeacherApiResponse[]>(
+    `/teachers/by-institute/${instituteId}`,
+  );
   return response.data;
 };
 
@@ -113,21 +126,31 @@ export const deleteTeacher = async (id: number): Promise<void> => {
 
 export const updateTeacherProfileImage = async (
   id: number,
-  file: File
+  file: File,
 ): Promise<TeacherApiResponse> => {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await axiosClient.put<TeacherApiResponse>(`/teachers/${id}/profile-image`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
+  const response = await axiosClient.put<TeacherApiResponse>(
+    `/teachers/${id}/profile-image`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     },
-  });
+  );
   return response.data;
 };
 
-export const searchTeachers = async (query: string): Promise<TeacherSearchResult[]> => {
-  const response = await axiosClient.get<TeacherSearchResult[]>("/teachers/search", {
-    params: { q: query },
-  });
+export const searchTeachers = async (
+  query: string,
+  instituteId: number | string,
+): Promise<TeacherSearchResult[]> => {
+  const response = await axiosClient.get<TeacherSearchResult[]>(
+    `/teachers/by-institute/${instituteId}/search`,
+    {
+      params: { q: query },
+    },
+  );
   return response.data;
 };

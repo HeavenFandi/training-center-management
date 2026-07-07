@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useCallback } from "react";
-import { Box, Container, Typography, CircularProgress } from "@mui/material";
+import { Box, Container, Typography, CircularProgress, Skeleton, Card, Stack } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import CardTrainingSession from "../../components/Cards/CardTrainingSession";
 import TrainingSessionsPagination from "../../components/Courses/List/TrainingSessionsPagination";
@@ -106,6 +106,7 @@ const TrainingSessions = memo(() => {
   const handlePageChange = useCallback(
     (_: React.ChangeEvent<unknown>, value: number) => {
       dispatch(setPage(value));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [dispatch]
   );
@@ -166,9 +167,47 @@ const TrainingSessions = memo(() => {
               </Typography>
 
               {loading === "pending" || loading === "idle" ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-                  <CircularProgress />
-                </Box>
+                <Grid
+                  container
+                  spacing={3}
+                  direction="row-reverse"
+                  justifyContent="flex-start"
+                >
+                  {[0,1,2,3,4,5].map((i) => (
+                    <Grid size={{ xs:12, sm:6, md:4 }} key={i}>
+                      <Card sx={{ borderRadius:"16px", overflow:"hidden", backgroundColor:"rgba(255,255,255,0.6)", backdropFilter:"blur(16px)", border:"1px solid rgba(255,255,255,0.5)", boxShadow:"0 8px 32px 0 rgba(31,38,135,0.1)", height:"100%", display:"flex", flexDirection:"column" }}>
+                        <Skeleton variant="rectangular" height={180} />
+                        <Box sx={{ p: 2.5, flexGrow:1, display:"flex", flexDirection:"column" }}>
+                          <Stack spacing={1.5}>
+                            <Box>
+                              <Skeleton variant="text" width="90%" height={28} sx={{ mb:0.5 }} />
+                              <Skeleton variant="text" width="50%" height={20} />
+                            </Box>
+                            <Skeleton variant="text" width="100%" height={48} />
+                            <Stack spacing={1}>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="40%" height={20} />
+              </Box>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="35%" height={20} />
+              </Box>
+              <Box sx={{ display:"flex", gap:0.5, alignItems:"center" }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="30%" height={20} />
+              </Box>
+            </Stack>
+                          </Stack>
+                        </Box>
+                        <Box sx={{ p:2, pt:0, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                          <Skeleton variant="text" width="30%" height={28} />
+                          <Skeleton variant="rounded" width={80} height={36} />
+                        </Box>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
               ) : error ? (
                 <Box
                   sx={{

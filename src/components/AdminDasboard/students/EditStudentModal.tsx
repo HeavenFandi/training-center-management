@@ -73,7 +73,10 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     if (open && student) {
       console.log("[DEBUG EditStudentModal] === Opening edit modal ===");
       console.log("[DEBUG EditStudentModal] Initial student.bio:", student?.bio);
-      setFormData({ ...student }); // Make a copy
+      setFormData({
+        ...student,
+        bio: student?.bio ?? "",
+      });
       setTempImageUrl(student?.image);
       setValidationError(null);
     }
@@ -146,8 +149,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     if (!formData.username?.trim()) errors.push("اسم المستخدم مطلوب");
     if (!formData.gender) errors.push("الجنس مطلوب");
     if (!formData.birthDate) errors.push("تاريخ الميلاد مطلوب");
-    if (!formData.address?.trim()) errors.push("العنوان مطلوب");
-    if (!formData.bio?.trim()) errors.push("السيرة الذاتية مطلوبة");
+    if (!String(formData.bio ?? "").trim()) errors.push("السيرة الذاتية مطلوبة");
 
     if (errors.length > 0) {
       setValidationError(errors[0]);
@@ -166,8 +168,9 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     }
 
     if (formData) {
-      console.log("[DEBUG EditStudentModal] Passing complete formData to onSave:", formData);
-      onSave(formData);
+      const normalizedFormData = { ...formData, bio: String(formData.bio ?? "") };
+      console.log("[DEBUG EditStudentModal] Passing complete formData to onSave:", normalizedFormData);
+      onSave(normalizedFormData);
     }
   }, [formData, loading, onSave, onImageUpdate, imageUpdateLoading]);
 

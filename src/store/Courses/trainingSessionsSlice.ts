@@ -13,6 +13,7 @@ import actAddCourseRating from "./act/actAddCourseRating";
 import actEnrollInSession from "./act/actEnrollInSession";
 import actInitiatePayment from "./act/actInitiatePayment";
 import actGetCategories, { Category } from "./act/actGetCategories";
+import actCreateCategory from "./act/actCreateCategory";
 import actGetCourseRatings, { CourseRating } from "./act/actGetCourseRatings";
 import actGetCourseAverageRating from "./act/actGetCourseAverageRating";
 import actGetLecturesBySessionId from "./act/actGetLecturesBySessionId";
@@ -205,6 +206,63 @@ const trainingSessionsSlice = createSlice({
       state.deletingLectureId = null;
       state.lectureDeleteError = null;
     },
+    resetTrainingSessions: (state) => {
+      state.allLectures = [];
+      state.allLecturesLoading = "idle";
+      state.allLecturesError = null;
+    },
+    clearTrainingSessionsState: (state) => {
+      state.trainingSessions = [];
+      state.activeSessions = [];
+      state.activeSessionsLoading = "idle";
+      state.activeSessionsError = null;
+      state.selectedTrainingSession = null;
+      state.loading = "idle";
+      state.sessionDetailsLoading = "idle";
+      state.error = null;
+      state.addRatingLoading = false;
+      state.addRatingError = null;
+      state.categories = [];
+      state.categoriesLoading = "idle";
+      state.categoriesError = null;
+      state.ratings = [];
+      state.ratingsLoading = "idle";
+      state.ratingsError = null;
+      state.averageRating = null;
+      state.averageRatingLoading = "idle";
+      state.averageRatingError = null;
+      state.searchTerm = "";
+      state.instituteInput = "";
+      state.categoryInput = "";
+      state.minPriceInput = "";
+      state.maxPriceInput = "";
+      state.locationInput = "";
+      state.appliedFilters = {
+        institute: "",
+        category: "",
+        minPrice: "",
+        maxPrice: "",
+        location: "",
+      };
+      state.page = 1;
+      state.courseSessions = {};
+      state.courseSessionsLoading = {};
+      state.courseSessionsError = {};
+      state.sessionLectures = {};
+      state.sessionLecturesLoading = {};
+      state.sessionLecturesError = {};
+      state.lectureUpdateLoading = false;
+      state.lectureUpdateError = null;
+      state.deletingLectureId = null;
+      state.lectureDeleteError = null;
+      state.deletingSessionId = null;
+      state.sessionDeleteError = null;
+      state.lectureCreateLoading = false;
+      state.lectureCreateError = null;
+      state.allLectures = [];
+      state.allLecturesLoading = "idle";
+      state.allLecturesError = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(
@@ -244,6 +302,10 @@ const trainingSessionsSlice = createSlice({
       state.categoriesLoading = "failed";
       if (action.payload && typeof action.payload == "string")
         state.categoriesError = action.payload;
+    });
+
+    builder.addCase(actCreateCategory.fulfilled, (state, action) => {
+      state.categories = [...state.categories, action.payload];
     });
 
     builder.addCase(actGetTrainingSessions.pending, (state) => {
@@ -382,7 +444,6 @@ const trainingSessionsSlice = createSlice({
       state.ratingsLoading = "succeeded";
       state.ratings = action.payload;
       state.ratingsError = null;
-      console.log("ratings fulfilled:", action.payload);
     });
     builder.addCase(actGetCourseRatings.rejected, (state, action) => {
       state.ratingsLoading = "failed";
@@ -448,7 +509,8 @@ const trainingSessionsSlice = createSlice({
       state.lectureDeleteError = null;
     });
     builder.addCase(actDeleteLecture.rejected, (state, action) => {
-      // Keep deletingLectureId as is until user closes modal
+      // Reset deletingLectureId so modal isn't stuck loading, but keep error
+      state.deletingLectureId = null;
       if (action.payload && typeof action.payload == "string")
         state.lectureDeleteError = action.payload;
     });
@@ -557,29 +619,35 @@ const trainingSessionsSlice = createSlice({
       const payload = action.payload as any;
       state.selectedTrainingSession = {
         ...payload,
-        startTime: typeof payload.startTime === "object" 
-          ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00` 
-          : payload.startTime,
-        endTime: typeof payload.endTime === "object" 
-          ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00` 
-          : payload.endTime,
+        startTime:
+          typeof payload.startTime === "object"
+            ? `${String(payload.startTime.hour).padStart(2, "0")}:${String(payload.startTime.minute).padStart(2, "0")}:00`
+            : payload.startTime,
+        endTime:
+          typeof payload.endTime === "object"
+            ? `${String(payload.endTime.hour).padStart(2, "0")}:${String(payload.endTime.minute).padStart(2, "0")}:00`
+            : payload.endTime,
       } as any;
       // Update trainingSessions list
       state.trainingSessions = state.trainingSessions.map((session) =>
-        session.id === action.payload.id ? {
-          ...session,
-          ...(action.payload as any),
-        } as any : session
+        session.id === action.payload.id
+          ? ({
+              ...session,
+              ...(action.payload as any),
+            } as any)
+          : session,
       );
       // Update courseSessions
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
           state.courseSessions[courseId] = state.courseSessions[courseId].map(
             (session) =>
-              session.id === action.payload.id ? {
-                ...session,
-                ...(action.payload as any),
-              } as any : session
+              session.id === action.payload.id
+                ? ({
+                    ...session,
+                    ...(action.payload as any),
+                  } as any)
+                : session,
           );
         }
       }
@@ -601,6 +669,10 @@ const trainingSessionsSlice = createSlice({
       state.trainingSessions = state.trainingSessions.filter(
         (session) => session.id !== action.payload,
       );
+      // Remove from activeSessions
+      state.activeSessions = state.activeSessions.filter(
+        (session) => session.id !== action.payload,
+      );
       // Also remove from courseSessions if exists
       for (const courseId in state.courseSessions) {
         if (state.courseSessions[courseId]) {
@@ -611,7 +683,8 @@ const trainingSessionsSlice = createSlice({
       }
     });
     builder.addCase(actDeleteTrainingSession.rejected, (state, action) => {
-      // Keep deletingSessionId as is until user closes modal
+      // Reset deletingSessionId so modal isn't stuck loading, but keep error
+      state.deletingSessionId = null;
       if (action.payload && typeof action.payload == "string")
         state.sessionDeleteError = action.payload;
     });
@@ -647,6 +720,8 @@ export const {
   setPage,
   clearDeleteSessionState,
   clearDeleteLectureState,
+  clearTrainingSessionsState,
+  resetTrainingSessions,
 } = trainingSessionsSlice.actions;
 const selectTrainingSessionsState = (state: RootState) =>
   state.trainingSessions;
@@ -717,7 +792,7 @@ export const selectFilteredTrainingSessions = createSelector(
 export const selectTotalPages = createSelector(
   [selectFilteredTrainingSessions],
   (filtered) => {
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 6;
     return Math.ceil(filtered.length / ITEMS_PER_PAGE);
   },
 );
@@ -728,7 +803,7 @@ export const selectPaginatedTrainingSessions = createSelector(
     (state: RootState) => state.trainingSessions.page,
   ],
   (filtered, page) => {
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 6;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return filtered.slice(startIndex, endIndex);

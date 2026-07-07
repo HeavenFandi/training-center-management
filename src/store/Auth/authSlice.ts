@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import actAuthLogin, { User, UserType } from "./act/actAuthLogin";
 import actAuthRegister from "./act/actAuthRegister";
 
@@ -6,32 +6,76 @@ interface AuthState {
   user: User | null;
   userType: UserType | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   loginLoading: boolean;
   loginError: string | null;
 
   registerLoading: boolean;
-  registerError: string | null | Record<string, string[]>;
+  registerError: string | null;
   registerSuccess: boolean;
 }
 
-console.log("[DEBUG authSlice] Initializing auth slice...");
-const savedUser = localStorage.getItem("user");
-const savedStudentId = localStorage.getItem("studentId");
-console.log("[DEBUG authSlice] localStorage.user raw:", savedUser);
-console.log("[DEBUG authSlice] localStorage.studentId raw:", savedStudentId);
-const parsedUser = savedUser ? JSON.parse(savedUser) : null;
-console.log("[DEBUG authSlice] parsedUser after JSON.parse:", parsedUser);
+const AUTH_KEYS = [
+  "user",
+  "userType",
+  "studentId",
+  "userId",
+  "token",
+] as const;
 
-// If we have a saved user and saved studentId but user doesn't have studentId, add it
-if (parsedUser && savedStudentId && !parsedUser.studentId) {
-  parsedUser.studentId = Number(savedStudentId);
-  console.log("[DEBUG authSlice] Added studentId to parsedUser:", parsedUser);
-}
+const clearAllAuthKeys = () => {
+  AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
+  Object.keys(localStorage).forEach((key) => {
+    if (
+      key.toLowerCase().includes("auth") ||
+      key.toLowerCase().includes("token") ||
+      key.toLowerCase().includes("user")
+    ) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
+const parseStoredUser = (): { user: User | null; isAuthenticated: boolean } => {
+  try {
+    const savedUser = localStorage.getItem("user");
+    const savedStudentId = localStorage.getItem("studentId");
+
+    if (!savedUser) {
+      clearAllAuthKeys();
+      return { user: null, isAuthenticated: false };
+    }
+
+    const parsedUser = JSON.parse(savedUser);
+
+    // Fix: use user.id instead of token to check if stored user is valid!
+    if (
+      !parsedUser ||
+      typeof parsedUser !== "object" ||
+      !parsedUser.id
+    ) {
+      clearAllAuthKeys();
+      return { user: null, isAuthenticated: false };
+    }
+
+    if (savedStudentId && !parsedUser.studentId) {
+      parsedUser.studentId = Number(savedStudentId);
+    }
+
+    return { user: parsedUser, isAuthenticated: true };
+  } catch (error) {
+    clearAllAuthKeys();
+    return { user: null, isAuthenticated: false };
+  }
+};
+
+const { user: initialUser, isAuthenticated: initialAuth } = parseStoredUser();
 
 const initialState: AuthState = {
-  user: parsedUser,
-  userType: parsedUser?.userType || null,
-  isAuthenticated: !!savedUser,
+  user: initialUser,
+  userType: initialUser?.userType || null,
+  isAuthenticated: initialAuth,
+  isHydrated: false,
   loginLoading: false,
   loginError: null,
 
@@ -39,14 +83,12 @@ const initialState: AuthState = {
   registerError: null,
   registerSuccess: false,
 };
-console.log("[DEBUG authSlice] Initial auth state:", initialState);
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout: (state) => {
-      console.log("[DEBUG authSlice] logout called");
       state.user = null;
       state.userType = null;
       state.isAuthenticated = false;
@@ -55,22 +97,7 @@ const authSlice = createSlice({
       state.registerError = null;
       state.registerLoading = false;
       state.registerSuccess = false;
-      
-      // Clear all auth data from localStorage
-      localStorage.removeItem("user");
-      localStorage.removeItem("userType");
-      localStorage.removeItem("studentId");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("token");
-      
-      // Clear any other possible auth keys
-      Object.keys(localStorage).forEach((key) => {
-        if (key.toLowerCase().includes("auth") || 
-            key.toLowerCase().includes("token") || 
-            key.toLowerCase().includes("user")) {
-          localStorage.removeItem(key);
-        }
-      });
+      clearAllAuthKeys();
     },
     resetAuthState: (state) => {
       state.loginError = null;
@@ -79,27 +106,59 @@ const authSlice = createSlice({
       state.registerLoading = false;
       state.registerSuccess = false;
     },
+    setHydrated: (state) => {
+      state.isHydrated = true;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(actAuthLogin.pending, (state) => {
-        console.log("[DEBUG authSlice] actAuthLogin.pending");
+        if (import.meta.env.DEV) {
+          console.log("🔄 authSlice: actAuthLogin.pending");
+        }
         state.loginLoading = true;
         state.loginError = null;
       })
-      .addCase(actAuthLogin.fulfilled, (state, action) => {
-        console.log("[DEBUG authSlice] actAuthLogin.fulfilled, payload:", action.payload);
+      .addCase(actAuthLogin.fulfilled, (state, action: PayloadAction<User>) => {
+        if (import.meta.env.DEV) {
+          console.log("✅ authSlice: actAuthLogin.fulfilled", { payload: action.payload });
+          console.log("  - action.payload.token:", action.payload.token);
+          console.log("  - action.payload.id:", action.payload.id);
+        }
         state.loginLoading = false;
         state.user = action.payload;
         state.userType = action.payload.userType;
-        state.isAuthenticated = true;
+        // Fix: use user.id instead of token to determine if authenticated!
+        state.isAuthenticated = !!action.payload && !!action.payload.id;
         state.loginError = null;
+
+        localStorage.setItem("user", JSON.stringify(action.payload));
+        localStorage.setItem("userType", action.payload.userType);
+        localStorage.setItem("userId", String(action.payload.id));
+        if (action.payload.studentId) {
+          localStorage.setItem("studentId", String(action.payload.studentId));
+        }
+        if (action.payload.token) {
+          localStorage.setItem("token", action.payload.token);
+        }
+        if (import.meta.env.DEV) {
+          console.log("🔐 authSlice: localStorage updated, state:", {
+            user: state.user,
+            isAuthenticated: state.isAuthenticated,
+            userType: state.userType,
+          });
+        }
       })
       .addCase(actAuthLogin.rejected, (state, action) => {
-        console.error("[DEBUG authSlice] actAuthLogin.rejected, payload:", action.payload);
+        if (import.meta.env.DEV) {
+          console.error("❌ authSlice: actAuthLogin.rejected", { payload: action.payload });
+        }
         state.loginLoading = false;
         state.loginError = action.payload as string;
         state.isAuthenticated = false;
+        state.user = null;
+        state.userType = null;
+        clearAllAuthKeys();
       });
 
     builder
@@ -122,5 +181,5 @@ const authSlice = createSlice({
 });
 
 export { actAuthLogin, actAuthRegister };
-export const { logout, resetAuthState } = authSlice.actions;
+export const { logout, resetAuthState, setHydrated } = authSlice.actions;
 export default authSlice.reducer;

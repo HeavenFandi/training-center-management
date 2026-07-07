@@ -2,6 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosClient from "../../../api/axiosClient";
 import axiosErrorHandler from "../../../utils/axiosErrorHandler";
 import { TTrainingSessionListItem } from "../../../types/cardType";
+import { getAllInstitutes } from "../../../api/instituteApi";
+import { getTeachers } from "../../../api/teacherApi";
 
 export interface TFilters {
   category?: string;
@@ -25,7 +27,8 @@ interface TTrainingSessionResponse {
   courseName: string;
   courseDescription: string;
   classroomName?: string;
-  teacherName: string;
+  teacherName?: string;
+  teacherUsername?: string;
   teacherId?: number;
   instituteName?: string;
   tenantName?: string;
@@ -48,40 +51,89 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
       });
 
       console.log("Fetching sessions with filters:", cleanedFilters);
-      const response = await axiosClient.get<TTrainingSessionResponse[]>("/training-sessions/sessions-with-filter", {
-        params: cleanedFilters,
-      });
-      console.log("Filtered response:", response.data);
+      const [sessionsResponse, institutesResponse, teachersResponse] =
+        await Promise.all([
+          axiosClient.get<TTrainingSessionResponse[]>(
+            "/training-sessions/sessions-with-filter",
+            {
+              params: cleanedFilters,
+            },
+          ),
+          getAllInstitutes(),
+          getTeachers(),
+        ]);
 
-      const mappedSessions: TTrainingSessionListItem[] = response.data.map((item: TTrainingSessionResponse) => ({
-        id: item.id,
-        courseId: item.courseId,
-        title: item.courseName,
-        teacherName: item.teacherName,
-        teacherId: item.teacherId || 0,
-        duration: item.duration,
-        price: item.price,
-        availableSeats: item.availableSeats,
-        status: item.status,
-        category: item.categoryName || "", 
-        institute: item.instituteName || item.tenantName || "",
-        location: item.location || item.classroomName || "",
-        image: item.image || "",
-        description: item.courseDescription || "",
-        classroomId: (item as any).classroomId,
-        minSeats: item.minSeats,
-        numberOfLectures: item.numberOfLectures,
-        requiredEquipment: item.requiredEquipment,
-        startDate: (item as any).startDate,
-        startTime: (item as any).startTime,
-        endTime: (item as any).endTime,
-      }));
+      console.log("Filtered response (sessions):", sessionsResponse.data);
+      console.log("Filtered response (institutes):", institutesResponse);
+      console.log("Filtered response (teachers):", teachersResponse);
+
+      // Create a map of institute names to their locations
+      const instituteLocationMap = new Map<string, string>();
+      institutesResponse.forEach((institute) => {
+        if (institute.name) {
+          instituteLocationMap.set(institute.name, institute.location);
+        }
+        if (institute.tenantName) {
+          instituteLocationMap.set(institute.tenantName, institute.location);
+        }
+      });
+
+      // Create a map of teacherId to full name
+      const teacherNameMap = new Map<number, string>();
+      teachersResponse.forEach((teacher) => {
+        if (teacher.id) {
+          const fullName =
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim();
+          if (fullName) {
+            teacherNameMap.set(teacher.id, fullName);
+          }
+        }
+      });
+
+      const mappedSessions: TTrainingSessionListItem[] =
+        sessionsResponse.data.map((item: TTrainingSessionResponse) => {
+          const instituteName = item.instituteName || item.tenantName || "";
+          const instituteLocation =
+            instituteLocationMap.get(instituteName) || "";
+
+          // Get teacher name from map if available, otherwise fall back to API fields
+          const teacherId = item.teacherId || 0;
+          const finalTeacherName =
+            teacherNameMap.get(teacherId) ||
+            item.teacherName ||
+            item.teacherUsername ||
+            "";
+
+          return {
+            id: item.id,
+            courseId: item.courseId,
+            title: item.courseName,
+            teacherName: finalTeacherName,
+            teacherId: teacherId,
+            duration: item.duration,
+            price: item.price,
+            availableSeats: item.availableSeats,
+            status: item.status,
+            category: item.categoryName || "",
+            institute: instituteName,
+            location: instituteLocation,
+            image: item.image || "",
+            description: item.courseDescription || "",
+            classroomId: (item as any).classroomId,
+            minSeats: item.minSeats,
+            numberOfLectures: item.numberOfLectures,
+            requiredEquipment: item.requiredEquipment,
+            startDate: (item as any).startDate,
+            startTime: (item as any).startTime,
+            endTime: (item as any).endTime,
+          };
+        });
 
       return mappedSessions;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));
     }
-  }
+  },
 );
 
 export default actGetFilteredTrainingSessions;

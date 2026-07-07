@@ -6,6 +6,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 
 interface CourseManagementHeaderProps {
   onAddClick: () => void;
+  onAddCategoryClick: () => void;
   searchQuery: string;
   onSearch: (query: string) => void;
   onClearSearch: () => void;
@@ -14,6 +15,7 @@ interface CourseManagementHeaderProps {
 
 const CourseManagementHeader: React.FC<CourseManagementHeaderProps> = ({ 
   onAddClick, 
+  onAddCategoryClick,
   searchQuery, 
   onSearch, 
   onClearSearch,
@@ -68,23 +70,42 @@ const CourseManagementHeader: React.FC<CourseManagementHeaderProps> = ({
             أهلا بك في لوحة تحكم إدارة الكورسات المركزية
           </Typography>
         </Box>
-        <Button
-          onClick={onAddClick}
-          variant="contained"
-          sx={{
-            backgroundColor: "#091c39",
-            color: "white",
-            borderRadius: "50px",
-            px: { xs: 2, sm: 4 },
-            py: 1.2,
-            fontWeight: "bold",
-            fontSize: "15px",
-            boxShadow: "0px 8px 20px rgba(19, 62, 101, 0.2)",
-            fontFamily: "Tajawal",
-            "&:hover": { backgroundColor: "#0d2d4a" },
-          }}>
-          إضافة كورس جديد
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            onClick={onAddCategoryClick}
+            variant="contained"
+            sx={{
+              backgroundColor: "#16a34a",
+              color: "white",
+              borderRadius: "50px",
+              px: { xs: 2, sm: 4 },
+              py: 1.2,
+              fontWeight: "bold",
+              fontSize: "15px",
+              boxShadow: "0px 8px 20px rgba(22, 163, 74, 0.2)",
+              fontFamily: "Tajawal",
+              "&:hover": { backgroundColor: "#15803d" },
+            }}>
+            + إضافة تصنيف
+          </Button>
+          <Button
+            onClick={onAddClick}
+            variant="contained"
+            sx={{
+              backgroundColor: "#091c39",
+              color: "white",
+              borderRadius: "50px",
+              px: { xs: 2, sm: 4 },
+              py: 1.2,
+              fontWeight: "bold",
+              fontSize: "15px",
+              boxShadow: "0px 8px 20px rgba(19, 62, 101, 0.2)",
+              fontFamily: "Tajawal",
+              "&:hover": { backgroundColor: "#0d2d4a" },
+            }}>
+            إضافة كورس جديد
+          </Button>
+        </Stack>
       </Stack>
 
       {/* حقل البحث تحت العنوان */}

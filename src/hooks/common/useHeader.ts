@@ -62,7 +62,7 @@ export const useHeader = () => {
       return;
     }
 
-    navigate("/");
+    navigate("/login");
   }, [dispatch, handleCloseNavMenu, isLoggedIn, navigate]);
 
   return {

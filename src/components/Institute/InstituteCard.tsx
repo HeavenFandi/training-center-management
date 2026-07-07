@@ -1,5 +1,4 @@
-import { Card, CardContent, Avatar, Box, Typography, IconButton, Button } from "@mui/material";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { Card, CardContent, Avatar, Box, Typography, IconButton } from "@mui/material";
 import PaletteIcon from "@mui/icons-material/Palette";
 import SecurityIcon from "@mui/icons-material/Security";
 import CodeIcon from "@mui/icons-material/Code";
@@ -17,13 +16,11 @@ const getIcon = (category: string) => {
 export const InstituteCard = ({ 
   course, 
   isExpanded, 
-  onToggle, 
-  onViewSessions 
+  onToggle 
 }: { 
   course: TCourse; 
   isExpanded: boolean; 
   onToggle: () => void;
-  onViewSessions: () => void;
 }) => (
   <Card
     elevation={0}
@@ -53,14 +50,6 @@ export const InstituteCard = ({
             {course.description}
           </Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          size="small"
-          onClick={onViewSessions}
-          sx={{ mr: 1 }}
-        >
-          الدورات المتاحة
-        </Button>
         <IconButton size="small" onClick={onToggle}>
           {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>

@@ -7,36 +7,59 @@ import actCreateCourse from "../../store/Courses/act/actCreateCourse";
 import actDeleteCourse from "../../store/Courses/act/actDeleteCourse";
 import actUpdateCourse from "../../store/Courses/act/actUpdateCourse";
 import actSearchCourses from "../../store/Courses/act/actSearchCourses";
+import actCreateCategory from "../../store/Courses/act/actCreateCategory";
 import actGetActiveOrUpcomingByCourseAndInstitute from "../../store/Courses/act/actGetActiveOrUpcomingByCourseAndInstitute";
 import actDeleteTrainingSession from "../../store/Courses/act/actDeleteTrainingSession";
 import actCreateTrainingSession from "../../store/Courses/act/actCreateTrainingSession";
 import actGetClassroomsByInstituteId from "../../store/Classrooms/act/actGetClassroomsByInstituteId";
-import { selectCoursesState, addSessionToCourse, updateSessionInCourse, deleteSessionFromCourse, clearDeleteCourseState } from "../../store/Courses/courseSlice";
+import {
+  selectCoursesState,
+  addSessionToCourse,
+  updateSessionInCourse,
+  deleteSessionFromCourse,
+  clearDeleteCourseState,
+} from "../../store/Courses/courseSlice";
 import { actGetInstituteByUserId } from "../../store/Institutes/institutesSlice";
-import { clearDeleteSessionState, clearDeleteLectureState, actUpdateTrainingSession } from "../../store/Courses/trainingSessionsSlice";
+import {
+  clearDeleteSessionState,
+  clearDeleteLectureState,
+  actUpdateTrainingSession,
+} from "../../store/Courses/trainingSessionsSlice";
 import actGetTrainingSessionDetails from "../../store/Courses/act/actGetTrainingSessionDetails";
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { UpdateCourseRequest } from "../../api/courseApi";
-import { CreateTrainingSessionRequest, updateTrainingSessionImage, convertTimeStringToTimeObject } from "../../api/trainingSessionApi";
+import {
+  CreateTrainingSessionRequest,
+  updateTrainingSessionImage,
+  convertTimeStringToTimeObject,
+} from "../../api/trainingSessionApi";
 
 export const useCourseManagement = () => {
   const dispatch = useAppDispatch();
   const { showSnackbar } = useSnackbar();
-  const { courses: reduxCourses, loading: adminCoursesLoading, error: adminCoursesError, createLoading, createError, updateLoading, updateError, searchLoading, searchError, deletingCourseId, deleteError } = useAppSelector(selectCoursesState);
-  const { deletingSessionId, sessionDeleteError } = useAppSelector((state) => state.trainingSessions);
+  const {
+    courses: reduxCourses,
+    loading: adminCoursesLoading,
+    error: adminCoursesError,
+    createLoading,
+    createError,
+    updateLoading,
+    updateError,
+    searchLoading,
+    searchError,
+    deletingCourseId,
+    deleteError,
+  } = useAppSelector(selectCoursesState);
+  const { deletingSessionId, sessionDeleteError } = useAppSelector(
+    (state) => state.trainingSessions,
+  );
   const { currentInstitute } = useAppSelector((state) => state.institutes);
   const { user } = useAppSelector((state) => state.auth);
-
-  console.log("[useCourseManagement] currentInstitute:", currentInstitute);
-  console.log("[useCourseManagement] currentInstitute?.tenantId:", currentInstitute?.tenantId);
-  console.log("[useCourseManagement] user:", user);
 
   // Fetch institute by userId
   useEffect(() => {
     const userId = user?.id;
-    console.log("[useCourseManagement] userId:", userId);
     if (userId && !currentInstitute) {
-      console.log("[useCourseManagement] Dispatching actGetInstituteByUserId with userId:", userId);
       dispatch(actGetInstituteByUserId(userId));
     }
   }, [dispatch, user, currentInstitute]);
@@ -45,12 +68,15 @@ export const useCourseManagement = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [openEditModal, setOpenEditModel] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
+  const [openAddCategoryModal, setOpenAddCategoryModal] = useState(false);
+  const [createCategoryLoading, setCreateCategoryLoading] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [openConflictDialog, setOpenConflictDialog] = useState(false);
   const [conflictData, setConflictData] = useState<any>(null);
-  const [originalFormData, setOriginalFormData] = useState<CreateTrainingSessionRequest | null>(null);
+  const [originalFormData, setOriginalFormData] =
+    useState<CreateTrainingSessionRequest | null>(null);
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   const [updatingSession, setUpdatingSession] = useState(false);
@@ -59,7 +85,11 @@ export const useCourseManagement = () => {
 
   // Fetch courses when currentInstitute has tenantId
   useEffect(() => {
-    if (currentInstitute?.tenantId && !isSearching && reduxCourses.length === 0) {
+    if (
+      currentInstitute?.tenantId &&
+      !isSearching &&
+      reduxCourses.length === 0
+    ) {
       dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
     }
   }, [dispatch, currentInstitute?.tenantId, isSearching, reduxCourses.length]);
@@ -67,9 +97,18 @@ export const useCourseManagement = () => {
   // Fetch sessions for all courses once
   const hasFetchedSessionsRef = useRef(false);
   useEffect(() => {
-    if (currentInstitute?.id && courses.length > 0 && !hasFetchedSessionsRef.current) {
-      courses.forEach(course => {
-        dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: course.id, instituteId: currentInstitute.id }));
+    if (
+      currentInstitute?.id &&
+      courses.length > 0 &&
+      !hasFetchedSessionsRef.current
+    ) {
+      courses.forEach((course) => {
+        dispatch(
+          actGetActiveOrUpcomingByCourseAndInstitute({
+            courseId: course.id,
+            instituteId: currentInstitute.id,
+          }),
+        );
       });
       hasFetchedSessionsRef.current = true;
     }
@@ -105,10 +144,12 @@ export const useCourseManagement = () => {
 
     const timeoutId = setTimeout(() => {
       setIsSearching(true);
-      dispatch(actSearchCourses({ 
-        name: searchQuery, 
-        tenantId: parseInt(currentInstitute.tenantId, 10) 
-      }));
+      dispatch(
+        actSearchCourses({
+          name: searchQuery,
+          tenantId: parseInt(currentInstitute.tenantId, 10),
+        }),
+      );
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -164,18 +205,21 @@ export const useCourseManagement = () => {
     dispatch(clearDeleteCourseState());
   }, [dispatch]);
 
-  const handleSaveEdit = useCallback(async (updateData: UpdateCourseRequest, onClose?: () => void) => {
-    try {
-      const resultAction = await dispatch(actUpdateCourse(updateData));
-      if (actUpdateCourse.fulfilled.match(resultAction)) {
-        showSnackbar("تم التعديل بنجاح", "success");
-        setSelectedCourse(resultAction.payload);
-        if (onClose) onClose();
+  const handleSaveEdit = useCallback(
+    async (updateData: UpdateCourseRequest, onClose?: () => void) => {
+      try {
+        const resultAction = await dispatch(actUpdateCourse(updateData));
+        if (actUpdateCourse.fulfilled.match(resultAction)) {
+          showSnackbar("تم التعديل بنجاح", "success");
+          setSelectedCourse(resultAction.payload);
+          if (onClose) onClose();
+        }
+      } catch (error) {
+        console.error("Error updating course:", error);
       }
-    } catch (error) {
-      console.error("Error updating course:", error);
-    }
-  }, [dispatch, showSnackbar]);
+    },
+    [dispatch, showSnackbar],
+  );
 
   const handleOpenAdd = useCallback(() => {
     setOpenAddModal(true);
@@ -185,32 +229,67 @@ export const useCourseManagement = () => {
     setOpenAddModal(false);
   }, []);
 
-  const handleSaveAdd = useCallback(async (data: CourseFormData) => {
-    if (!currentInstitute?.tenantId) {
-      showSnackbar("لم يتم تحميل معلومات المعهد", "error");
-      return;
-    }
+  const handleOpenAddCategory = useCallback(() => {
+    setOpenAddCategoryModal(true);
+  }, []);
 
-    const payload = {
-      name: data.title,
-      description: data.description,
-      requirements: data.requirements,
-      hours: parseInt(data.hoursCount, 10),
-      categoryId: parseInt(data.categoryId, 10),
-      tenantId: parseInt(currentInstitute.tenantId, 10)
-    };
+  const handleCloseAddCategory = useCallback(() => {
+    setOpenAddCategoryModal(false);
+  }, []);
 
-    try {
-      const resultAction = await dispatch(actCreateCourse(payload));
-      if (actCreateCourse.fulfilled.match(resultAction)) {
-        showSnackbar("تم إضافة الكورس بنجاح", "success");
-        setOpenAddModal(false);
-        dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
+  const handleSaveAddCategory = useCallback(
+    async (name: string) => {
+      setCreateCategoryLoading(true);
+      try {
+        const resultAction = await dispatch(actCreateCategory({ name }));
+        if (actCreateCategory.fulfilled.match(resultAction)) {
+          showSnackbar("تم إضافة التصنيف بنجاح", "success");
+          setOpenAddCategoryModal(false);
+        } else {
+          showSnackbar(
+            (resultAction.payload as string) || "حدث خطأ أثناء إضافة التصنيف",
+            "error",
+          );
+        }
+      } catch (error) {
+        console.error("Error creating category:", error);
+        showSnackbar("حدث خطأ أثناء إضافة التصنيف", "error");
+      } finally {
+        setCreateCategoryLoading(false);
       }
-    } catch (error) {
-      console.error("Error creating course: ", error);
-    }
-  }, [dispatch, currentInstitute, showSnackbar]);
+    },
+    [dispatch, showSnackbar],
+  );
+
+  const handleSaveAdd = useCallback(
+    async (data: CourseFormData) => {
+      if (!currentInstitute?.tenantId) {
+        showSnackbar("لم يتم تحميل معلومات المعهد", "error");
+        return;
+      }
+
+      const payload = {
+        name: data.title,
+        description: data.description,
+        requirements: data.requirements,
+        hours: parseInt(data.hoursCount, 10),
+        categoryId: parseInt(data.categoryId, 10),
+        tenantId: parseInt(currentInstitute.tenantId, 10),
+      };
+
+      try {
+        const resultAction = await dispatch(actCreateCourse(payload));
+        if (actCreateCourse.fulfilled.match(resultAction)) {
+          showSnackbar("تم إضافة الكورس بنجاح", "success");
+          setOpenAddModal(false);
+          dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
+        }
+      } catch (error) {
+        // Error creating course
+      }
+    },
+    [dispatch, currentInstitute, showSnackbar],
+  );
 
   const handleCloseConflictDialog = useCallback(() => {
     setOpenConflictDialog(false);
@@ -226,7 +305,12 @@ export const useCourseManagement = () => {
       const minute = parts[1]?.padStart(2, "0") || "00";
       return `${hour}:${minute}:00`;
     }
-    if (typeof timeStr === "object" && timeStr !== null && "hour" in timeStr && "minute" in timeStr) {
+    if (
+      typeof timeStr === "object" &&
+      timeStr !== null &&
+      "hour" in timeStr &&
+      "minute" in timeStr
+    ) {
       const hour = String(timeStr.hour).padStart(2, "0");
       const minute = String(timeStr.minute).padStart(2, "0");
       return `${hour}:${minute}:00`;
@@ -235,230 +319,323 @@ export const useCourseManagement = () => {
   };
 
   // دالة اختيار اقتراح الباك إند المحدّثة لمعالجة تكرار الـ 409 وحساب الوقت بدقة
-  const handleSelectSuggestion = useCallback(async (suggestion: any, onSuccess?: () => void) => {
-    console.log("=== handleSelectSuggestion CALLED ===");
-    console.log("originalFormData:", originalFormData);
-    console.log("Selected Suggestion:", suggestion);
-    
-    if (!originalFormData) return;
+  const handleSelectSuggestion = useCallback(
+    async (suggestion: any, onSuccess?: () => void) => {
+      if (!originalFormData) return;
 
-    let updatedData = { ...originalFormData };
+      let updatedData = { ...originalFormData };
 
-    // Helper to convert any time (string or object) to string "HH:mm:ss"
-    const timeToString = (time: any): string => {
-      if (!time) return "00:00:00";
-      if (typeof time === "string") {
-        const parts = time.split(":");
-        const hour = parts[0]?.padStart(2, "0") || "00";
-        const minute = parts[1]?.padStart(2, "0") || "00";
-        return `${hour}:${minute}:00`;
-      }
-      if (typeof time === "object" && time !== null && "hour" in time && "minute" in time) {
-        const hour = String(time.hour).padStart(2, "0");
-        const minute = String(time.minute).padStart(2, "0");
-        return `${hour}:${minute}:00`;
-      }
-      return "00:00:00";
-    };
-
-
-
-    // 1. استخراج معرف القاعة بشكل صحيح
-    const newClassroomId = suggestion.classroomId ?? suggestion.roomId ?? suggestion.hallId ?? suggestion.id;
-    if (newClassroomId !== undefined && newClassroomId !== null) {
-      updatedData.classroomId = Number(newClassroomId);
-    }
-
-    // 2. تحديث التوقيت الزمني
-    if (suggestion.startTime) {
-      const newStartTimeStr = timeToString(suggestion.startTime);
-      updatedData.startTime = convertTimeStringToTimeObject(newStartTimeStr);
-    }
-    
-    if (suggestion.endTime) {
-      const newEndTimeStr = timeToString(suggestion.endTime);
-      updatedData.endTime = convertTimeStringToTimeObject(newEndTimeStr);
-    } else if (suggestion.startTime && originalFormData.startTime && originalFormData.endTime) {
-      // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
-      const origStartStr = timeToString(originalFormData.startTime);
-      const origEndStr = timeToString(originalFormData.endTime);
-      
-      const [origStartH, origStartM] = origStartStr.split(':').map(Number);
-      const [origEndH, origEndM] = origEndStr.split(':').map(Number);
-      const durationInMinutes = (origEndH * 60 + origEndM) - (origStartH * 60 + origStartM);
-
-      const newStartStr = timeToString(updatedData.startTime);
-      const [newStartH, newStartM] = newStartStr.split(':').map(Number);
-      const totalEndMinutes = (newStartH * 60 + newStartM) + durationInMinutes;
-      
-      const newEndH = Math.floor(totalEndMinutes / 60) % 24;
-      const newEndM = totalEndMinutes % 60;
-      const newEndStr = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}:00`;
-      updatedData.endTime = convertTimeStringToTimeObject(newEndStr);
-    }
-
-    // 3. تحديث تاريخ البدء المقترح
-    if (suggestion.date) updatedData.startDate = suggestion.date;
-    else if (suggestion.startDate) updatedData.startDate = suggestion.startDate;
-
-    // 4. بناء الـ Payload النهائي النظيف
-    const cleanPayload: CreateTrainingSessionRequest = {
-      courseId: Number(updatedData.courseId),
-      teacherId: Number(updatedData.teacherId),
-      classroomId: Number(updatedData.classroomId),
-      price: Number(updatedData.price),
-      availableSeats: Number(updatedData.availableSeats),
-      minSeats: Number(updatedData.minSeats),
-      numberOfLectures: Number(updatedData.numberOfLectures),
-      duration: updatedData.duration,
-      status: updatedData.status,
-      requiredEquipment: updatedData.requiredEquipment,
-      startDate: updatedData.startDate,
-      startTime: updatedData.startTime,
-      endTime: updatedData.endTime,
-      daysOfWeek: updatedData.daysOfWeek,
-    };
-
-    console.log("=== cleanPayload to submit ===", cleanPayload);
-    setSubmittingSuggestion(true);
-    
-    try {
-      const resultAction = await dispatch(actCreateTrainingSession(cleanPayload));
-      if (actCreateTrainingSession.fulfilled.match(resultAction)) {
-        showSnackbar("تم إنشاء الدورة بنجاح باستخدام اقتراح النظام", "success");
-        if (currentInstitute?.id) {
-          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: cleanPayload.courseId, instituteId: currentInstitute.id }));
+      // Helper to convert any time (string or object) to string "HH:mm:ss"
+      const timeToString = (time: any): string => {
+        if (!time) return "00:00:00";
+        if (typeof time === "string") {
+          const parts = time.split(":");
+          const hour = parts[0]?.padStart(2, "0") || "00";
+          const minute = parts[1]?.padStart(2, "0") || "00";
+          return `${hour}:${minute}:00`;
         }
-        setOpenConflictDialog(false);
-        setConflictData(null);
-        setOriginalFormData(null);
-        if (onSuccess) onSuccess();
-      } else {
-        const payload = resultAction.payload as any;
-        
-        // إذا واجه الاقتراح الحالي تضارباً إضافياً، يتم تحديث الديالوج بالاقتراحات الجديدة فوراً
-        if (payload?.status === 409 || resultAction.meta.requestStatus === "rejected") {
-          const errorData = payload?.data || payload;
-          console.log("New Conflict from suggestion. Updating dialogue:", errorData);
-          setConflictData(errorData);
-          showSnackbar("الاقتراح المختار واجه تعارضاً زملانياً آخر، تم تحديث كروت الخيارات.", "warning");
+        if (
+          typeof time === "object" &&
+          time !== null &&
+          "hour" in time &&
+          "minute" in time
+        ) {
+          const hour = String(time.hour).padStart(2, "0");
+          const minute = String(time.minute).padStart(2, "0");
+          return `${hour}:${minute}:00`;
+        }
+        return "00:00:00";
+      };
+
+      // 1. استخراج معرف القاعة بشكل صحيح
+      const newClassroomId =
+        suggestion.classroomId ??
+        suggestion.roomId ??
+        suggestion.hallId ??
+        suggestion.id;
+      if (newClassroomId !== undefined && newClassroomId !== null) {
+        updatedData.classroomId = Number(newClassroomId);
+      }
+
+      // 2. تحديث التوقيت الزمني
+      if (suggestion.startTime) {
+        const newStartTimeStr = timeToString(suggestion.startTime);
+        updatedData.startTime = convertTimeStringToTimeObject(newStartTimeStr);
+      }
+
+      if (suggestion.endTime) {
+        const newEndTimeStr = timeToString(suggestion.endTime);
+        updatedData.endTime = convertTimeStringToTimeObject(newEndTimeStr);
+      } else if (
+        suggestion.startTime &&
+        originalFormData.startTime &&
+        originalFormData.endTime
+      ) {
+        // حساب المدة الزمنية من الطلب الأصلي لتفادي مشاكل الـ Duration
+        const origStartStr = timeToString(originalFormData.startTime);
+        const origEndStr = timeToString(originalFormData.endTime);
+
+        const [origStartH, origStartM] = origStartStr.split(":").map(Number);
+        const [origEndH, origEndM] = origEndStr.split(":").map(Number);
+        const durationInMinutes =
+          origEndH * 60 + origEndM - (origStartH * 60 + origStartM);
+
+        const newStartStr = timeToString(updatedData.startTime);
+        const [newStartH, newStartM] = newStartStr.split(":").map(Number);
+        const totalEndMinutes = newStartH * 60 + newStartM + durationInMinutes;
+
+        const newEndH = Math.floor(totalEndMinutes / 60) % 24;
+        const newEndM = totalEndMinutes % 60;
+        const newEndStr = `${String(newEndH).padStart(2, "0")}:${String(newEndM).padStart(2, "0")}:00`;
+        updatedData.endTime = convertTimeStringToTimeObject(newEndStr);
+      }
+
+      // 3. تحديث تاريخ البدء المقترح
+      if (suggestion.date) updatedData.startDate = suggestion.date;
+      else if (suggestion.startDate)
+        updatedData.startDate = suggestion.startDate;
+
+      // 4. بناء الـ Payload النهائي النظيف
+      const cleanPayload: CreateTrainingSessionRequest = {
+        courseId: Number(updatedData.courseId),
+        teacherId: Number(updatedData.teacherId),
+        classroomId: Number(updatedData.classroomId),
+        price: Number(updatedData.price),
+        availableSeats: Number(updatedData.availableSeats),
+        minSeats: Number(updatedData.minSeats),
+        numberOfLectures: Number(updatedData.numberOfLectures),
+        duration: updatedData.duration,
+        status: updatedData.status,
+        requiredEquipment: updatedData.requiredEquipment,
+        startDate: updatedData.startDate,
+        startTime: updatedData.startTime,
+        endTime: updatedData.endTime,
+        daysOfWeek: updatedData.daysOfWeek,
+      };
+
+      setSubmittingSuggestion(true);
+
+      try {
+        const resultAction = await dispatch(
+          actCreateTrainingSession(cleanPayload),
+        );
+        if (actCreateTrainingSession.fulfilled.match(resultAction)) {
+          showSnackbar(
+            "تم إنشاء الدورة بنجاح باستخدام اقتراح النظام",
+            "success",
+          );
+          if (currentInstitute?.id) {
+            dispatch(
+              actGetActiveOrUpcomingByCourseAndInstitute({
+                courseId: cleanPayload.courseId,
+                instituteId: currentInstitute.id,
+              }),
+            );
+          }
+          setOpenConflictDialog(false);
+          setConflictData(null);
+          setOriginalFormData(null);
+          if (onSuccess) onSuccess();
         } else {
-          showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
-        }
-      }
-    } catch (error) {
-      console.error("Error submitting suggestion:", error);
-      showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
-    } finally {
-      setSubmittingSuggestion(false);
-    }
-  }, [originalFormData, dispatch, currentInstitute, showSnackbar]);
+          const payload = resultAction.payload as any;
 
-  const handleAddSession = useCallback(async (sessionData: CreateTrainingSessionRequest, onSuccess?: () => void) => {
-    setCreatingSession(true);
-    try {
-      const resultAction = await dispatch(actCreateTrainingSession(sessionData));
-      if (actCreateTrainingSession.fulfilled.match(resultAction)) {
-        showSnackbar("تم إنشاء الدورة بنجاح", "success");
-        if (currentInstitute?.id) {
-          dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId: sessionData.courseId, instituteId: currentInstitute.id }));
+          // إذا واجه الاقتراح الحالي تعارضاً إضافياً، يتم تحديث الديالوج بالاقتراحات الجديدة فوراً
+          if (
+            payload?.status === 409 ||
+            resultAction.meta.requestStatus === "rejected"
+          ) {
+            const errorData = payload?.data || payload;
+            setConflictData(errorData);
+            showSnackbar(
+              "الاقتراح المختار واجه تعارضاً زملانياً آخر، تم تحديث كروت الخيارات.",
+              "warning",
+            );
+          } else {
+            showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
+          }
         }
-        if (onSuccess) onSuccess();
-      } else {
-        const payload = resultAction.payload as any;
-        if (payload?.status === 409) {
-          setOriginalFormData(sessionData);
-          setConflictData(payload.data);
-          setOpenConflictDialog(true);
+      } catch (error) {
+        console.error("Error submitting suggestion:", error);
+        showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
+      } finally {
+        setSubmittingSuggestion(false);
+      }
+    },
+    [originalFormData, dispatch, currentInstitute, showSnackbar],
+  );
+
+  const handleAddSession = useCallback(
+    async (
+      sessionData: CreateTrainingSessionRequest,
+      onSuccess?: () => void,
+    ) => {
+      setCreatingSession(true);
+      try {
+        const resultAction = await dispatch(
+          actCreateTrainingSession(sessionData),
+        );
+        if (actCreateTrainingSession.fulfilled.match(resultAction)) {
+          showSnackbar("تم إنشاء الدورة بنجاح", "success");
+          if (currentInstitute?.id) {
+            dispatch(
+              actGetActiveOrUpcomingByCourseAndInstitute({
+                courseId: sessionData.courseId,
+                instituteId: currentInstitute.id,
+              }),
+            );
+          }
+          if (onSuccess) onSuccess();
         } else {
-          showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
+          const payload = resultAction.payload as any;
+          if (payload?.status === 409) {
+            setOriginalFormData(sessionData);
+            setConflictData(payload.data);
+            setOpenConflictDialog(true);
+          } else {
+            showSnackbar(payload || "حدث خطأ أثناء إنشاء الدورة", "error");
+          }
         }
+      } catch (error) {
+        console.error("Error creating training session:", error);
+        showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
+      } finally {
+        setCreatingSession(false);
       }
-    } catch (error) {
-      console.error("Error creating training session:", error);
-      showSnackbar("حدث خطأ أثناء إنشاء الدورة", "error");
-    } finally {
-      setCreatingSession(false);
-    }
-  }, [dispatch, currentInstitute, showSnackbar]);
+    },
+    [dispatch, currentInstitute, showSnackbar],
+  );
 
-  const handleUpdateSession = useCallback(async (sessionId: number, data: any, imageFile: File | null, courseId: number): Promise<{ success: true; sessionId: number; imageFile: File | null; courseId: number } | { success: false }> => {
-    setUpdatingSession(true);
-    try {
-      // First update the session details
-      const resultAction = await dispatch(
-        actUpdateTrainingSession({ id: sessionId, data })
-      );
-      
-      if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
-        // If there's an image file, update that too (but don't refetch yet)
-        if (imageFile) {
-          await updateTrainingSessionImage(sessionId, imageFile);
+  const handleUpdateSession = useCallback(
+    async (
+      sessionId: number,
+      data: any,
+      imageFile: File | null,
+      courseId: number,
+    ): Promise<
+      | {
+          success: true;
+          sessionId: number;
+          imageFile: File | null;
+          courseId: number;
         }
-        
-        // Return true so parent can handle closing modal first, then refetch and snackbar
-        return { success: true, sessionId, imageFile, courseId };
-      } else {
-        const errorMsg = (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
-        showSnackbar(errorMsg, "error");
+      | { success: false }
+    > => {
+      setUpdatingSession(true);
+      try {
+        // First update the session details
+        const resultAction = await dispatch(
+          actUpdateTrainingSession({ id: sessionId, data }),
+        );
+
+        if (actUpdateTrainingSession.fulfilled.match(resultAction)) {
+          // If there's an image file, update that too (but don't refetch yet)
+          if (imageFile) {
+            await updateTrainingSessionImage(sessionId, imageFile);
+          }
+
+          // Return true so parent can handle closing modal first, then refetch and snackbar
+          return { success: true, sessionId, imageFile, courseId };
+        } else {
+          const errorMsg =
+            (resultAction.payload as string) || "حدث خطأ أثناء تحديث الدورة";
+          showSnackbar(errorMsg, "error");
+          return { success: false };
+        }
+      } catch (error) {
+        showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
         return { success: false };
+      } finally {
+        setUpdatingSession(false);
       }
-    } catch (error) {
-      console.error("Error updating session:", error);
-      showSnackbar("حدث خطأ أثناء تحديث الدورة", "error");
-      return { success: false };
-    } finally {
-      setUpdatingSession(false);
-    }
-  }, [dispatch, showSnackbar]);
+    },
+    [dispatch, showSnackbar],
+  );
 
-  const handlePostUpdateSession = useCallback(async (sessionId: number, imageFile: File | null, courseId: number) => {
-    try {
-      // Show snackbar first
-      showSnackbar("تم تحديث الدورة بنجاح", "success");
-      
-      // Refresh training session details if image was updated
-      if (imageFile) {
-        await dispatch(actGetTrainingSessionDetails(sessionId));
+  const handlePostUpdateSession = useCallback(
+    async (sessionId: number, imageFile: File | null, courseId: number) => {
+      try {
+        // Show snackbar first
+        showSnackbar("تم تحديث الدورة بنجاح", "success");
+
+        // Refresh training session details if image was updated
+        if (imageFile) {
+          await dispatch(actGetTrainingSessionDetails(sessionId));
+        }
+
+        // Refresh the sessions list for this course
+        if (currentInstitute?.id) {
+          dispatch(
+            actGetActiveOrUpcomingByCourseAndInstitute({
+              courseId,
+              instituteId: currentInstitute.id,
+            }),
+          );
+        }
+
+        // Refresh courses list to reflect changes in CourseManagementGrid
+        if (currentInstitute?.tenantId) {
+          dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
+        }
+      } catch (error) {
+        // Error in post update session
       }
-      
-      // Refresh the sessions list for this course
+    },
+    [dispatch, showSnackbar, currentInstitute],
+  );
+
+  const handleDeleteSession = useCallback(
+    async (courseId: number, sessionId: number) => {
+      try {
+        const resultAction = await dispatch(
+          actDeleteTrainingSession(sessionId),
+        );
+        if (actDeleteTrainingSession.fulfilled.match(resultAction)) {
+          dispatch(deleteSessionFromCourse({ courseId, sessionId }));
+          if (selectedCourse?.id === courseId) {
+            setSelectedCourse((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    sessions: prev.sessions?.filter((s) => s.id !== sessionId),
+                  }
+                : null,
+            );
+          }
+          showSnackbar("تم حذف الدورة بنجاح", "success");
+          return true;
+        }
+        // Don't show snackbar on rejection - error will appear in DeleteModal
+      } catch (error) {
+        // Error deleting session
+      }
+    },
+    [dispatch, selectedCourse, showSnackbar],
+  );
+
+  const handleFetchSessions = useCallback(
+    (courseId: number) => {
       if (currentInstitute?.id) {
         dispatch(
           actGetActiveOrUpcomingByCourseAndInstitute({
             courseId,
             instituteId: currentInstitute.id,
-          })
+          }),
         );
       }
-    } catch (error) {
-      console.error("Error in post update session:", error);
-    }
-  }, [dispatch, showSnackbar, currentInstitute]);
+    },
+    [dispatch, currentInstitute],
+  );
 
-  const handleDeleteSession = useCallback(async (courseId: number, sessionId: number) => {
-    try {
-      const resultAction = await dispatch(actDeleteTrainingSession(sessionId));
-      if (actDeleteTrainingSession.fulfilled.match(resultAction)) {
-        dispatch(deleteSessionFromCourse({ courseId, sessionId }));
-        if (selectedCourse?.id === courseId) {
-          setSelectedCourse(prev => prev ? {
-            ...prev,
-            sessions: prev.sessions?.filter(s => s.id !== sessionId)
-          } : null);
-        }
-        showSnackbar("تم حذف الدورة بنجاح", "success");
-        return true;
-      }
-      // Don't show snackbar on rejection - error will appear in DeleteModal
-    } catch (error) {
-      console.error("Error deleting session:", error);
-    }
-  }, [dispatch, selectedCourse, showSnackbar]);
+  const refreshCourseSessions = useCallback(
+    (courseId: number) => {
+      handleFetchSessions(courseId);
+    },
+    [handleFetchSessions],
+  );
 
-  const handleFetchSessions = useCallback((courseId: number) => {
-    if (currentInstitute?.id) {
-      dispatch(actGetActiveOrUpcomingByCourseAndInstitute({ courseId, instituteId: currentInstitute.id }));
+  const refreshCourses = useCallback(() => {
+    if (currentInstitute?.tenantId) {
+      dispatch(actGetCoursesByTenantId(currentInstitute.tenantId));
     }
   }, [dispatch, currentInstitute]);
 
@@ -476,6 +653,8 @@ export const useCourseManagement = () => {
     isDeleteOpen,
     openEditModal,
     openAddModal,
+    openAddCategoryModal,
+    createCategoryLoading,
     openDetailsModal,
     openConflictDialog,
     conflictData,
@@ -483,7 +662,9 @@ export const useCourseManagement = () => {
     updateLoading,
     searchLoading,
     adminCoursesLoading,
-    tenantId: currentInstitute?.tenantId ? parseInt(currentInstitute.tenantId, 10) : 0,
+    tenantId: currentInstitute?.tenantId
+      ? parseInt(currentInstitute.tenantId, 10)
+      : 0,
     searchQuery,
     handleSearch,
     handleClearSearch,
@@ -498,11 +679,16 @@ export const useCourseManagement = () => {
     handleOpenAdd,
     handleCloseAdd,
     handleSaveAdd,
+    handleOpenAddCategory,
+    handleCloseAddCategory,
+    handleSaveAddCategory,
     handleAddSession,
     handleUpdateSession,
     handlePostUpdateSession,
     handleDeleteSession,
     handleFetchSessions,
+    refreshCourseSessions,
+    refreshCourses,
     handleCloseConflictDialog,
     handleSelectSuggestion,
     submittingSuggestion,

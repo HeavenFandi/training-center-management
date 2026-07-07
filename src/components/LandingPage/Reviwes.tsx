@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -8,10 +8,55 @@ import {
   Rating,
   Stack,
   Container,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
-import { reviewsData, Review } from "../../data/reviewData";
+import { getTopRatings, RatingReview } from "../../api/ratingsApi";
 
 const Reviews: React.FC = () => {
+  const [reviews, setReviews] = useState<RatingReview[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getTopRatings(3); // Limit to 3 reviews as per original design
+        setReviews(data);
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err);
+        setError("حدث خطأ أثناء جلب التقييمات");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box
+        component="section"
+        sx={{ width: "100%", py: 8, direction: "rtl", textAlign: "center" }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box component="section" sx={{ width: "100%", py: 8, direction: "rtl" }}>
+        <Container maxWidth="lg">
+          <Alert severity="error">{error}</Alert>
+        </Container>
+      </Box>
+    );
+  }
+
   return (
     <Box component="section" sx={{ width: "100%", py: 8, direction: "rtl" }}>
       <Container maxWidth="lg">
@@ -37,7 +82,7 @@ const Reviews: React.FC = () => {
             width: "100%",
           }}
         >
-          {reviewsData.map((item: Review) => (
+          {reviews.map((item: RatingReview) => (
             <Card
               key={item.id}
               sx={{
@@ -76,7 +121,7 @@ const Reviews: React.FC = () => {
                       fontSize: "0.95rem" 
                     }}
                   >
-                    "{item.text}"
+                    "{item.review}"
                   </Typography>
                 </Stack>
 
@@ -92,16 +137,16 @@ const Reviews: React.FC = () => {
                   }}
                 >
                   <Avatar 
-                    src={item.avatar} 
-                    alt={item.name} 
                     sx={{ width: 45, height: 45 }}
-                  />
+                  >
+                    {item.username.charAt(0).toUpperCase()}
+                  </Avatar>
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold">
-                      {item.name}
+                      {item.username}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {item.role}
+                      {item.courseName}
                     </Typography>
                   </Box>
                 </Stack>

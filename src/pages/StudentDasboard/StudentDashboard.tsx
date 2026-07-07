@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState } from "react";
 import {
   Box,
   Grid,
@@ -8,10 +8,14 @@ import {
   Typography,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogContent,
+  IconButton,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
+import CloseIcon from "@mui/icons-material/Close";
 
 import { WeeklyScheduleItem, Day } from "../../types/studentDashboard";
 
@@ -75,6 +79,7 @@ const formatTime = (time: any): string => {
 
 const StudentDashboard = () => {
   const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
+  const [viewAllOpen, setViewAllOpen] = useState(false);
 
   const {
     student,
@@ -215,7 +220,7 @@ const StudentDashboard = () => {
       }}
     >
       <Container maxWidth="lg">
-        <StudentProfileHeader student={student} onEdit={handleOpenEdit} />
+        <StudentProfileHeader student={student} />
 
         <Grid container spacing={2} mb={4}>
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -248,7 +253,7 @@ const StudentDashboard = () => {
 
         <Grid container spacing={3} mb={6}>
           <Grid size={{ xs: 12, md: 5 }}>
-            <PersonalInfo student={student} />
+            <PersonalInfo student={student} onEdit={handleOpenEdit} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 7 }}>
@@ -258,15 +263,18 @@ const StudentDashboard = () => {
               alignItems="center"
               mb={2}
             >
-              <Button
-                sx={{
-                  color: "#2196f3",
-                  fontWeight: "bold",
-                  fontFamily: "Tajawal",
-                }}
-              >
-                عرض الكل
-              </Button>
+              {activeCourses.length > 3 && (
+                <Button
+                  onClick={() => setViewAllOpen(true)}
+                  sx={{
+                    color: "#2196f3",
+                    fontWeight: "bold",
+                    fontFamily: "Tajawal",
+                  }}
+                >
+                  عرض الكل
+                </Button>
+              )}
               <Typography
                 variant="h6"
                 sx={{
@@ -275,7 +283,7 @@ const StudentDashboard = () => {
                   fontFamily: "Tajawal",
                 }}
               >
-                دوراتي النشطة
+                دوراتي التدريبية
               </Typography>
             </Stack>
 
@@ -299,14 +307,18 @@ const StudentDashboard = () => {
                 </Typography>
               </Box>
             ) : (
-              activeCourses.map((course, index) => (
-                <CourseActivityCard
-                  key={
-                    course.trainingSessionId || course.courseName || `${index}`
-                  }
-                  {...course}
-                />
-              ))
+              activeCourses
+                .slice(0, 3)
+                .map((course, index) => (
+                  <CourseActivityCard
+                    key={
+                      course.trainingSessionId ||
+                      course.courseName ||
+                      `${index}`
+                    }
+                    {...course}
+                  />
+                ))
             )}
           </Grid>
         </Grid>
@@ -364,6 +376,49 @@ const StudentDashboard = () => {
           );
         })()}
       </Container>
+
+      <Dialog
+        open={viewAllOpen}
+        onClose={() => setViewAllOpen(false)}
+        fullWidth
+        maxWidth="md"
+        dir="rtl"
+        PaperProps={{
+          sx: { borderRadius: "28px", p: 0.5 },
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            px: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            bgcolor: "#F8FAFC",
+          }}
+        >
+          <Typography variant="h6" fontWeight="900" color="#133E65">
+            دوراتي التدريبية
+          </Typography>
+          <IconButton
+            onClick={() => setViewAllOpen(false)}
+            sx={{ bgcolor: "#fff" }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <DialogContent
+          sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC" }}
+        >
+          {activeCourses.map((course, index) => (
+            <CourseActivityCard
+              key={course.trainingSessionId || course.courseName || `${index}`}
+              {...course}
+            />
+          ))}
+        </DialogContent>
+      </Dialog>
 
       <EditStudentModal
         open={openEdit}

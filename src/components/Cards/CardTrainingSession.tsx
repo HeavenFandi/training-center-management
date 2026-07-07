@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { TTrainingSessionListItem } from "../../types/cardType";
 import { useNavigate } from "react-router-dom";
 
@@ -59,8 +60,7 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
             sx={{
               height: "100%",
               width: "100%",
-              background:
-                "linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)",
+              background: "linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -78,7 +78,9 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
           </Box>
         )}
       </Box>
-      <CardContent sx={{ p: 2.5, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+      <CardContent
+        sx={{ p: 2.5, flexGrow: 1, display: "flex", flexDirection: "column" }}
+      >
         <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
           <Box>
             <Typography
@@ -94,7 +96,7 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
               {trainingSession.title}
             </Typography>
             <Typography
-              onClick={() => navigate(`/main/ALNourInstitute`)}
+              onClick={() => navigate(`/main/InstituteDetails`)}
               sx={{
                 fontFamily: "Tajawal",
                 color: "#7b8794",
@@ -125,24 +127,52 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
             {trainingSession.description || "لا يوجد وصف متاح"}
           </Typography>
 
-          <Stack direction="column" spacing={1} alignItems="flex" justifyContent="flex">
+          <Stack
+            direction="column"
+            spacing={1}
+            alignItems="flex"
+            justifyContent="flex"
+          >
             <Stack direction="row" spacing={0.5} alignItems="center">
               <PersonIcon sx={{ fontSize: "1rem", color: "#64748b" }} />
               <Typography
-                onClick={() => trainingSession.teacherId && navigate(`/main/teacher-details/${trainingSession.teacherId}`)}
+                onClick={() =>
+                  trainingSession.teacherId &&
+                  navigate(`/main/teacher-details/${trainingSession.teacherId}`)
+                }
                 sx={{
                   fontFamily: "Tajawal",
                   color: "#64748b",
                   fontSize: "0.85rem",
                   cursor: trainingSession.teacherId ? "pointer" : "default",
-                  "&:hover": trainingSession.teacherId ? { color: "#0b2c5a" } : {},
+                  "&:hover": trainingSession.teacherId
+                    ? { color: "#0b2c5a" }
+                    : {},
                 }}
               >
                 {trainingSession.teacherName}
               </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={0.5} alignItems="flex" justifyContent="flex">
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <LocationOnIcon sx={{ fontSize: "1rem", color: "#64748b" }} />
+              <Typography
+                sx={{
+                  fontFamily: "Tajawal",
+                  color: "#64748b",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {trainingSession.location}
+              </Typography>
+            </Stack>
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="flex"
+              justifyContent="flex"
+            >
               <ScheduleIcon sx={{ fontSize: "1rem", color: "#64748b" }} />
               <Typography
                 sx={{
@@ -158,7 +188,15 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
           </Stack>
         </Stack>
       </CardContent>
-      <CardActions sx={{ p: 2, pt: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <CardActions
+        sx={{
+          p: 2,
+          pt: 0,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography
           sx={{
             fontWeight: 800,
@@ -192,5 +230,3 @@ function CardTrainingSession({ trainingSession }: TTrainingSessionProps) {
 }
 
 export default CardTrainingSession;
-
-
