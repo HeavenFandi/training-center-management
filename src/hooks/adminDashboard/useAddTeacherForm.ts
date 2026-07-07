@@ -8,7 +8,7 @@ import {
 import { useSnackbar } from "../../Context/SnackbarContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import actCreateTeacher from "../../store/teachers/act/actCreateTeacher";
-import actGetTeachers from "../../store/teachers/act/actGetTeachers";
+import actGetTeachersByInstituteId from "../../store/teachers/act/actGetTeachersByInstituteId";
 
 interface UseAddTeacherFormProps {
   onClose: () => void;
@@ -24,6 +24,7 @@ export const useAddTeacherForm = ({
   const { showSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { currentInstitute } = useAppSelector((state) => state.institutes);
 
   const {
     register,
@@ -43,6 +44,11 @@ export const useAddTeacherForm = ({
     async (data: AddTeacherFormData) => {
       setIsSubmitting(true);
       try {
+        if (!currentInstitute || !currentInstitute.id) {
+          showSnackbar("لم يتم العثور على المعهد", "error");
+          return;
+        }
+
         const payload = {
           username: data.username,
           email: data.email,
@@ -54,6 +60,7 @@ export const useAddTeacherForm = ({
           specialization: data.specialization,
           address: data.address,
           experienceYears: data.experienceYears,
+          instituteId: currentInstitute.id,
         };
 
         if (import.meta.env.DEV) {
@@ -63,17 +70,17 @@ export const useAddTeacherForm = ({
         const resultAction = await dispatch(actCreateTeacher(payload));
 
         if (actCreateTeacher.fulfilled.match(resultAction)) {
-          const response = resultAction.payload;
+          const createdTeacher = resultAction.payload;
           if (import.meta.env.DEV) {
-            console.log("Create teacher response:", response);
+            console.log("Create teacher response:", createdTeacher);
           }
 
           if (onSave) {
             onSave(data);
           }
 
-          // Refresh teachers list
-          dispatch(actGetTeachers());
+          // Refresh teachers list (only for this institute)
+          dispatch(actGetTeachersByInstituteId(currentInstitute.id));
 
           reset();
           showSnackbar("تم إضافة المعلم بنجاح", "success");
@@ -98,7 +105,7 @@ export const useAddTeacherForm = ({
         setIsSubmitting(false);
       }
     },
-    [onClose, onSave, reset, showSnackbar, dispatch],
+    [onClose, onSave, reset, showSnackbar, dispatch, currentInstitute],
   );
 
   const onError = useCallback(

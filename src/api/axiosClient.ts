@@ -12,7 +12,7 @@ axiosClient.interceptors.request.use((config) => {
       url: (config.baseURL ?? "") + (config.url ?? ""),
     });
   }
-  
+
   const user = localStorage.getItem("user");
   if (user) {
     try {
@@ -39,7 +39,7 @@ axiosClient.interceptors.response.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosClient;
