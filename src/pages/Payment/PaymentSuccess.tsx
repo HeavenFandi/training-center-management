@@ -163,7 +163,16 @@ const PaymentSuccess: React.FC = () => {
             variant="contained"
             size="large"
             startIcon={<SchoolIcon sx={{ ml: 1, mr: 0 }} />}
-            onClick={() => navigate("/main/student-dashboard")}
+            onClick={() => {
+              // If the user is authenticated and is a student, take them to their dashboard.
+              // Otherwise send them to the public main page to avoid forcing a login redirect
+              // when Stripe redirects back and the auth state may not be present (different origin/port).
+              if (user && userType === "STUDENT") {
+                navigate("/main/student-dashboard");
+              } else {
+                navigate("/main");
+              }
+            }}
             sx={{
               bgcolor: "#051630",
               borderRadius: "12px",
