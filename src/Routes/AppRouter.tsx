@@ -105,19 +105,14 @@ const router = createBrowserRouter([
       },
       {
         path: "payment/success",
-        element: (
-          <ProtectedRoute>
-            <PaymentSuccess />
-          </ProtectedRoute>
-        ),
+        // Stripe redirects back to this URL without an authenticated session.
+        // Render the success page publicly so Stripe can land users here.
+        element: <PaymentSuccess />,
       },
       {
         path: "payment/cancel",
-        element: (
-          <ProtectedRoute>
-            <PaymentCancel />
-          </ProtectedRoute>
-        ),
+        // The cancel page should also be accessible without auth.
+        element: <PaymentCancel />,
       },
       {
         path: "admin-dashboard",

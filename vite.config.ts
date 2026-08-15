@@ -5,8 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "localhost",
-    port: 5174,
-    strictPort: false,
+    port: 5173,
+    // Ensure Vite fails if the port is in use so it doesn't silently switch
+    strictPort: true,
     allowedHosts: true,
     proxy: {
       "/api": {
