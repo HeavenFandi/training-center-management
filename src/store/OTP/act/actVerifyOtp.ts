@@ -13,15 +13,9 @@ const actVerifyOtp = createAsyncThunk<
   { rejectValue: string }
 >("otp/actVerifyOtp", async ({ email, code }, thunkAPI) => {
   try {
-    console.log("[DEBUG actVerifyOtp] === START VERIFY OTP ===");
-    console.log("[DEBUG actVerifyOtp] Verifying OTP for email:", email, "code:", code);
-
     const response = await axiosClient.post<string>("/otp/verify", null, {
       params: { email, code }
     });
-    
-    console.log("[DEBUG actVerifyOtp] Response received:", response.data);
-    console.log("[DEBUG actVerifyOtp] === END VERIFY OTP (SUCCESS) ===");
     
     return response.data;
   } catch (error) {

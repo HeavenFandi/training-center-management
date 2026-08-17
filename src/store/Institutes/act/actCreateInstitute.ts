@@ -59,16 +59,6 @@ const actCreateInstitute = createAsyncThunk(
       }
       
     
-      Object.entries(apiPayload).forEach(([key, value]) => {
-        console.log(`${key}:`, {
-          value,
-          type: typeof value,
-          isArray: Array.isArray(value),
-          isNull: value === null,
-          isUndefined: value === undefined,
-        });
-      });
-   
       const response = await axiosClient.post("/institutes", apiPayload);
    
       return response.data;

@@ -8,20 +8,12 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, user, isHydrated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user, isHydrated } = useAppSelector(
+    (state) => state.auth,
+  );
   const location = useLocation();
 
-  if (import.meta.env.DEV) {
-    console.log("🛡️ ProtectedRoute called with location:", location.pathname);
-    console.log("  - isHydrated:", isHydrated);
-    console.log("  - isAuthenticated:", isAuthenticated);
-    console.log("  - user:", user);
-  }
-
   if (!isHydrated) {
-    if (import.meta.env.DEV) {
-      console.log("🔄 ProtectedRoute: waiting for hydration...");
-    }
     return (
       <Box
         sx={{
@@ -37,15 +29,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated || !user) {
-    if (import.meta.env.DEV) {
-      console.log("🚫 ProtectedRoute: not authenticated, redirecting to /login");
-    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (import.meta.env.DEV) {
-    console.log("✅ ProtectedRoute: authenticated, rendering children");
-  }
   return <>{children}</>;
 };
 

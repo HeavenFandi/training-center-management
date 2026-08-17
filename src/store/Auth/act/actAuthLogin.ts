@@ -27,10 +27,6 @@ const actAuthLogin = createAsyncThunk<
   LoginPayload,
   { rejectValue: string }
 >("auth/actAuthLogin", async (data, thunkAPI) => {
-  if (import.meta.env.DEV) {
-    console.log("📧 Login attempt with data:", { email: data.email });
-  }
-
   try {
     const loginData = {
       email: data.email.trim(),
@@ -38,10 +34,6 @@ const actAuthLogin = createAsyncThunk<
     };
 
     const response = await axiosClient.post<User>("/auth/login", loginData);
-
-    if (import.meta.env.DEV) {
-      console.log("✅ /auth/login response:", response);
-    }
 
     let userData = response.data;
 
@@ -92,10 +84,6 @@ const actAuthLogin = createAsyncThunk<
           );
         }
       }
-    }
-
-    if (import.meta.env.DEV) {
-      console.log("🎉 Returning user data from actAuthLogin:", userData);
     }
 
     return userData;

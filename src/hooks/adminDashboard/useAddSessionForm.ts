@@ -369,7 +369,6 @@ export const useAddSessionForm = ({ onClose, onSave, initialSession, courseId, t
       // Convert Arabic days to English for the API
       const newEnglishDays = newArabicDays.map((d) => dayMap[d]) as Array<"MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY">;
 
-      console.log("Toggling day:", arabicDay, "New Arabic days:", newArabicDays, "New English days:", newEnglishDays);
       setValue("daysOfWeek", newEnglishDays, { shouldValidate: false });
       return newArabicDays;
     });

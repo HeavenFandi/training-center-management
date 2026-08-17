@@ -183,8 +183,6 @@ export const useStudentManagement = () => {
       return;
     }
 
-    console.log("Deleting student id:", studentToDelete.id);
-
     try {
       const resultAction = await dispatch(
         actDeleteStudent(studentToDelete.id)

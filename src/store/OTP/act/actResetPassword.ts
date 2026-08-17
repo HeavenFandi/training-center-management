@@ -8,16 +8,10 @@ const actResetPassword = createAsyncThunk<
   { rejectValue: string }
 >("otp/actResetPassword", async ({ email, newPassword }, thunkAPI) => {
   try {
-    console.log("[DEBUG actResetPassword] === START RESET PASSWORD ===");
-    console.log("[DEBUG actResetPassword] Resetting password for email:", email);
-
     const response = await axiosClient.post<string>("/otp/reset-password", {
       email,
       newPassword,
     });
-    
-    console.log("[DEBUG actResetPassword] API Response received:", response.data);
-    console.log("[DEBUG actResetPassword] === END RESET PASSWORD (SUCCESS) ===");
     
     return response.data;
   } catch (error) {

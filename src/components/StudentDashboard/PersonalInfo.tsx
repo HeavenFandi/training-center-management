@@ -9,9 +9,6 @@ interface PersonalInfoProps {
 }
 
 const PersonalInfo: React.FC<PersonalInfoProps> = ({ student, onEdit }) => {
-  console.log("[DEBUG PersonalInfo] Received student:", student);
-  console.log("[DEBUG PersonalInfo] student.bio:", student.bio);
-  
   return (
   <Paper
     sx={{

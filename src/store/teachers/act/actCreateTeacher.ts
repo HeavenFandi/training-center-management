@@ -7,9 +7,7 @@ const actCreateTeacher = createAsyncThunk(
   async (data: CreateTeacherRequest, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Create teacher payload:", data);
       const response = await createTeacher(data);
-      console.log("Create teacher response:", response);
       return response;
     } catch (error) {
       console.error("actCreateTeacher error:", error);

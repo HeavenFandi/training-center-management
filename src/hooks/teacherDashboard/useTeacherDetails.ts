@@ -37,9 +37,6 @@ export default function useTeacherDetails() {
           getTeacherCourseProgress(id),
         ]);
 
-        console.log("RAW TEACHER DETAILS:", teacherData);
-        console.log("RAW TEACHER COURSES:", coursesData);
-
         const fullName =
           `${teacherData.firstName || ""} ${teacherData.lastName || ""}`.trim() ||
           teacherData.username ||

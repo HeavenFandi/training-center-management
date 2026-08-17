@@ -50,7 +50,6 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
         }
       });
 
-      console.log("Fetching sessions with filters:", cleanedFilters);
       const [sessionsResponse, institutesResponse, teachersResponse] =
         await Promise.all([
           axiosClient.get<TTrainingSessionResponse[]>(
@@ -62,10 +61,6 @@ const actGetFilteredTrainingSessions = createAsyncThunk(
           getAllInstitutes(),
           getTeachers(),
         ]);
-
-      console.log("Filtered response (sessions):", sessionsResponse.data);
-      console.log("Filtered response (institutes):", institutesResponse);
-      console.log("Filtered response (teachers):", teachersResponse);
 
       // Create a map of institute names to their locations
       const instituteLocationMap = new Map<string, string>();

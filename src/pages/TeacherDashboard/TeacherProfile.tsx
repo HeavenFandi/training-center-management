@@ -85,7 +85,6 @@ const TeacherProfile = () => {
   const { selectedTeacher, courseProgress } = useAppSelector(
     (state) => state.teachers,
   );
-  console.log("courseProgress", courseProgress);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 

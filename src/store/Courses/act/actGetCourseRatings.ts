@@ -37,11 +37,9 @@ const actGetCourseRatings = createAsyncThunk(
         return existingRatingsForCourse;
       }
 
-      console.log("Fetching ratings for courseId:", payload.courseId);
       const response = await axiosClient.get<CourseRating[]>(
         `/courses/${payload.courseId}/ratings`,
       );
-      console.log("Course ratings response:", response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));

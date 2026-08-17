@@ -25,7 +25,6 @@ const ResetPassword = memo(() => {
 
   const handleFormSubmit = (data: TResetPasswordType) => {
     const email = getEmail();
-    console.log("[DEBUG ResetPassword] Submitting password reset for email:", email);
     dispatch(actResetPassword({ email, newPassword: data.password }));
   };
 

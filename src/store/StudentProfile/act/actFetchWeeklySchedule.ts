@@ -32,7 +32,6 @@ const actFetchWeeklySchedule = createAsyncThunk<
         weeklySchedule = response.data.data;
       }
     }
-    console.log("[DEBUG actFetchWeeklySchedule] Processed weeklySchedule:", weeklySchedule);
 
     return weeklySchedule;
   } catch (error) {

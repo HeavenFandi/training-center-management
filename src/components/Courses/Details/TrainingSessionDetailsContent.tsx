@@ -86,7 +86,6 @@ function TrainingSessionDetailsContent() {
   // Fetch ratings and average rating when resolvedCourseId is available
   useEffect(() => {
     if (resolvedCourseId) {
-      console.log("Using resolvedCourseId to fetch ratings:", resolvedCourseId);
       dispatch(actGetCourseRatings({ courseId: resolvedCourseId }));
       dispatch(actGetCourseAverageRating({ courseId: resolvedCourseId }));
     }
@@ -238,9 +237,6 @@ function TrainingSessionDetailsContent() {
             <Box sx={{ textAlign: "right" }}>
               <Typography
                 onClick={() => {
-                  console.log("INSTRUCTOR DATA:", instructor);
-                  console.log("INSTRUCTOR DATA ID:", instructor?.id);
-
                   const instructorId = instructor?.id;
 
                   if (instructorId === null || instructorId === undefined) {

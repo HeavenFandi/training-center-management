@@ -70,12 +70,6 @@ export const useAddStudentForm = ({
     async (data: StudentFormData) => {
       setIsSubmitting(true);
       try {
-        // Strict Payload Logging
-        console.log("Current Auth Context Info:", {
-          user,
-          institute: currentInstitute,
-        });
-
         // Convert image file to base64 if present
         let imageBase64 = "";
         if (imageFile) {
@@ -112,13 +106,10 @@ export const useAddStudentForm = ({
           instituteId: instituteId,
         };
 
-        console.log("Exact Create Student Payload Sent to API:", payload);
-
         const resultAction = await dispatch(actCreateStudent(payload));
 
         if (actCreateStudent.fulfilled.match(resultAction)) {
           const response = resultAction.payload;
-          console.log("Create student response:", response);
 
           if (onAdd) {
             onAdd(response);

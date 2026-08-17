@@ -181,11 +181,6 @@ const StudentSchedule: React.FC<StudentScheduleProps> = ({
 
             <Stack spacing={1.5}>
               {(() => {
-                console.log("[DEBUG StudentSchedule] Looking up lectures for day:", {
-                  dayName: day.name,
-                  dateString: (day as any).dateString,
-                  availableKeys: Object.keys(lecturesData)
-                });
                 const lectures = lecturesData[(day as any).dateString] || lecturesData[day.name] || [];
                 
                 if (lectures.length === 0) {

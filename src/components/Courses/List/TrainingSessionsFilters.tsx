@@ -197,7 +197,6 @@ function TrainingSessionsFilters({
             size="small"
             value={categoryInput}
             onChange={(e) => {
-              console.log("Selected Category:", e.target.value);
               setCategoryInput(e.target.value);
             }}
             sx={inputSx}>

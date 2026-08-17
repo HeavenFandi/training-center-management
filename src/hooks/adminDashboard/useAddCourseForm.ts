@@ -59,7 +59,6 @@ export const useAddCourseForm = ({ onClose, onSave }: UseAddCourseFormProps) => 
 
   const onError = useCallback(
     (errors: FieldErrors<CourseFormData>) => {
-      console.log("Form validation errors:", errors);
       showSnackbar("يرجى التأكد من ملء جميع الحقول", "error");
     },
     [showSnackbar]

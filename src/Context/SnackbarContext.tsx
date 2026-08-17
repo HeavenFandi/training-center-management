@@ -34,20 +34,17 @@ export const SnackbarProvider = ({ children }: { children: React.ReactNode }) =>
 
   const showSnackbar = (
     msg: string, type: SnackbarSeverity = "success") => {
-    console.log("showSnackbar called with message:", msg, "type:", type);
     setMessage(msg);
     setSeverity(type);
     setOpen(true);
   };
 
   const hideSnackbar = () => {
-    console.log("hideSnackbar called");
     setOpen(false);
   };
 
   const handleClose = (
     event?: React.SyntheticEvent | Event, reason?: string) => {
-    console.log("handleClose called, reason:", reason);
     if (reason === "clickaway") {
       return;
     }
@@ -55,7 +52,6 @@ export const SnackbarProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const handleExited = () => {
-    console.log("Snackbar exited, clearing state");
     setMessage("");
     setSeverity("success");
   };
@@ -79,8 +75,6 @@ export const SnackbarProvider = ({ children }: { children: React.ReactNode }) =>
       default: return "#10b981";
     }
   };
-
-  console.log("SnackbarProvider - open:", open, "message:", message);
 
   return (
     <SnackbarContext.Provider value={{ showSnackbar, hideSnackbar }}>

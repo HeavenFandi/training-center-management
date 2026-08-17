@@ -60,8 +60,6 @@ import StudentSchedule from "../../components/StudentDashboard/StudentSchedule";
 import { useStudentDashboard } from "../../hooks/studentDashboard/useStudentDashboard";
 
 const formatTime = (time: any): string => {
-  console.log("[DEBUG formatTime] Input time:", time, typeof time);
-
   // Case 1: Time is a string like "HH:mm:ss" or "HH:mm"
   if (typeof time === "string") {
     return time.substring(0, 5); // "09:00:00" → "09:00"
@@ -137,15 +135,8 @@ const StudentDashboard = () => {
   }, [weeklySchedule, currentDate, hasInitialized]);
 
   const lecturesData = useMemo(() => {
-    console.log("[DEBUG StudentDashboard] weeklySchedule:", weeklySchedule);
     const data: Record<string, any[]> = {};
     weeklySchedule.forEach((item: WeeklyScheduleItem) => {
-      console.log("[DEBUG StudentDashboard] Processing session:", {
-        lectureDate: item.lectureDate,
-        day: item.day,
-        courseName: item.courseName,
-      });
-
       const key = item.lectureDate || item.day;
       if (!data[key]) {
         data[key] = [];
@@ -159,7 +150,6 @@ const StudentDashboard = () => {
         room: item.room,
       });
     });
-    console.log("[DEBUG StudentDashboard] lecturesData:", data);
     return data;
   }, [weeklySchedule]);
 
@@ -324,16 +314,6 @@ const StudentDashboard = () => {
         </Grid>
 
         {(() => {
-          console.log(
-            "[DEBUG StudentDashboard] scheduleLoading:",
-            scheduleLoading,
-          );
-          console.log("[DEBUG StudentDashboard] scheduleError:", scheduleError);
-          console.log(
-            "[DEBUG StudentDashboard] weeklySchedule.length:",
-            weeklySchedule.length,
-          );
-
           if (scheduleError) {
             return (
               <Box sx={{ textAlign: "center", py: 8 }}>

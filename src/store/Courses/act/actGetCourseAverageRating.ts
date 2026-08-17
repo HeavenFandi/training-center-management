@@ -24,11 +24,9 @@ const actGetCourseAverageRating = createAsyncThunk(
         return state.trainingSessions.averageRating;
       }
 
-      console.log("Fetching average rating for courseId:", payload.courseId);
       const response = await axiosClient.get<number>(
         `/courses/${payload.courseId}/ratings/average`,
       );
-      console.log("Course average rating response:", response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));

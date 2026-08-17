@@ -12,10 +12,6 @@ const actInitiatePayment = createAsyncThunk(
   async (payload: TPaymentPayload, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("=== actInitiatePayment Debug ===");
-      console.log("Received payload:", payload);
-      console.log("Payload types - sessionId:", typeof payload.sessionId, ", studentId:", typeof payload.studentId);
-      
       const response = await axiosClient.post<string>(
         `/payments/initiate/${payload.sessionId}`,
         {},
@@ -25,7 +21,6 @@ const actInitiatePayment = createAsyncThunk(
           }
         }
       );
-      console.log("API call successful!");
       return response.data;
     } catch (error) {
       console.error("Error in actInitiatePayment:", error);

@@ -15,13 +15,7 @@ interface AuthState {
   registerSuccess: boolean;
 }
 
-const AUTH_KEYS = [
-  "user",
-  "userType",
-  "studentId",
-  "userId",
-  "token",
-] as const;
+const AUTH_KEYS = ["user", "userType", "studentId", "userId", "token"] as const;
 
 const clearAllAuthKeys = () => {
   AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
@@ -49,11 +43,7 @@ const parseStoredUser = (): { user: User | null; isAuthenticated: boolean } => {
     const parsedUser = JSON.parse(savedUser);
 
     // Fix: use user.id instead of token to check if stored user is valid!
-    if (
-      !parsedUser ||
-      typeof parsedUser !== "object" ||
-      !parsedUser.id
-    ) {
+    if (!parsedUser || typeof parsedUser !== "object" || !parsedUser.id) {
       clearAllAuthKeys();
       return { user: null, isAuthenticated: false };
     }
@@ -113,18 +103,10 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(actAuthLogin.pending, (state) => {
-        if (import.meta.env.DEV) {
-          console.log("🔄 authSlice: actAuthLogin.pending");
-        }
         state.loginLoading = true;
         state.loginError = null;
       })
       .addCase(actAuthLogin.fulfilled, (state, action: PayloadAction<User>) => {
-        if (import.meta.env.DEV) {
-          console.log("✅ authSlice: actAuthLogin.fulfilled", { payload: action.payload });
-          console.log("  - action.payload.token:", action.payload.token);
-          console.log("  - action.payload.id:", action.payload.id);
-        }
         state.loginLoading = false;
         state.user = action.payload;
         state.userType = action.payload.userType;
@@ -141,17 +123,12 @@ const authSlice = createSlice({
         if (action.payload.token) {
           localStorage.setItem("token", action.payload.token);
         }
-        if (import.meta.env.DEV) {
-          console.log("🔐 authSlice: localStorage updated, state:", {
-            user: state.user,
-            isAuthenticated: state.isAuthenticated,
-            userType: state.userType,
-          });
-        }
       })
       .addCase(actAuthLogin.rejected, (state, action) => {
         if (import.meta.env.DEV) {
-          console.error("❌ authSlice: actAuthLogin.rejected", { payload: action.payload });
+          console.error("❌ authSlice: actAuthLogin.rejected", {
+            payload: action.payload,
+          });
         }
         state.loginLoading = false;
         state.loginError = action.payload as string;

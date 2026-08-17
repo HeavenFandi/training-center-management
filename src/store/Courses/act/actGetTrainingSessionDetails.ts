@@ -83,12 +83,6 @@ const actGetTrainingSessionDetails = createAsyncThunk(
 
       const item = response.data;
 
-      console.log(
-        "RAW TRAINING SESSION DETAILS (full):",
-        JSON.stringify(item, null, 2),
-      );
-      console.log("RAW TEACHERS RESPONSE:", teachersResponse);
-
       // Create a map of teacherId to full name
       const teacherNameMap = new Map<number, string>();
       teachersResponse.forEach((teacher) => {
@@ -100,16 +94,6 @@ const actGetTrainingSessionDetails = createAsyncThunk(
           }
         }
       });
-      console.log("RAW TRAINING SESSION DETAILS (object):", item);
-      console.log("All keys in response object:", Object.keys(item));
-      console.log(
-        "enrolledStudentsCount from backend:",
-        item.enrolledStudentsCount,
-      );
-      console.log(
-        "studentEnrollmentCount from backend:",
-        item.studentEnrollmentCount,
-      );
 
       // Parse duration to extract numeric part if it's a messy string
       let parsedDuration = item.duration;
@@ -128,9 +112,6 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         }
       }
 
-      console.log("Parsed Duration:", parsedDuration);
-      console.log("Parsed Lectures:", parsedLectures);
-
       const instructorId =
         item.instructor?.id && item.instructor.id !== 0
           ? item.instructor.id
@@ -142,8 +123,6 @@ const actGetTrainingSessionDetails = createAsyncThunk(
             item.instructorId ??
             item.lecturerId ??
             item.userId);
-
-      console.log("FINAL MAPPED INSTRUCTOR ID:", instructorId);
 
       // Extract courseId from all possible places and normalize to a valid positive number
       const possibleCourseIds = [
@@ -159,26 +138,6 @@ const actGetTrainingSessionDetails = createAsyncThunk(
         (value) =>
           typeof value === "number" && Number.isFinite(value) && value > 0,
       );
-
-      console.log("EXTRACTING COURSE ID - item.courseId:", item.courseId);
-      console.log(
-        "EXTRACTING COURSE ID - item.trainingCourseId:",
-        item.trainingCourseId,
-      );
-      console.log("EXTRACTING COURSE ID - item.course?.id:", item.course?.id);
-      console.log(
-        "EXTRACTING COURSE ID - item.course?.courseId:",
-        item.course?.courseId,
-      );
-      console.log(
-        "EXTRACTING COURSE ID - item.courseDetails?.id:",
-        item.courseDetails?.id,
-      );
-      console.log(
-        "EXTRACTING COURSE ID - item.courseDetails?.courseId:",
-        item.courseDetails?.courseId,
-      );
-      console.log("FINAL EXTRACTED COURSE ID:", extractedCourseId);
 
       // Get classroomId from all possible places
       const classroomId = item.classroomId ?? item.hallId;
