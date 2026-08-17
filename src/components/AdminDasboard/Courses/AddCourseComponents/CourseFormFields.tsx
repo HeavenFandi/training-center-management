@@ -1,6 +1,19 @@
 import React, { useEffect } from "react";
-import { Grid, MenuItem, Select, InputLabel, FormControl, FormHelperText, CircularProgress } from "@mui/material";
-import { UseFormRegister, FieldErrors, useController, Control } from "react-hook-form";
+import {
+  Grid,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  FormHelperText,
+  CircularProgress,
+} from "@mui/material";
+import {
+  UseFormRegister,
+  FieldErrors,
+  useController,
+  Control,
+} from "react-hook-form";
 import AuthInput from "../../../Auth/AuthInput";
 import { CourseFormData } from "../../../../validation/CourseSchema";
 import { useAppDispatch, useAppSelector } from "../../../../store/hooks";
@@ -19,10 +32,8 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { categories, categoriesLoading, categoriesError } = useAppSelector(
-    (state) => state.trainingSessions
+    (state) => state.trainingSessions,
   );
-
-  console.log("[CourseFormFields] categories: ", categories, " categoriesLoading: ", categoriesLoading);
 
   useEffect(() => {
     if (categories.length === 0 && categoriesLoading === "idle") {
@@ -32,17 +43,14 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
 
   const {
     field,
-    fieldState: { isDirty, isTouched, invalid }
+    fieldState: { isDirty, isTouched, invalid },
   } = useController({
     name: "categoryId",
     control,
-    defaultValue: categories.length > 0 ? String(categories[0].id) : "1"
+    defaultValue: categories.length > 0 ? String(categories[0].id) : "1",
   });
 
-  console.log("[CourseFormFields] field: ", field, " isDirty: ", isDirty, " isTouched: ", isTouched, " invalid: ", invalid);
-
   const handleSelectChange = (event: any) => {
-    console.log("[CourseFormFields] Select onChange triggered with value: ", event.target.value);
     field.onChange(event);
   };
 
@@ -82,9 +90,9 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
             name={field.name}
             ref={field.ref}
             disabled={isLoading}
-            startAdornment={isLoading ? (
-              <CircularProgress size={20} sx={{ mr: 1 }} />
-            ) : null}
+            startAdornment={
+              isLoading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null
+            }
           >
             {isLoading ? (
               <MenuItem disabled value="">
@@ -96,12 +104,14 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
               </MenuItem>
             ) : (
               categories.map((cat) => (
-                <MenuItem key={cat.id} value={String(cat.id)}>{cat.name}</MenuItem>
+                <MenuItem key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </MenuItem>
               ))
             )}
           </Select>
           <FormHelperText error={!!errors.categoryId || !!categoriesError}>
-            {errors.categoryId?.message as string || categoriesError}
+            {(errors.categoryId?.message as string) || categoriesError}
           </FormHelperText>
         </FormControl>
       </Grid>

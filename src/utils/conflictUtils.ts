@@ -42,10 +42,6 @@ export const checkLectureConflict = (
   classroomId: number,
   allLectures: LectureResponse[]
 ): { hasConflict: boolean; conflictingLecture?: LectureResponse; message: string } => {
-  console.log('=== Checking for lecture conflicts ===');
-  console.log('Input:', { lectureId, lectureDate, startTime, endTime, classroomId });
-  console.log('All lectures:', allLectures);
-
   const conflicting = allLectures.find(lecture => {
     // Skip the current lecture being edited
     if (lectureId && lecture.id === lectureId) return false;
@@ -56,7 +52,6 @@ export const checkLectureConflict = (
     
     // Check time overlap
     if (intervalsOverlap(startTime, endTime, lecture.startTime, lecture.endTime)) {
-      console.log('Conflict found with lecture:', lecture);
       return true;
     }
     return false;

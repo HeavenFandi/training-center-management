@@ -23,13 +23,6 @@ const actAddCourseRating = createAsyncThunk(
   "trainingSessions/actAddCourseRating",
   async (data: TRatingPayload, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
-    console.log("actAddCourseRating - courseId:", data.courseId);
-    console.log("actAddCourseRating - studentId:", data.studentId);
-    console.log("actAddCourseRating - request payload:", {
-      courseId: data.courseId,
-      rating: data.rating,
-      review: data.review,
-    });
 
     if (!data.courseId) {
       console.error("Course ID not found in session data");
@@ -44,10 +37,6 @@ const actAddCourseRating = createAsyncThunk(
       };
 
       const url = `/courses/${data.courseId}/ratings`;
-      const fullUrl = axiosClient.defaults.baseURL
-        ? `${axiosClient.defaults.baseURL}${url}`
-        : url;
-      console.log("actAddCourseRating - posting to courses URL:", fullUrl);
 
       const response = await axiosClient.post<TRatingResponse>(url, payload, {
         params: {
@@ -55,11 +44,8 @@ const actAddCourseRating = createAsyncThunk(
         },
       });
 
-      console.log("actAddCourseRating - courses response:", response.data);
       return response.data;
     } catch (error) {
-      console.log("actAddCourseRating - error:", error);
-     
       const errorMsg = axiosErrorHandler(error);
       if (
         typeof errorMsg === "string" &&

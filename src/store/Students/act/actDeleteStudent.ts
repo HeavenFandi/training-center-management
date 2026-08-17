@@ -15,7 +15,6 @@ const actDeleteStudent = createAsyncThunk(
         throw new Error("لم يتم العثور على معرف المعهد");
       }
       
-      console.log("Deleting student id:", studentId, "for institute id:", instituteId);
       await deleteStudent(studentId, instituteId);
       return studentId;
     } catch (error) {

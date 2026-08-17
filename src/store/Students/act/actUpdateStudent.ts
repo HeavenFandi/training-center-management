@@ -12,9 +12,7 @@ const actUpdateStudent = createAsyncThunk(
   async ({ id, data }: UpdateStudentArgs, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Calling updateStudent with id:", id, "and data:", data);
       const response = await updateStudent(id, data);
-      console.log("updateStudent response:", response);
       return response;
     } catch (error) {
       console.error("actUpdateStudent error:", error);

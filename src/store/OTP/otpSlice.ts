@@ -49,14 +49,12 @@ const otpSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(actSendOtp.pending, (state) => {
-        console.log("[DEBUG otpSlice] actSendOtp.pending");
         state.sendLoading = true;
         state.sendError = null;
         state.sendSuccess = false;
         state.message = null;
       })
       .addCase(actSendOtp.fulfilled, (state, action) => {
-        console.log("[DEBUG otpSlice] actSendOtp.fulfilled, payload:", action.payload);
         state.sendLoading = false;
         state.sendError = null;
         state.sendSuccess = true;
@@ -72,14 +70,12 @@ const otpSlice = createSlice({
 
     builder
       .addCase(actVerifyOtp.pending, (state) => {
-        console.log("[DEBUG otpSlice] actVerifyOtp.pending");
         state.verifyLoading = true;
         state.verifyError = null;
         state.verifySuccess = false;
         state.message = null;
       })
       .addCase(actVerifyOtp.fulfilled, (state, action) => {
-        console.log("[DEBUG otpSlice] actVerifyOtp.fulfilled, payload:", action.payload);
         state.verifyLoading = false;
         state.verifyError = null;
         state.verifySuccess = true;
@@ -95,14 +91,12 @@ const otpSlice = createSlice({
 
     builder
       .addCase(actResetPassword.pending, (state) => {
-        console.log("[DEBUG otpSlice] actResetPassword.pending");
         state.resetPasswordLoading = true;
         state.resetPasswordError = null;
         state.resetPasswordSuccess = false;
         state.message = null;
       })
       .addCase(actResetPassword.fulfilled, (state, action) => {
-        console.log("[DEBUG otpSlice] actResetPassword.fulfilled, payload:", action.payload);
         state.resetPasswordLoading = false;
         state.resetPasswordError = null;
         state.resetPasswordSuccess = true;

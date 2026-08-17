@@ -85,10 +85,6 @@ const SessionsListModal: React.FC<SessionsListModalProps> = ({
                     }
                   }}
                   onClick={() => {
-                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] Session clicked:`, session);
-                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] Session keys:`, Object.keys(session));
-                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] session.teacherId:`, session.teacherId);
-                    console.log(`[DEBUG][STAGE 11: SESSIONS LIST MODAL] session.classroomId:`, session.classroomId);
                     onSessionClick(session, course);
                   }}
                 >

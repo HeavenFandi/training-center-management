@@ -7,9 +7,7 @@ const actUpdateCourse = createAsyncThunk(
   async (data: UpdateCourseRequest, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Update course payload:", data);
       const response = await updateCourse(data);
-      console.log("Update course response:", response);
       return response;
     } catch (error) {
       console.error("actUpdateCourse error:", error);

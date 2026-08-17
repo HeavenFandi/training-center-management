@@ -61,14 +61,6 @@ export const getInstituteByTenantId = async (tenantId: string) => {
 export const getInstituteByUserId = async (userId: string | number): Promise<Institute | null> => {
   const response = await axiosClient.get<Institute[]>(`/institutes/user/${userId}`);
   
-  // Dev-only log to verify API response shape
-  if (import.meta.env.DEV) {
-    console.group("🔍 Institute API Response");
-    console.log("Full response:", response);
-    console.log("Response data (array):", response.data);
-    console.groupEnd();
-  }
-
   // ALWAYS treat as array (fallback to empty array for safety)
   const institutes = Array.isArray(response.data) ? response.data : [];
   

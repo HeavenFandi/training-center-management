@@ -43,9 +43,6 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
   async ({ courseId, instituteId }: ActGetActiveOrUpcomingArgs, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log(
-        `[DEBUG][STAGE 1: API REQUEST] Fetching active/upcoming sessions for course ${courseId}, institute ${instituteId}`,
-      );
       const [sessionsResponse, institute, teachersResponse] = await Promise.all(
         [
           axiosClient.get(
@@ -55,20 +52,6 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
           getTeachers(),
         ],
       );
-      console.log(
-        `[DEBUG][STAGE 2: RAW API RESPONSE] Full response:`,
-        sessionsResponse,
-      );
-      console.log(
-        `[DEBUG][STAGE 2: RAW API RESPONSE] Data field:`,
-        sessionsResponse.data,
-      );
-      console.log(
-        `[DEBUG][STAGE 2: RAW API RESPONSE] Data keys:`,
-        Object.keys(sessionsResponse.data),
-      );
-      console.log(`[DEBUG][STAGE 2: INSTITUTE DATA]`, institute);
-      console.log(`[DEBUG][STAGE 2: TEACHERS DATA]`, teachersResponse);
 
       let rawData: TTrainingSessionResponse[] = [];
       if (Array.isArray(sessionsResponse.data)) {
@@ -84,10 +67,6 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
           rawData = sessionsResponse.data.data;
         }
       }
-      console.log(
-        `[DEBUG][STAGE 3: RAW DATA PREPARED] Raw sessions to map:`,
-        rawData,
-      );
 
       // Create a map of teacherId to full name
       const teacherNameMap = new Map<number, string>();
@@ -103,23 +82,6 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
 
       const mappedSessions: TTrainingSessionListItem[] = rawData.map(
         (item: TTrainingSessionResponse, index: number) => {
-          console.log(
-            `[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item keys:`,
-            Object.keys(item),
-          );
-          console.log(
-            `[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item:`,
-            item,
-          );
-          console.log(
-            `[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item.teacherId:`,
-            item.teacherId,
-          );
-          console.log(
-            `[DEBUG][STAGE 4: MAPPING ITEM ${index}] Raw item.classroomId:`,
-            item.classroomId,
-          );
-
           // Get teacher name from map if available, otherwise fall back to API fields
           const finalTeacherName =
             teacherNameMap.get(item.teacherId) ||
@@ -153,26 +115,8 @@ const actGetActiveOrUpcomingByCourseAndInstitute = createAsyncThunk(
             classroomId: item.classroomId,
           };
 
-          console.log(
-            `[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item:`,
-            mappedItem,
-          );
-          console.log(
-            `[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item.teacherId:`,
-            mappedItem.teacherId,
-          );
-          console.log(
-            `[DEBUG][STAGE 5: MAPPED ITEM ${index}] Mapped item.classroomId:`,
-            mappedItem.classroomId,
-          );
-
           return mappedItem;
         },
-      );
-
-      console.log(
-        `[DEBUG][STAGE 6: FINAL MAPPED SESSIONS] All mapped sessions:`,
-        mappedSessions,
       );
 
       return mappedSessions;

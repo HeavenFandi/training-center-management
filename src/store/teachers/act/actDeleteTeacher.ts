@@ -7,7 +7,6 @@ const actDeleteTeacher = createAsyncThunk(
   async (id: number, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Deleting teacher id:", id);
       await deleteTeacher(id);
       return id;
     } catch (error) {

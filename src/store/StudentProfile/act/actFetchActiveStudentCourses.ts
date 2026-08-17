@@ -23,17 +23,8 @@ const actFetchActiveStudentCourses = createAsyncThunk<
     }
 
     try {
-      console.log(
-        "[DEBUG actFetchActiveStudentCourses] Fetching active courses for student id:",
-        studentId,
-      );
       const url = `/enrollments/student/${studentId}/active`;
-      console.log("[DEBUG actFetchActiveStudentCourses] Request URL:", url);
       const response = await axiosClient.get(url);
-      console.log(
-        "[DEBUG actFetchActiveStudentCourses] Response data:",
-        response.data,
-      );
 
       // Handle possible response formats and preserve the full array from the backend.
       let rawCourses: Array<Record<string, unknown>> = [];
@@ -103,10 +94,6 @@ const actFetchActiveStudentCourses = createAsyncThunk<
         };
       });
 
-      console.log(
-        "[DEBUG actFetchActiveStudentCourses] Processed courses:",
-        courses,
-      );
       return courses;
     } catch (error) {
       console.error("[DEBUG actFetchActiveStudentCourses] === ERROR ===");

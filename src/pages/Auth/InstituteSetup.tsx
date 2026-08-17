@@ -141,8 +141,6 @@ const InstituteSetup: React.FC = () => {
       status: "ACTIVE" as const,
     };
 
-    console.log("Institute payload:", JSON.stringify(payload, null, 2));
-
     dispatch(actCreateInstitute(payload));
   };
 

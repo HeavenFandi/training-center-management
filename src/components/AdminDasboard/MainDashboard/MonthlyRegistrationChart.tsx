@@ -21,9 +21,6 @@ type Props = {
 };
 
 const MonthlyRegistrationChart: React.FC<Props> = ({ data, loading, error, year }) => {
-  console.log("MonthlyRegistrationChart: loading =", loading);
-  console.log("MonthlyRegistrationChart: data =", data);
-  console.log("MonthlyRegistrationChart: data.every(d => d.value === 0) =", data.every(d => d.value === 0));
   return (
     <Paper
       sx={{

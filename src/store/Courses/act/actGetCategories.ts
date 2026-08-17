@@ -20,9 +20,7 @@ const actGetCategories = createAsyncThunk(
     }
     
     try {
-      console.log("Fetching categories from API");
       const response = await axiosClient.get<Category[]>("/categories");
-      console.log("Categories API Response:", response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));

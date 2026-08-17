@@ -20,7 +20,7 @@ import EditStudentForm from "./EditStudentForm";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>
+  ref: React.Ref<unknown>,
 ) {
   return <Slide direction="up" ref={ref} {...props} timeout={500} />;
 });
@@ -28,22 +28,27 @@ const Transition = React.forwardRef(function Transition(
 interface EditStudentModalProps {
   open: boolean;
   onClose: () => void;
-  student: (CreateStudentResponse | {
-    id: number;
-    firstName: string;
-    lastName: string;
-    username: string;
-    email?: string;
-    contactInfo?: string;
-    gender?: string;
-    birthDate?: string;
-    address?: string;
-    interest?: string;
-    bio?: string;
-    enrollmentDate?: string;
-    image?: string;
-    userId?: number;
-  }) | null;
+  student:
+    | (
+        | CreateStudentResponse
+        | {
+            id: number;
+            firstName: string;
+            lastName: string;
+            username: string;
+            email?: string;
+            contactInfo?: string;
+            gender?: string;
+            birthDate?: string;
+            address?: string;
+            interest?: string;
+            bio?: string;
+            enrollmentDate?: string;
+            image?: string;
+            userId?: number;
+          }
+      )
+    | null;
   onSave: (updatedStudent: any) => void;
   onImageUpdate?: () => Promise<void>;
   loading?: boolean;
@@ -66,13 +71,13 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
   imageUpdateLoading = false,
 }) => {
   const [formData, setFormData] = useState<any>(student);
-  const [tempImageUrl, setTempImageUrl] = useState<string | undefined>(student?.image);
+  const [tempImageUrl, setTempImageUrl] = useState<string | undefined>(
+    student?.image,
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && student) {
-      console.log("[DEBUG EditStudentModal] === Opening edit modal ===");
-      console.log("[DEBUG EditStudentModal] Initial student.bio:", student?.bio);
       setFormData({
         ...student,
         bio: student?.bio ?? "",
@@ -89,11 +94,12 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     }
   }, [student?.image]);
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData((prev: any) => (prev ? { ...prev, [field]: e.target.value } : null));
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev: any) =>
+        prev ? { ...prev, [field]: e.target.value } : null,
+      );
+    };
 
   const handleImageChange = (imageUrl: string, file?: File) => {
     setTempImageUrl(imageUrl);
@@ -109,36 +115,29 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        
+
         // Validate file type
         if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
           setValidationError("الصورة يجب أن تكون من نوع JPG أو PNG");
           return;
         }
-        
+
         // Validate file size
         if (file.size > MAX_IMAGE_SIZE) {
           setValidationError("الصورة يجب أن تكون أقل من 5 ميجابايت");
           return;
         }
-        
+
         setValidationError(null);
         const imageUrl = URL.createObjectURL(file);
         handleImageChange(imageUrl, file);
       }
     },
-    [setPendingImageFile]
+    [setPendingImageFile],
   );
 
   const handleSave = useCallback(async () => {
-    console.log("[DEBUG EditStudentModal] Save clicked!");
-    console.log("[DEBUG EditStudentModal] formData:", formData);
-    console.log("[DEBUG EditStudentModal] formData.bio:", formData?.bio);
-    console.log("[DEBUG EditStudentModal] loading:", loading);
-    console.log("[DEBUG EditStudentModal] imageUpdateLoading:", imageUpdateLoading);
-
     if (!formData || loading || imageUpdateLoading) {
-      console.log("[DEBUG EditStudentModal] Not saving: formData missing or loading");
       return;
     }
 
@@ -149,7 +148,8 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     if (!formData.username?.trim()) errors.push("اسم المستخدم مطلوب");
     if (!formData.gender) errors.push("الجنس مطلوب");
     if (!formData.birthDate) errors.push("تاريخ الميلاد مطلوب");
-    if (!String(formData.bio ?? "").trim()) errors.push("السيرة الذاتية مطلوبة");
+    if (!String(formData.bio ?? "").trim())
+      errors.push("السيرة الذاتية مطلوبة");
 
     if (errors.length > 0) {
       setValidationError(errors[0]);
@@ -168,8 +168,10 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     }
 
     if (formData) {
-      const normalizedFormData = { ...formData, bio: String(formData.bio ?? "") };
-      console.log("[DEBUG EditStudentModal] Passing complete formData to onSave:", normalizedFormData);
+      const normalizedFormData = {
+        ...formData,
+        bio: String(formData.bio ?? ""),
+      };
       onSave(normalizedFormData);
     }
   }, [formData, loading, onSave, onImageUpdate, imageUpdateLoading]);
@@ -199,24 +201,53 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
         <Typography variant="h6" fontWeight="900" color="#133E65">
           تعديل البيانات الشخصية
         </Typography>
-        <IconButton onClick={onClose} disabled={loading} sx={{ bgcolor: "#fff" }}>
+        <IconButton
+          onClick={onClose}
+          disabled={loading}
+          sx={{ bgcolor: "#fff" }}
+        >
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
 
-      <DialogContent sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC" }}>
+      <DialogContent
+        sx={{ p: 4, pt: 2, overflowY: "auto", bgcolor: "#F8FAFC" }}
+      >
         {(error || validationError) && (
-          <Box sx={{ mb: 3, p: 2, bgcolor: "#fee2e2", borderRadius: "12px", border: "1px solid #fecaca" }}>
-            <Typography sx={{ color: "#dc2626", fontFamily: "Tajawal", fontWeight: "bold" }}>
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              bgcolor: "#fee2e2",
+              borderRadius: "12px",
+              border: "1px solid #fecaca",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#dc2626",
+                fontFamily: "Tajawal",
+                fontWeight: "bold",
+              }}
+            >
               {validationError || error}
             </Typography>
           </Box>
         )}
-        <Grid container spacing={4} alignItems="flex-start" sx={{ flexDirection: "row-reverse" }}>
+        <Grid
+          container
+          spacing={4}
+          alignItems="flex-start"
+          sx={{ flexDirection: "row-reverse" }}
+        >
           <Grid size={{ xs: 12, md: 9 }} order={{ xs: 2, md: 1 }}>
             <EditStudentForm formData={formData} onChange={handleChange} />
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }} order={{ xs: 1, md: 2 }} sx={{ display: "flex", justifyContent: "center", pt: 2 }}>
+          <Grid
+            size={{ xs: 12, md: 3 }}
+            order={{ xs: 1, md: 2 }}
+            sx={{ display: "flex", justifyContent: "center", pt: 2 }}
+          >
             <Box sx={{ position: "relative" }}>
               <Box
                 component="img"
@@ -257,7 +288,14 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
         </Grid>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 1, justifyContent: "space-between", bgcolor: "#F8FAFC" }}>
+      <DialogActions
+        sx={{
+          p: 3,
+          pt: 1,
+          justifyContent: "space-between",
+          bgcolor: "#F8FAFC",
+        }}
+      >
         <Button
           onClick={onClose}
           disabled={loading}
@@ -286,15 +324,15 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
                 boxShadow: "0 10px 25px rgba(19, 62, 101, 0.3)",
               },
             }}
-            startIcon={success ? <CheckCircleOutlineIcon /> : <SaveIcon sx={{ ml: 1 }} />}
+            startIcon={
+              success ? <CheckCircleOutlineIcon /> : <SaveIcon sx={{ ml: 1 }} />
+            }
           >
-            {loading || imageUpdateLoading ? (
-              ""
-            ) : success ? (
-              "تم الحفظ بنجاح"
-            ) : (
-              "حفظ التغييرات"
-            )}
+            {loading || imageUpdateLoading
+              ? ""
+              : success
+                ? "تم الحفظ بنجاح"
+                : "حفظ التغييرات"}
           </Button>
           {(loading || imageUpdateLoading) && (
             <CircularProgress

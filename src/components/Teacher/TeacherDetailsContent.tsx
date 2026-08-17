@@ -12,7 +12,10 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { selectSessions, actGetTrainingSessions } from "../../store/Courses/trainingSessionsSlice";
+import {
+  selectSessions,
+  actGetTrainingSessions,
+} from "../../store/Courses/trainingSessionsSlice";
 
 import GroupIcon from "@mui/icons-material/Group";
 import SlowMotionVideoIcon from "@mui/icons-material/SlowMotionVideo";
@@ -38,33 +41,21 @@ export default function TeacherDetailsContent() {
   }, [dispatch, sessions.length]);
 
   const handleCourseClick = (courseId: number, courseName: string) => {
-    console.log("=== handleCourseClick ===");
-    console.log("courseId:", courseId);
-    console.log("courseName:", courseName);
-    console.log("All sessions:", sessions);
-    
     // First try to match by courseId
     let matchingSession = sessions.find((session) => {
-      console.log("Checking session courseId:", session.courseId, "vs target:", courseId);
       return session.courseId === courseId;
     });
-    
+
     // If no match by courseId, try matching by courseName
     if (!matchingSession) {
-      console.log("No match by courseId, trying courseName");
       matchingSession = sessions.find((session) => {
-        console.log("Checking session title:", session.title, "vs target:", courseName);
         return session.title === courseName;
       });
     }
-    
-    console.log("matchingSession:", matchingSession);
-    
+
     if (matchingSession) {
-      console.log("Navigating to session details:", matchingSession.id);
       navigate(`/main/training-session-details/${matchingSession.id}`);
     } else {
-      console.log("No matching session found, navigating to courses list");
       navigate("/main/courses");
     }
   };
@@ -100,7 +91,8 @@ export default function TeacherDetailsContent() {
           fontFamily: "Tajawal, sans-serif",
           fontSize: "24px",
           color: "#243041",
-        }}>
+        }}
+      >
         جاري تحميل بيانات المعلم...
       </Box>
     );
@@ -118,7 +110,8 @@ export default function TeacherDetailsContent() {
           fontFamily: "Tajawal, sans-serif",
           fontSize: "24px",
           color: "#C62828",
-        }}>
+        }}
+      >
         {error}
       </Box>
     );
@@ -136,7 +129,8 @@ export default function TeacherDetailsContent() {
           fontFamily: "Tajawal, sans-serif",
           fontSize: "24px",
           color: "#243041",
-        }}>
+        }}
+      >
         لا توجد بيانات للمعلم
       </Box>
     );
@@ -149,7 +143,8 @@ export default function TeacherDetailsContent() {
         background: "linear-gradient(180deg, #F6FAFD 0%, #B3CFE5 100%)",
         pt: { xs: 10, md: 12 },
         pb: 6,
-      }}>
+      }}
+    >
       <Container maxWidth="lg">
         <Stack alignItems="center" spacing={1} sx={{ mb: 5 }}>
           <Avatar
@@ -169,7 +164,8 @@ export default function TeacherDetailsContent() {
               lineHeight: 1.2,
               fontFamily: "Tajawal, sans-serif",
               textAlign: "center",
-            }}>
+            }}
+          >
             {teacher.name}
           </Typography>
 
@@ -180,7 +176,8 @@ export default function TeacherDetailsContent() {
               color: "rgba(26, 61, 99, 1)",
               fontFamily: "Tajawal, sans-serif",
               textAlign: "center",
-            }}>
+            }}
+          >
             {teacher.title || "مدرب"}
           </Typography>
 
@@ -197,7 +194,8 @@ export default function TeacherDetailsContent() {
                 fontWeight: 700,
                 color: "#ffb400",
                 fontFamily: "Tajawal, sans-serif",
-              }}>
+              }}
+            >
               {teacher.rating || 0}
             </Typography>
           </Stack>
@@ -215,7 +213,8 @@ export default function TeacherDetailsContent() {
                     color: "#93a1b2",
                     fontWeight: 500,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   الطلاب المستفيدين
                 </Typography>
 
@@ -225,7 +224,8 @@ export default function TeacherDetailsContent() {
                     color: "#091c39",
                     fontWeight: 700,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   {teacher.studentsCount || 0} طالب
                 </Typography>
               </Stack>
@@ -243,7 +243,8 @@ export default function TeacherDetailsContent() {
                     color: "#93a1b2",
                     fontWeight: 500,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   الدورات المقدمة
                 </Typography>
 
@@ -253,7 +254,8 @@ export default function TeacherDetailsContent() {
                     color: "#1f2a37",
                     fontWeight: 700,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   {teacherCourses.length} دورة
                 </Typography>
               </Stack>
@@ -273,7 +275,8 @@ export default function TeacherDetailsContent() {
                     color: "#93a1b2",
                     fontWeight: 500,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   سنوات الخبرة
                 </Typography>
 
@@ -283,7 +286,8 @@ export default function TeacherDetailsContent() {
                     color: "#1f2a37",
                     fontWeight: 700,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   +{teacher.experienceYears || 0}
                 </Typography>
               </Stack>
@@ -298,13 +302,15 @@ export default function TeacherDetailsContent() {
                 ...sectionCardSx,
                 p: 3,
                 backgroundColor: "rgba(246, 250, 253, 0.6)",
-              }}>
+              }}
+            >
               <Stack
                 direction="row"
                 alignItems="center"
                 justifyContent="flex-end"
                 spacing={1}
-                sx={{ mb: 3 }}>
+                sx={{ mb: 3 }}
+              >
                 <Typography
                   sx={{
                     fontSize: "22px",
@@ -312,7 +318,8 @@ export default function TeacherDetailsContent() {
                     color: "#243041",
                     lineHeight: 1,
                     fontFamily: "Tajawal, sans-serif",
-                  }}>
+                  }}
+                >
                   الكورسات
                 </Typography>
 
@@ -326,7 +333,9 @@ export default function TeacherDetailsContent() {
                   teacherCourses.map((course) => (
                     <Box
                       key={course.courseId}
-                      onClick={() => handleCourseClick(course.courseId, course.courseName)}
+                      onClick={() =>
+                        handleCourseClick(course.courseId, course.courseName)
+                      }
                       sx={{
                         p: 2,
                         borderRadius: "16px",
@@ -338,7 +347,8 @@ export default function TeacherDetailsContent() {
                           transform: "translateY(-2px)",
                           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                         },
-                      }}>
+                      }}
+                    >
                       <Typography
                         sx={{
                           fontSize: "20px",
@@ -348,7 +358,8 @@ export default function TeacherDetailsContent() {
                           mb: 1,
                           fontFamily: "Tajawal, sans-serif",
                           textAlign: "right",
-                        }}>
+                        }}
+                      >
                         {course.courseName}
                       </Typography>
 
@@ -361,7 +372,8 @@ export default function TeacherDetailsContent() {
                           fontFamily: "Tajawal, sans-serif",
                           textAlign: "right",
                           mb: 1,
-                        }}>
+                        }}
+                      >
                         الجلسات المكتملة: {course.completedSessions} /{" "}
                         {course.totalSessions}
                       </Typography>
@@ -384,7 +396,8 @@ export default function TeacherDetailsContent() {
                           fontWeight: 700,
                           fontFamily: "Tajawal, sans-serif",
                           textAlign: "right",
-                        }}>
+                        }}
+                      >
                         نسبة التقدم: %{course.progressPercentage}
                       </Typography>
                       <Typography
@@ -396,7 +409,8 @@ export default function TeacherDetailsContent() {
                           fontFamily: "Tajawal, sans-serif",
                           textAlign: "right",
                           mb: 1,
-                        }}>
+                        }}
+                      >
                         عدد الطلاب المستفيدين: {course.numberOfStudents || 0}
                       </Typography>
                     </Box>
@@ -408,7 +422,8 @@ export default function TeacherDetailsContent() {
                       color: "#6B7280",
                       fontFamily: "Tajawal, sans-serif",
                       textAlign: "center",
-                    }}>
+                    }}
+                  >
                     لا توجد كورسات لهذا المعلم حاليًا
                   </Typography>
                 )}
@@ -423,7 +438,8 @@ export default function TeacherDetailsContent() {
                   ...sectionCardSx,
                   p: 3,
                   backgroundColor: "rgba(246, 250, 253, 0.6)",
-                }}>
+                }}
+              >
                 <Typography
                   sx={{
                     fontSize: "22px",
@@ -433,7 +449,8 @@ export default function TeacherDetailsContent() {
                     fontFamily: "Tajawal, sans-serif",
                     textAlign: "right",
                     mb: 2,
-                  }}>
+                  }}
+                >
                   السيرة الذاتية
                 </Typography>
 
@@ -444,7 +461,8 @@ export default function TeacherDetailsContent() {
                     lineHeight: 1.8,
                     fontFamily: "Tajawal, sans-serif",
                     textAlign: "right",
-                  }}>
+                  }}
+                >
                   {teacher.bio || "لا توجد سيرة ذاتية متاحة لهذا المعلم"}
                 </Typography>
               </Card>
@@ -454,11 +472,13 @@ export default function TeacherDetailsContent() {
                   ...sectionCardSx,
                   p: 3,
                   backgroundColor: "rgba(246, 250, 253, 0.6)",
-                }}>
+                }}
+              >
                 <Stack
                   mt={2}
                   spacing={3}
-                  sx={{ width: "100%", direction: "rtl", px: 2 }}>
+                  sx={{ width: "100%", direction: "rtl", px: 2 }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <CallRoundedIcon sx={{ color: "#243041" }} />
 
@@ -469,13 +489,15 @@ export default function TeacherDetailsContent() {
                         color: "#243041",
                         fontFamily: "Tajawal, sans-serif",
                         whiteSpace: "nowrap",
-                      }}>
+                      }}
+                    >
                       معلومات الاتصال
                     </Typography>
                   </Box>
 
                   <Box
-                    sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                    sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
+                  >
                     <EmailRoundedIcon sx={{ color: "#243041", mt: 0.5 }} />
 
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -486,7 +508,8 @@ export default function TeacherDetailsContent() {
                           color: "#243041",
                           fontFamily: "Tajawal, sans-serif",
                           lineHeight: 1.2,
-                        }}>
+                        }}
+                      >
                         البريد الإلكتروني
                       </Typography>
 
@@ -496,14 +519,16 @@ export default function TeacherDetailsContent() {
                           color: "#0b1b34",
                           fontFamily: "Tajawal, sans-serif",
                           wordBreak: "break-word",
-                        }}>
+                        }}
+                      >
                         {teacher.email || "غير متوفر"}
                       </Typography>
                     </Box>
                   </Box>
 
                   <Box
-                    sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                    sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
+                  >
                     <PhoneIphoneRoundedIcon
                       sx={{ color: "#243041", mt: 0.5 }}
                     />
@@ -516,7 +541,8 @@ export default function TeacherDetailsContent() {
                           color: "#243041",
                           fontFamily: "Tajawal, sans-serif",
                           lineHeight: 1.2,
-                        }}>
+                        }}
+                      >
                         الرقم
                       </Typography>
 
@@ -525,7 +551,8 @@ export default function TeacherDetailsContent() {
                           fontSize: "16px",
                           color: "#0b1b34",
                           fontFamily: "Tajawal, sans-serif",
-                        }}>
+                        }}
+                      >
                         {teacher.phone || "غير متوفر"}
                       </Typography>
                     </Box>

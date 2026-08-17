@@ -63,17 +63,10 @@ export const useAddTeacherForm = ({
           instituteId: currentInstitute.id,
         };
 
-        if (import.meta.env.DEV) {
-          console.log("Create teacher payload:", payload);
-        }
-
         const resultAction = await dispatch(actCreateTeacher(payload));
 
         if (actCreateTeacher.fulfilled.match(resultAction)) {
           const createdTeacher = resultAction.payload;
-          if (import.meta.env.DEV) {
-            console.log("Create teacher response:", createdTeacher);
-          }
 
           if (onSave) {
             onSave(data);
@@ -110,7 +103,6 @@ export const useAddTeacherForm = ({
 
   const onError = useCallback(
     (errors: FieldErrors<AddTeacherFormData>) => {
-      console.log("Form validation errors:", errors);
       showSnackbar("يرجى التأكد من ملء جميع الحقول بشكل صحيح", "error");
     },
     [showSnackbar],

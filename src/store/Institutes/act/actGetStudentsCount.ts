@@ -7,9 +7,7 @@ const actGetStudentsCount = createAsyncThunk(
   async (tenantId: string | number, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Fetching students count for tenantId:", tenantId);
       const response = await getStudentsCount(tenantId);
-      console.log("Students count response:", response);
       return response;
     } catch (error) {
       console.error("actGetStudentsCount error:", error);

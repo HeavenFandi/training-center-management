@@ -201,12 +201,6 @@ const InstituteManagement: React.FC = () => {
   useEffect(() => {
     const instituteId = currentInstitute?.id;
     if (instituteId) {
-      if (import.meta.env.DEV) {
-        console.log(
-          "InstituteManagement: Calling actGetInstituteById with id:",
-          instituteId,
-        );
-      }
       dispatch(actGetInstituteById(instituteId));
     }
   }, [dispatch, currentInstitute?.id]);
@@ -214,9 +208,6 @@ const InstituteManagement: React.FC = () => {
   // Clean description from any backend debug text
   const cleanDescription = (text: string | null | undefined) => {
     if (!text) return "";
-    if (import.meta.env.DEV) {
-      console.log("cleanDescription: original text:", text);
-    }
     // Remove any debug text starting with "what" or similar
     let cleaned = text;
     // Common debug patterns (only remove if it's at the end)
@@ -224,32 +215,11 @@ const InstituteManagement: React.FC = () => {
       /\s*(\?what|what\s+happ|what\s*if\s*i\s+send\s+put).*$/i;
     cleaned = cleaned.replace(debugPattern, "");
     cleaned = cleaned.trim();
-    if (import.meta.env.DEV) {
-      console.log("cleanDescription: cleaned text:", cleaned);
-    }
     return cleaned;
   };
 
   useEffect(() => {
     if (currentInstitute) {
-      if (import.meta.env.DEV) {
-        console.log(
-          "InstituteManagement: currentInstitute FULL OBJECT:",
-          currentInstitute,
-        );
-        console.log(
-          "InstituteManagement: currentInstitute.description:",
-          currentInstitute.description,
-        );
-        console.log(
-          "InstituteManagement: currentInstitute.description length:",
-          currentInstitute.description?.length,
-        );
-        console.log(
-          "InstituteManagement: currentInstitute.description type:",
-          typeof currentInstitute.description,
-        );
-      }
       const timeRange = `${formatTime(currentInstitute.startTime)} - ${formatTime(currentInstitute.endTime)}`;
       const forbiddenDays = ["الجمعة", "السبت", "FRIDAY", "SATURDAY"];
       const mappedDays = (currentInstitute.workingDays ?? [])
@@ -274,12 +244,6 @@ const InstituteManagement: React.FC = () => {
           },
         ],
       };
-      if (import.meta.env.DEV) {
-        console.log(
-          "InstituteManagement: setting instituteInfo:",
-          newInstituteInfo,
-        );
-      }
       setInstituteInfo(newInstituteInfo);
     }
   }, [currentInstitute]);
@@ -303,32 +267,12 @@ const InstituteManagement: React.FC = () => {
   }, [updateSuccess, updateError, showSnackbar, dispatch]);
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log(
-        "InstituteManagement: coursesLoading:",
-        coursesLoading,
-        "courses:",
-        courses,
-        "error:",
-        coursesError,
-      );
-    }
     if (coursesError) {
       showSnackbar(coursesError, "error");
     }
   }, [coursesLoading, courses, coursesError, showSnackbar]);
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log(
-        "InstituteManagement: teachersLoading:",
-        teachersLoading,
-        "teachers:",
-        teachers,
-        "error:",
-        teachersError,
-      );
-    }
     if (teachersError) {
       showSnackbar(teachersError, "error");
     }
@@ -338,9 +282,6 @@ const InstituteManagement: React.FC = () => {
   useEffect(() => {
     const tenantId = currentInstitute?.tenantId;
     const instituteId = currentInstitute?.id;
-    if (import.meta.env.DEV) {
-      console.log("InstituteManagement: currentInstitute.tenantId:", tenantId);
-    }
     if (tenantId) {
       dispatch(actGetStudentsCount(tenantId));
       dispatch(actGetCoursesByTenantId(tenantId));
@@ -400,8 +341,6 @@ const InstituteManagement: React.FC = () => {
         | "ACTIVE"
         | "INACTIVE",
     };
-
-    console.log("Update institute payload:", payload);
 
     dispatch(actUpdateInstitute({ id: currentInstitute.id, data: payload }));
   };

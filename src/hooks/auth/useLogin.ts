@@ -38,36 +38,21 @@ const useLogin = () => {
   // =========================
   const onsubmit = useCallback(
     async (data: TSignInType) => {
-      if (import.meta.env.DEV) {
-        console.log("🚀 useLogin onsubmit called with data:", data);
-      }
       try {
         dispatch(resetInstituteState());
 
         // 1. LOGIN
-        if (import.meta.env.DEV) {
-          console.log("📤 Calling actAuthLogin...");
-        }
         const userData = await dispatch(actAuthLogin(data)).unwrap();
-        if (import.meta.env.DEV) {
-          console.log("✅ actAuthLogin unwrapped successfully:", userData);
-        }
 
         let institute: Institute | null = null;
 
         // 2. FETCH INSTITUTE (ADMIN ONLY)
         if (userData.userType === "ADMIN") {
-          if (import.meta.env.DEV) {
-            console.log("🏛️ User is ADMIN, fetching institute...");
-          }
           try {
             // actGetInstituteByUserId already returns Institute | null (not array)
             institute = await dispatch(
               actGetInstituteByUserId(userData.id)
             ).unwrap();
-            if (import.meta.env.DEV) {
-              console.log("🏫 Institute fetched:", institute);
-            }
           } catch (err) {
             if (import.meta.env.DEV) {
               console.warn("⚠️ Could not fetch institute (proceeding anyway):", err);
@@ -78,34 +63,15 @@ const useLogin = () => {
 
         const hasInstitute = !!institute?.id;
 
-        if (import.meta.env.DEV) {
-          console.log("🔐 Login successful, user data:", userData);
-          console.log("🏫 Institute data:", institute);
-          console.log("🧭 Navigating to:", userData.userType === "ADMIN" ? (hasInstitute ? "/admin-dashboard" : "/institute-setup") : (userData.userType === "TEACHER" ? "/teacher-dashboard" : "/main"));
-        }
-
         // 3. NAVIGATION
         if (userData.userType === "ADMIN") {
-          if (import.meta.env.DEV) {
-            console.log("🧭 Calling navigate to admin route...");
-          }
           navigate(
             hasInstitute ? "/admin-dashboard" : "/institute-setup"
           );
         } else if (userData.userType === "TEACHER") {
-          if (import.meta.env.DEV) {
-            console.log("🧭 Calling navigate to teacher route...");
-          }
           navigate("/teacher-dashboard");
         } else {
-          if (import.meta.env.DEV) {
-            console.log("🧭 Calling navigate to main route...");
-          }
           navigate("/main");
-        }
-
-        if (import.meta.env.DEV) {
-          console.log("✅ navigate called successfully!");
         }
 
         // 4. RESET AUTH
@@ -113,7 +79,6 @@ const useLogin = () => {
       } catch (err) {
         if (import.meta.env.DEV) {
           console.error("❌ useLogin onsubmit failed:", err);
-          console.error("❌ Error stack:", (err as Error).stack);
         }
       }
     },

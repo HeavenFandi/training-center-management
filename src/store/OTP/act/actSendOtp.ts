@@ -8,15 +8,9 @@ const actSendOtp = createAsyncThunk<
   { rejectValue: string }
 >("otp/actSendOtp", async (email, thunkAPI) => {
   try {
-    console.log("[DEBUG actSendOtp] === START SEND OTP ===");
-    console.log("[DEBUG actSendOtp] Sending OTP to email:", email);
-
     const response = await axiosClient.post<string>("/otp/send", null, {
       params: { email }
     });
-    
-    console.log("[DEBUG actSendOtp] Response received:", response.data);
-    console.log("[DEBUG actSendOtp] === END SEND OTP (SUCCESS) ===");
     
     return response.data;
   } catch (error) {

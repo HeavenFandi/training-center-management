@@ -12,7 +12,6 @@ import actInitiatePayment from "../../store/Courses/act/actInitiatePayment";
 const getStudentId = (user: any) => {
   // Priority 1: user.studentId from Redux store
   if (user?.studentId) {
-    console.log("getStudentId: Using user.studentId:", user.studentId);
     return user.studentId;
   }
 
@@ -20,11 +19,9 @@ const getStudentId = (user: any) => {
   const localStorageStudentId = localStorage.getItem("studentId");
   if (localStorageStudentId) {
     const parsed = Number(localStorageStudentId);
-    console.log("getStudentId: Using localStorage studentId:", parsed);
     return parsed;
   }
 
-  console.log("getStudentId: No valid studentId found!");
   return null;
 };
 
@@ -49,10 +46,6 @@ export const useTrainingSessionDetails = () => {
   const handleAddRating = async (rating: number, review: string) => {
     const studentId = getStudentId(user);
     const resolvedCourseId = session?.courseId;
-
-    console.log("FULL SESSION:", session);
-    console.log("resolvedCourseId:", resolvedCourseId);
-    console.log("studentId:", studentId);
 
     if (!resolvedCourseId) {
       console.error("Course ID not found in session data");
@@ -80,18 +73,8 @@ export const useTrainingSessionDetails = () => {
   };
 
   const handleInitiatePayment = async () => {
-    console.log("=== handleInitiatePayment Debug ===");
-    console.log("Complete user object:", user);
-    console.log("user.studentId:", user?.studentId);
-    console.log("user.id:", user?.id);
-    console.log("localStorage.studentId:", localStorage.getItem("studentId"));
-
     const studentId = getStudentId(user);
     const trainingSessionId = session?.id;
-
-    console.log("Final studentId to send:", studentId);
-    console.log("Type of studentId:", typeof studentId);
-    console.log("trainingSessionId:", trainingSessionId);
 
     if (!studentId) {
       return Promise.reject(
@@ -100,11 +83,6 @@ export const useTrainingSessionDetails = () => {
     }
 
     if (studentId && trainingSessionId) {
-      console.log("Calling actInitiatePayment with:", {
-        sessionId: Number(trainingSessionId),
-        studentId: Number(studentId),
-      });
-
       const paymentUrl = await dispatch(
         actInitiatePayment({
           sessionId: Number(trainingSessionId),
@@ -134,7 +112,7 @@ export const useTrainingSessionDetails = () => {
     handleEnroll,
     handleInitiatePayment,
     handleInstituteClick: () => navigate(`/main/institute/1`),
-    handleEnrollClick: () => console.log("تسجيل في:", session?.courseName),
+    handleEnrollClick: () => {},
   };
 };
 

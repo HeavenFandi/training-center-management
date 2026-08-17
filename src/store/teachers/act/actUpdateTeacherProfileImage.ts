@@ -12,8 +12,6 @@ const actUpdateTeacherProfileImage = createAsyncThunk(
   async ({ id, file }: UpdateTeacherProfileImagePayload, thunkAPI) => {
     const { rejectWithValue } = thunkAPI;
     try {
-      console.log("Update teacher image id:", id);
-      console.log("Update teacher image file:", file);
       const response = await updateTeacherProfileImage(id, file);
       return response;
     } catch (error) {

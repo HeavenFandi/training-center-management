@@ -5,14 +5,6 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  // Only log safe metadata in development mode
-  if (import.meta.env.DEV) {
-    console.log("[axiosClient] Request:", {
-      method: config.method?.toUpperCase(),
-      url: (config.baseURL ?? "") + (config.url ?? ""),
-    });
-  }
-
   const user = localStorage.getItem("user");
   if (user) {
     try {

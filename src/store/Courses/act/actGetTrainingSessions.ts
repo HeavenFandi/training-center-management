@@ -43,8 +43,6 @@ const actGetTrainingSessions = createAsyncThunk(
     }
 
     try {
-      console.log("=== actGetTrainingSessions ===");
-      console.log("Fetching all sessions without filters");
       const [sessionsResponse, institutesResponse, teachersResponse] =
         await Promise.all([
           axiosClient.get<TTrainingSessionResponse[]>(
@@ -53,10 +51,6 @@ const actGetTrainingSessions = createAsyncThunk(
           getAllInstitutes(),
           getTeachers(),
         ]);
-
-      console.log("Raw API Response (sessions):", sessionsResponse.data);
-      console.log("Raw API Response (institutes):", institutesResponse);
-      console.log("Raw API Response (teachers):", teachersResponse);
 
       // Create a map of institute names to their locations
       const instituteLocationMap = new Map<string, string>();
@@ -83,8 +77,7 @@ const actGetTrainingSessions = createAsyncThunk(
 
       const mappedSessions: TTrainingSessionListItem[] =
         sessionsResponse.data.map(
-          (item: TTrainingSessionResponse, index: number) => {
-            console.log(`Mapping session ${index}:`, item);
+          (item: TTrainingSessionResponse) => {
             const instituteName = item.instituteName || item.tenantName || "";
             const instituteLocation =
               instituteLocationMap.get(instituteName) || "";
@@ -118,12 +111,10 @@ const actGetTrainingSessions = createAsyncThunk(
                 (item as any).registeredStudentsCount ??
                 (item as any).studentsCount,
             };
-            console.log("Mapped session:", mapped);
             return mapped;
           },
         );
 
-      console.log("All mapped sessions:", mappedSessions);
       return mappedSessions;
     } catch (error) {
       return rejectWithValue(axiosErrorHandler(error));

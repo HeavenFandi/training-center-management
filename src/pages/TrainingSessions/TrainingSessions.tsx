@@ -93,7 +93,6 @@ const TrainingSessions = memo(() => {
     const maxP = parseFloat(maxPriceInput);
     if (!isNaN(maxP)) filters.maxPrice = maxP;
     
-    console.log("Final filter params:", filters);
     dispatch(actGetFilteredTrainingSessions(filters));
     dispatch(applyFilters());
   }, [dispatch, categoryInput, instituteInput, minPriceInput, maxPriceInput, locationInput]);
@@ -141,7 +140,6 @@ const TrainingSessions = memo(() => {
             categoriesError={categoriesError}
             setInstituteInput={(val) => dispatch(setInstituteInput(val))}
             setCategoryInput={(val) => {
-              console.log("Selected category:", val);
               dispatch(setCategoryInput(val));
             }}
             setMinPriceInput={(val) => dispatch(setMinPriceInput(val))}
