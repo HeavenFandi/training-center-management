@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import actAuthLogin, { User, UserType } from "./act/actAuthLogin";
 import actAuthRegister from "./act/actAuthRegister";
+import authTokenManager from "../../utils/authTokenManager";
 
 interface AuthState {
   user: User | null;
@@ -15,10 +16,11 @@ interface AuthState {
   registerSuccess: boolean;
 }
 
-const AUTH_KEYS = ["user", "userType", "studentId", "userId", "token"] as const;
+const AUTH_KEYS = ["user", "userType", "studentId", "userId"] as const;
 
 const clearAllAuthKeys = () => {
   AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
+  authTokenManager.removeToken();
   Object.keys(localStorage).forEach((key) => {
     if (
       key.toLowerCase().includes("auth") ||
@@ -121,7 +123,7 @@ const authSlice = createSlice({
           localStorage.setItem("studentId", String(action.payload.studentId));
         }
         if (action.payload.token) {
-          localStorage.setItem("token", action.payload.token);
+          authTokenManager.setToken(action.payload.token);
         }
       })
       .addCase(actAuthLogin.rejected, (state, action) => {

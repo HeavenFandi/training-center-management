@@ -1,4 +1,5 @@
 import axios from "axios";
+import authTokenManager from "../utils/authTokenManager";
 
 const axiosClient = axios.create({
   baseURL: "/api",
@@ -14,12 +15,11 @@ axiosClient.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      // Invalid JSON, clear all corrupted auth-related localStorage entries
       localStorage.removeItem("user");
       localStorage.removeItem("userType");
       localStorage.removeItem("studentId");
       localStorage.removeItem("userId");
-      localStorage.removeItem("token");
+      authTokenManager.removeToken();
     }
   }
   return config;
