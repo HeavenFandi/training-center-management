@@ -25,11 +25,48 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+const clearAllAuthKeys = () => {
+  const AUTH_KEYS = ["user", "userType", "studentId", "userId"] as const;
+  AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
+  authTokenManager.removeToken();
+  Object.keys(localStorage).forEach((key) => {
+    if (
+      key.toLowerCase().includes("auth") ||
+      key.toLowerCase().includes("token") ||
+      key.toLowerCase().includes("user")
+    ) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 axiosClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      // remove token explicitly and clear any auth-related storage
+      try {
+        authTokenManager.removeToken();
+      } catch (e) {
+        // keep behavior unchanged on removal failure
+      }
+      clearAllAuthKeys();
+      // redirect to login when unauthorized
+      try {
+        window.location.href = "/login";
+      } catch (e) {
+        // ignore if running in non-browser environment
+      }
+    }
+
+    // normalize error message for all rejections
+    const normalizedMessage = error.response?.data?.message || error.message;
+    if (normalizedMessage) {
+      error.message = normalizedMessage;
+    }
+
     return Promise.reject(error);
   },
 );
